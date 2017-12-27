@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5336785e-d0d3-4a8f-af15-93f598a70879" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/css/bootstrap.css" afterPath="$PROJECT_DIR$/css/bootstrap.css" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" afterPath="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -19,12 +18,12 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" pinned="false" current-in-tab="false">
+      <file leaf-file-name="2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="315">
-                <caret line="448" column="12" lean-forward="true" selection-start-line="448" selection-start-column="12" selection-end-line="448" selection-end-column="12" />
+              <first_editor relative-caret-position="467">
+                <caret line="479" column="0" lean-forward="false" selection-start-line="479" selection-start-column="0" selection-end-line="479" selection-end-column="0" />
                 <folding />
               </first_editor>
               <second_editor>
@@ -34,11 +33,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="bootstrap.css" pinned="false" current-in-tab="true">
+      <file leaf-file-name="bootstrap.css" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/css/bootstrap.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="186">
-              <caret line="1397" column="14" lean-forward="false" selection-start-line="1397" selection-start-column="14" selection-end-line="1397" selection-end-column="14" />
+            <state relative-caret-position="375">
+              <caret line="2704" column="1" lean-forward="true" selection-start-line="2704" selection-start-column="1" selection-end-line="2704" selection-end-column="1" />
               <folding />
             </state>
           </provider>
@@ -146,8 +145,8 @@
         <option value="$PROJECT_DIR$/_config.yml" />
         <option value="$PROJECT_DIR$/_posts/2017-12-07-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-2.md" />
         <option value="$PROJECT_DIR$/_layouts/post.html" />
-        <option value="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" />
         <option value="$PROJECT_DIR$/css/bootstrap.css" />
+        <option value="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" />
       </list>
     </option>
   </component>
@@ -800,12 +799,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1514388774090</updated>
-      <workItem from="1514388778595" duration="2381000" />
+      <workItem from="1514388778595" duration="2394000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="2381000" />
+    <option name="totallyTimeSpent" value="2394000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="1985" y="24" width="1855" height="1056" extended-state="6" />
@@ -1010,19 +1009,6 @@
         <state />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md">
-      <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
-        <state split_layout="SPLIT">
-          <first_editor relative-caret-position="315">
-            <caret line="448" column="12" lean-forward="true" selection-start-line="448" selection-start-column="12" selection-end-line="448" selection-end-column="12" />
-            <folding />
-          </first_editor>
-          <second_editor>
-            <js_state />
-          </second_editor>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/about.html">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="105">
@@ -1049,9 +1035,22 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/css/bootstrap.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="186">
-          <caret line="1397" column="14" lean-forward="false" selection-start-line="1397" selection-start-column="14" selection-end-line="1397" selection-end-column="14" />
+        <state relative-caret-position="375">
+          <caret line="2704" column="1" lean-forward="true" selection-start-line="2704" selection-start-column="1" selection-end-line="2704" selection-end-column="1" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="467">
+            <caret line="479" column="0" lean-forward="false" selection-start-line="479" selection-start-column="0" selection-end-line="479" selection-end-column="0" />
+            <folding />
+          </first_editor>
+          <second_editor>
+            <js_state />
+          </second_editor>
         </state>
       </provider>
     </entry>
