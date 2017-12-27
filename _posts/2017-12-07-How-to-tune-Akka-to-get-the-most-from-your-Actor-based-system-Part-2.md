@@ -120,7 +120,7 @@ message to arrive.
 #### Configuration for Kamon Akka ActorSystem
 
 As stated, the aspectj operating by Kamon is quite expensive, even when excluding of all routees metrics. By default, Kamon uses the default-dispatcher. If you don't set a default-dispatcher yourself, the threadpool size of the default-dispatcher will be the number of cores. In practice Kamon told us that about 75% of the running threads were Kamon’s.. You can set a dispatcher for Kamon as follows 
-<img align="right" src="/images/kamon_the_rock.png">
+<img align="right" src="/img/kamon_the_rock.png">
 
 <!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"> <span style="color: #4070a0">&quot;akka&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">{</span>
    <span style="color: #4070a0">&quot;actor&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">{</span>

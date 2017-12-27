@@ -98,7 +98,7 @@ You're somewhat familiar with [Akka-Streams](https://doc.akka.io/docs/akka/2.5/s
 
 Let's review some scenarios in which you may want to scale your routees: 
 
-<img align="right" src="/images/loaded.png">
+<img align="right" src="/img/loaded.png">
 ###### *The producer(In our use case, one of your actors), can produce faster than the received consumer(actor or any other source) can handle.*
 
  In this case you may:
@@ -107,7 +107,7 @@ Let's review some scenarios in which you may want to scale your routees:
 * Add more consumers(routees...)!
 * Leave it. You don't necessary need to back-pressure, Note it may lead to a loss of messages(Bounded mailbox)/ running out of memory...
 
-<img align="left" src="/images/easy.png">
+<img align="left" src="/img/easy.png">
 ###### *The consumer is faster than the producer.*
 
 Here the consumer will block waiting for the next item.
@@ -118,7 +118,7 @@ Here the consumer will block waiting for the next item.
 
 * Leave it. Then you may not get the most from your machine.
 
-<img align="right" src="/images/meeseeks.png">
+<img align="right" src="/img/meeseeks.png">
 ##### *Actor** per-request*
 
 <span style="font-weight: 400;">“</span><i><span style="font-weight: 400;">You press, you make a request, the </span></i><a href="https://en.wikipedia.org/wiki/Meeseeks_and_Destroy"><i><span style="font-weight: 400;">Meeseeks</span></i></a><i><span style="font-weight: 400;"> fulfills the request, and then it stops existing”(</span></i><a href="https://en.wikipedia.org/wiki/Rick_Sanchez_(Rick_and_Morty)"><i><span style="font-weight: 400;">Rick Sanchez</span></i></a><i><span style="font-weight: 400;">)</span></i>
@@ -367,7 +367,7 @@ From the first statement, when a 'Fork' performed, we have multiple threads and 
 
 From the second, when a thread is done it can take some other task. But what if he got stuck on this task? The other threads will wait on the 'Join' at some point, which is a threads starvation.
 
-<img align="right" src="/images/fork.jpg">
+<img align="right" src="/img/fork.jpg">
 
 <!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">my<span style="color: #666666">-</span>dispatcher <span style="color: #666666">{</span>
   executor <span style="color: #007020; font-weight: bold">=</span> <span style="color: #4070a0">&quot;fork-join-executor&quot;</span>
@@ -437,7 +437,7 @@ This executor tries its best to have your actor instance always schedule with th
 It is recommended for small number of actor instances, for if you have much more instances than threads, it is just not possible.
 
 #### Tips
-<img align="right" src="/images/dispatcher.jpg">
+<img align="right" src="/img/dispatcher.jpg">
 * Don't use the [Akka default dispatcher](https://doc.akka.io/docs/akka/2.5/scala/dispatchers.html) for your actorSystem nor for the actors themselves. Note that external Akka based frameworks use it as default, and you should configure a dedicated dispatcher for them as well.
 
 * Have a different Dispatcher for each actor, and for Futures inside an actor.

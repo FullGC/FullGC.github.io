@@ -129,7 +129,7 @@ done handling message: SomeTriggerMessage
 
 Stackable traits pattern is a good choice when you need to 'pipe' actions or modify and redirect data for an action. Mix and stack traits to describe the state of the class and execute the actions are clean and flexible, and generally the scala-functional way to do it.
 
-<img src="/images/scala_devs.png">
+<img src="/img/scala_devs.png">
 
 ------------------------------------------------------------------------------------------
 
