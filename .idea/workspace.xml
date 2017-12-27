@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5336785e-d0d3-4a8f-af15-93f598a70879" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" afterPath="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/_posts/2017-12-07-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-2.md" afterPath="$PROJECT_DIR$/_posts/2017-12-07-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-2.md" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/_posts/2017-12-07-Stackable-Traits-Pattern---Part-2.md" afterPath="$PROJECT_DIR$/_posts/2017-12-07-Stackable-Traits-Pattern---Part-2.md" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/_posts/2017-12-07-Stackable-Traits-Pattern.md" afterPath="$PROJECT_DIR$/_posts/2017-12-07-Stackable-Traits-Pattern.md" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -32,8 +35,8 @@
         <entry file="file://$PROJECT_DIR$/_posts/2017-12-07-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-2.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="255">
-                <caret line="17" column="42" lean-forward="false" selection-start-line="17" selection-start-column="42" selection-end-line="17" selection-end-column="42" />
+              <first_editor relative-caret-position="330">
+                <caret line="22" column="11" lean-forward="false" selection-start-line="22" selection-start-column="11" selection-end-line="22" selection-end-column="11" />
                 <folding />
               </first_editor>
               <second_editor>
@@ -97,8 +100,8 @@
         <entry file="file://$PROJECT_DIR$/_posts/2017-12-07-Stackable-Traits-Pattern.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="270">
-                <caret line="21" column="41" lean-forward="false" selection-start-line="21" selection-start-column="41" selection-end-line="21" selection-end-column="41" />
+              <first_editor relative-caret-position="405">
+                <caret line="27" column="0" lean-forward="false" selection-start-line="27" selection-start-column="0" selection-end-line="27" selection-end-column="0" />
                 <folding />
               </first_editor>
               <second_editor>
@@ -112,8 +115,8 @@
         <entry file="file://$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="270">
-                <caret line="18" column="40" lean-forward="false" selection-start-line="18" selection-start-column="35" selection-end-line="18" selection-end-column="40" />
+              <first_editor relative-caret-position="345">
+                <caret line="23" column="10" lean-forward="false" selection-start-line="23" selection-start-column="10" selection-end-line="23" selection-end-column="10" />
                 <folding />
               </first_editor>
               <second_editor>
@@ -127,8 +130,8 @@
         <entry file="file://$PROJECT_DIR$/_posts/2017-12-07-Stackable-Traits-Pattern---Part-2.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="452">
-                <caret line="161" column="132" lean-forward="false" selection-start-line="161" selection-start-column="132" selection-end-line="161" selection-end-column="132" />
+              <first_editor relative-caret-position="360">
+                <caret line="24" column="13" lean-forward="false" selection-start-line="24" selection-start-column="13" selection-end-line="24" selection-end-column="13" />
                 <folding />
               </first_editor>
               <second_editor>
@@ -836,7 +839,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="7891000" />
+    <option name="totallyTimeSpent" value="8164000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="65" y="24" width="1855" height="1056" extended-state="6" />
@@ -1197,8 +1200,8 @@
     <entry file="file://$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
         <state split_layout="SPLIT">
-          <first_editor relative-caret-position="270">
-            <caret line="18" column="40" lean-forward="false" selection-start-line="18" selection-start-column="35" selection-end-line="18" selection-end-column="40" />
+          <first_editor relative-caret-position="345">
+            <caret line="23" column="10" lean-forward="false" selection-start-line="23" selection-start-column="10" selection-end-line="23" selection-end-column="10" />
             <folding />
           </first_editor>
           <second_editor>
@@ -1210,8 +1213,8 @@
     <entry file="file://$PROJECT_DIR$/_posts/2017-12-07-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-2.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
         <state split_layout="SPLIT">
-          <first_editor relative-caret-position="255">
-            <caret line="17" column="42" lean-forward="false" selection-start-line="17" selection-start-column="42" selection-end-line="17" selection-end-column="42" />
+          <first_editor relative-caret-position="330">
+            <caret line="22" column="11" lean-forward="false" selection-start-line="22" selection-start-column="11" selection-end-line="22" selection-end-column="11" />
             <folding />
           </first_editor>
           <second_editor>
@@ -1223,8 +1226,8 @@
     <entry file="file://$PROJECT_DIR$/_posts/2017-12-07-Stackable-Traits-Pattern.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
         <state split_layout="SPLIT">
-          <first_editor relative-caret-position="270">
-            <caret line="21" column="41" lean-forward="false" selection-start-line="21" selection-start-column="41" selection-end-line="21" selection-end-column="41" />
+          <first_editor relative-caret-position="405">
+            <caret line="27" column="0" lean-forward="false" selection-start-line="27" selection-start-column="0" selection-end-line="27" selection-end-column="0" />
             <folding />
           </first_editor>
           <second_editor>
@@ -1236,8 +1239,8 @@
     <entry file="file://$PROJECT_DIR$/_posts/2017-12-07-Stackable-Traits-Pattern---Part-2.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
         <state split_layout="SPLIT">
-          <first_editor relative-caret-position="452">
-            <caret line="161" column="132" lean-forward="false" selection-start-line="161" selection-start-column="132" selection-end-line="161" selection-end-column="132" />
+          <first_editor relative-caret-position="360">
+            <caret line="24" column="13" lean-forward="false" selection-start-line="24" selection-start-column="13" selection-end-line="24" selection-end-column="13" />
             <folding />
           </first_editor>
           <second_editor>

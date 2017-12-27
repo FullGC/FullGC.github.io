@@ -13,15 +13,14 @@ date: 2017-12-09 14:40:45
 header-img: "img/tune-Akka.jpg"
 ---
 
-[Previously](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1/), we’ve tried to adjust Akka configurations for some possible use cases. After we set up a configuration and have a system up and running, we like to know how well we did and "re-tune" the configuration where needed.
-
 <i>This post is the second of a two parts series of articles on how to tune Akka configurations</i>
 
 * [Part-1: Initial Akka Configurations](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1)
 * [Part-2: Gather and analyze Akka metrics with Kamon and stackable traits](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2)
 
+[Previously](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1/), we’ve tried to adjust Akka configurations for some possible use cases. After we set up a configuration and have a system up and running, we like to know how well we did and "re-tune" the configuration where needed.
 
-## Gather and analyze Akka metrics with Kamon and stackable traits
+## Part-2: Gather and analyze Akka metrics with Kamon and stackable traits
 
 This part focuses on Akka metrics, means a high level data on the Akka Objects we've configured( i.e. Dispatchers, Routes, Actors(Routees), and Messages), how we gather them at Inneractive and some useful tips.
 

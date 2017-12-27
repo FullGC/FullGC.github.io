@@ -13,15 +13,15 @@ date: 2017-12-10 14:40:45
 header-img: "img/tune-Akka.jpg"
 ---
 
-At some point, whether it during your new actor-based system planning, or after you have some prototype working, you'll probably find yourself dig into the Akka Docs to find the right combinations of the various possibilities of routing, dispatchers, number of actors instances and so forth..
-Depending on the complexity of your system and performance requirements, this could get tedious.
-
 <i>This post is the first of a two parts series of articles on how to tune Akka configurations</i>
 
 * [Part-1: Initial Akka Configurations](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1)
 * [Part-2: Gather and analyze Akka metrics with Kamon and stackable traits](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2)
 
-## Initial Akka Configurations
+At some point, whether it during your new actor-based system planning, or after you have some prototype working, you'll probably find yourself dig into the Akka Docs to find the right combinations of the various possibilities of routing, dispatchers, number of actors instances and so forth..
+Depending on the complexity of your system and performance requirements, this could get tedious.
+
+## Part-1: Initial Akka Configurations
 
 Let's start with Akka configuration, specifically the configuration of [actor-instances](#heading=h.hhztx0701fu1), [routing strategy](#heading=h.cuvgdmxiz64e) and [dispatchers & executors](#heading=h.no1l9o35uyp0). Below is the relevant section of the application.conf
 ````

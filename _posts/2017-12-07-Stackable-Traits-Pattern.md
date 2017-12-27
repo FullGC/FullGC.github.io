@@ -13,20 +13,19 @@ date: 2017-12-08 14:40:45
 header-img: "img/burger-stack.jpg"
 ---
 
+<i>This post is the first of a two parts series of articles on Stackable Traits</i>
+
+* [Part-1: Error reporting design with Stackable Traits](https://fullgc.github.io/stackable-traits-pattern/)
+* [Part-2: Gathering Metrics with Stackable Actors](https://fullgc.github.io/stackable-traits-pattern---part-2/)
+
 *"Traits let you modify the methods of a class, and they do so in a way that allows you to stack those modifications with each other" (Programming in Scala by Martin Odersky)*
 
 One of the reasons that Scala still feels to me as 'a better Java', is the power of its traits. Trait can be used for multiple inheritance as Java interface, as a rich interface with fields and a state, and to be mixed into a class.
 
 An interesting behavior of traits, as opposed to classes, is the call for a super method. Call for a super method in classes is statically bound, means that the exact implementation that would be invoked is known upfront. In traits however it is dynamically bound. The term is usually refers to an invocation of a method in an object, where the implementation is decided on runtime, i.e. a polymorphic call. The super call is not defined when a trait defined, but only when it is mixed into a concrete class. This behavior allows us to 'stack' the traits, and used them the super call as ‘pipe’ and redirect output, quite similar to ‘pipe’ in linux. This is the basis for the use-cases we’ll review.
 
-<i>This post is the first of a two parts series of articles on Stackable Traits</i>
-
-* [Part-1: Error reporting design with Stackable Traits](https://fullgc.github.io/stackable-traits-pattern/)
-* [Part-2: Gathering Metrics with Stackable Actors](https://fullgc.github.io/stackable-traits-pattern---part-2/)
-
-
 <img align="right" src="/img/stackable_narrative.png">
-## **Error reporting design**
+## Part-1: Error reporting design
 
 Consider the following:
 
