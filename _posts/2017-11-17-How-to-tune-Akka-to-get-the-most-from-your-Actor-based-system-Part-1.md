@@ -89,9 +89,7 @@ routees can be added or removed dynamically, based on performance. You can confi
 
 ##### Scale /  [Back-Pressure](https://www.reactivemanifesto.org/glossary) DIY!
 
-When one component is struggling to keep-up, the system as a whole needs to 
-
-respond in a sensible way.
+When one component is struggling to keep-up, the system as a whole needs to respond in a sensible way.
 
 You're somewhat familiar with [Akka-Streams](https://doc.akka.io/docs/akka/2.5/scala/stream/index.html), which widely known as a framework that manages back-pressure for you. You can imitate the general behavior by yourself.
 
@@ -103,7 +101,9 @@ Let's review some scenarios in which you may want to scale your routees:
  In this case you may:
 
 * Back-pressure the producer, i.e. reduce the number of producer's routees.
+
 * Add more consumers(routees...)!
+
 * Leave it. You don't necessary need to back-pressure, Note it may lead to a loss of messages(Bounded mailbox)/ running out of memory...
 
 <img align="left" src="/img/easy.png">

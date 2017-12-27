@@ -5,7 +5,7 @@ author: FullGC
 description: "A blog about backend development, Scala development and devops"
 baseurl: ""
 url: "http://fullgc.github.io"
-github_username:  FullGC
+github_username: FullGC
 linkedin_username: dani-shemesh
 
 # Build settings
