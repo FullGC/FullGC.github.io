@@ -458,3 +458,22 @@ This translates to ~150,000,000 transactions per a minute.
 The Exchange server is akka-based, it uses Spray as a server side-http, and the entire flow is actor-based.
 We use other Akka frameworks in other modules like Akka-Http and Akka Streams.
 ```
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+var disqus_config = function () {
+this.page.url = "https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1/"
+this.page.identifier = Akka-1
+};
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://FullGC.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
