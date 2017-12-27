@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="5336785e-d0d3-4a8f-af15-93f598a70879" name="Default" comment="" />
+    <list default="true" id="5336785e-d0d3-4a8f-af15-93f598a70879" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" afterPath="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/about.html" afterPath="$PROJECT_DIR$/about.html" />
+    </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -16,12 +19,12 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" pinned="false" current-in-tab="false">
+      <file leaf-file-name="2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="105">
-                <caret line="7" column="7" lean-forward="false" selection-start-line="7" selection-start-column="7" selection-end-line="7" selection-end-column="7" />
+              <first_editor relative-caret-position="200">
+                <caret line="106" column="36" lean-forward="false" selection-start-line="106" selection-start-column="36" selection-end-line="106" selection-end-column="36" />
                 <folding />
               </first_editor>
               <second_editor>
@@ -71,11 +74,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="about.html" pinned="false" current-in-tab="true">
+      <file leaf-file-name="about.html" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/about.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="285">
-              <caret line="19" column="0" lean-forward="true" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
+            <state relative-caret-position="255">
+              <caret line="17" column="6" lean-forward="false" selection-start-line="17" selection-start-column="6" selection-end-line="17" selection-end-column="6" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="contact.html" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/contact.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="270">
+              <caret line="18" column="47" lean-forward="false" selection-start-line="18" selection-start-column="47" selection-end-line="18" selection-end-column="47" />
               <folding />
             </state>
           </provider>
@@ -88,6 +101,7 @@
       <find>vdaubry.github.io</find>
       <find>linkedin</find>
       <find>linkedin_username</find>
+      <find>Back-pressure the producer</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -101,10 +115,10 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" />
         <option value="$PROJECT_DIR$/_posts/2017-12-07-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-2.md" />
         <option value="$PROJECT_DIR$/_config.yml" />
         <option value="$PROJECT_DIR$/about.html" />
+        <option value="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" />
       </list>
     </option>
   </component>
@@ -304,12 +318,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1514388774090</updated>
-      <workItem from="1514388778595" duration="917000" />
+      <workItem from="1514388778595" duration="996000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="917000" />
+    <option name="totallyTimeSpent" value="996000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="1985" y="24" width="1855" height="1056" extended-state="6" />
@@ -400,19 +414,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md">
-      <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
-        <state split_layout="SPLIT">
-          <first_editor relative-caret-position="105">
-            <caret line="7" column="7" lean-forward="false" selection-start-line="7" selection-start-column="7" selection-end-line="7" selection-end-column="7" />
-            <folding />
-          </first_editor>
-          <second_editor>
-            <js_state />
-          </second_editor>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/_config.yml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="120">
@@ -423,9 +424,30 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/about.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="285">
-          <caret line="19" column="0" lean-forward="true" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
+        <state relative-caret-position="255">
+          <caret line="17" column="6" lean-forward="false" selection-start-line="17" selection-start-column="6" selection-end-line="17" selection-end-column="6" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/contact.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="18" column="47" lean-forward="false" selection-start-line="18" selection-start-column="47" selection-end-line="18" selection-end-column="47" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="200">
+            <caret line="106" column="36" lean-forward="false" selection-start-line="106" selection-start-column="36" selection-end-line="106" selection-end-column="36" />
+            <folding />
+          </first_editor>
+          <second_editor>
+            <js_state />
+          </second_editor>
         </state>
       </provider>
     </entry>
