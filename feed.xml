@@ -29,5 +29,3 @@ layout: none
     {% include svg-icons.html %}
   </channel>
 </rss>
-
-
