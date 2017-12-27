@@ -104,7 +104,7 @@ Let's review some scenarios in which you may want to scale your routees:
  In this case you may:
 
 * Back-pressure the producer, i.e. reduce the number of producer's routees.
-* Add more consumers(routees...)!   
+* Add more consumers(routees...)!
 * Leave it. You don't necessary need to back-pressure, Note it may lead to a loss of messages(Bounded mailbox)/ running out of memory...
 
 <img align="left" src="/images/easy.png">
