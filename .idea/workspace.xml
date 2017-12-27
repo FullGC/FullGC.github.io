@@ -2,26 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5336785e-d0d3-4a8f-af15-93f598a70879" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/404.jpg" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/config.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/dispatcher.jpg" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/easy.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/first-post.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/fork.jpg" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/jekyll-logo.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/jekyll-now-theme-screenshot.jpg" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/kamon_the_rock.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/loaded.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/meeseeks.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/scala_devs.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/stack-traits.jpg" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/stackable_narrative.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/img/step1.gif" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" afterPath="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/_posts/2017-12-07-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-2.md" afterPath="$PROJECT_DIR$/_posts/2017-12-07-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-2.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/_posts/2017-12-07-Stackable-Traits-Pattern---Part-2.md" afterPath="$PROJECT_DIR$/_posts/2017-12-07-Stackable-Traits-Pattern---Part-2.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/_posts/2017-12-07-Stackable-Traits-Pattern.md" afterPath="$PROJECT_DIR$/_posts/2017-12-07-Stackable-Traits-Pattern.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/less/clean-blog.less" afterPath="$PROJECT_DIR$/less/clean-blog.less" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -41,8 +22,8 @@
         <entry file="file://$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="185">
-                <caret line="100" column="25" lean-forward="false" selection-start-line="100" selection-start-column="25" selection-end-line="100" selection-end-column="25" />
+              <first_editor relative-caret-position="780">
+                <caret line="479" column="0" lean-forward="true" selection-start-line="479" selection-start-column="0" selection-end-line="479" selection-end-column="0" />
                 <folding />
               </first_editor>
               <second_editor>
@@ -746,12 +727,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1514388774090</updated>
-      <workItem from="1514388778595" duration="2014000" />
+      <workItem from="1514388778595" duration="2022000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="2014000" />
+    <option name="totallyTimeSpent" value="2022000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="1985" y="24" width="1855" height="1056" extended-state="6" />
@@ -975,8 +956,8 @@
     <entry file="file://$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
         <state split_layout="SPLIT">
-          <first_editor relative-caret-position="185">
-            <caret line="100" column="25" lean-forward="false" selection-start-line="100" selection-start-column="25" selection-end-line="100" selection-end-column="25" />
+          <first_editor relative-caret-position="780">
+            <caret line="479" column="0" lean-forward="true" selection-start-line="479" selection-start-column="0" selection-end-line="479" selection-end-column="0" />
             <folding />
           </first_editor>
           <second_editor>
