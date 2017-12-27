@@ -24,35 +24,34 @@ Depending on the complexity of your system and performance requirements, this co
 ## Initial Akka Configurations
 
 Let's start with Akka configuration, specifically the configuration of [actor-instances](#heading=h.hhztx0701fu1), [routing strategy](#heading=h.cuvgdmxiz64e) and [dispatchers & executors](#heading=h.no1l9o35uyp0). Below is the relevant section of the application.conf
-
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"> <span style="color: #666666">{</span>
-  akka <span style="color: #666666">{</span>
-    actor <span style="color: #666666">{</span>
-      akka<span style="color: #666666">.</span>actor<span style="color: #666666">.</span>deployment <span style="color: #666666">{</span>
-        <span style="color: #666666">/</span>my<span style="color: #666666">-</span>service <span style="color: #666666">{</span>
-           nr<span style="color: #666666">-</span>of<span style="color: #666666">-</span>instances <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-           router <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-           dispatcher <span style="color: #007020; font-weight: bold">=</span> <span style="color: #4070a0">&quot;my-dispatcher&quot;</span>
-    <span style="color: #666666">}</span>
-  my<span style="color: #666666">-</span>dispatcher <span style="color: #666666">{</span>
-    executor <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-    <span style="color: #007020; font-weight: bold">type</span> <span style="color: #666666">=</span> <span style="color: #666666">???</span>
-<span style="color: #666666">}</span>
-</pre></div>
-
+````
+ {
+  akka {
+    actor {
+      akka.actor.deployment {
+        /my-service {
+           nr-of-instances = ???
+           router = ???
+           dispatcher = "my-dispatcher"
+    }
+  my-dispatcher {
+    executor = ???
+    type = ???
+}
+````
 
 Let’s review some scenarios in which you may want to scale your routees:
 
 ### **Number of Actor Instances**
 
 I like to start by thinking about how many instances of an actor should I have?
-
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"> akka<span style="color: #666666">.</span>actor<span style="color: #666666">.</span>deployment <span style="color: #666666">{</span>
-    <span style="color: #666666">/</span>my<span style="color: #666666">-</span>service <span style="color: #666666">{</span>
-      nr<span style="color: #666666">-</span>of<span style="color: #666666">-</span>instances <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-    <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-</pre></div>
+````
+ akka.actor.deployment {
+    /my-service {
+      nr-of-instances = ???
+    }
+}
+````
 
 The size may depend on other configurations like routing strategy, dispatcher, threadpool size and more. Nevertheless, the nr-of-actor ‘strategy’ can be decided at this point.
 Let’s review our options and use cases:
@@ -70,19 +69,19 @@ Let’s review our options and use cases:
 * To execute tasks in parallel, and don't think you’ll need to manage [Back-Pressure](https://www.reactivemanifesto.org/glossary) nor to scale up	
 
 #### Resizeable number of instances(when using a router)
-
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">akka<span style="color: #666666">.</span>actor<span style="color: #666666">.</span>deployment <span style="color: #666666">{</span>
-  <span style="color: #666666">/</span>parent<span style="color: #666666">/</span>router <span style="color: #666666">{</span>
-    resizer <span style="color: #666666">{</span>
-      lower<span style="color: #666666">-</span>bound <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-      upper<span style="color: #666666">-</span>bound <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-      pressure<span style="color: #666666">-</span>threshold <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-      messages<span style="color: #666666">-</span>per<span style="color: #666666">-</span>resize <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-      <span style="color: #666666">...</span>
-    <span style="color: #666666">}</span>
-  <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-</pre></div>
+````
+akka.actor.deployment {
+  /parent/router {
+    resizer {
+      lower-bound = ???
+      upper-bound = ???
+      pressure-threshold = ???
+      messages-per-resize = ???
+      ...
+    }
+  }
+}
+````
 
 It is possible to configure resizable routees(actors instances managed by a router).
 
@@ -138,14 +137,13 @@ Note that there is a context-switches overhead and could theoretically lead to m
 ### **Routing**
 
 Akka provides "strategies" for the Akka router to define workload distribution among actors. 
-
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">akka<span style="color: #666666">.</span>actor<span style="color: #666666">.</span>deployment <span style="color: #666666">{</span>
-    <span style="color: #666666">/</span>my<span style="color: #666666">-</span>service <span style="color: #666666">{</span>
-      router <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-    <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-</pre></div>
-
+````
+akka.actor.deployment {
+    /my-service {
+      router = ???
+    }
+}
+````
 
 #### Strategies Overview
 
@@ -320,32 +318,32 @@ Let's quickly review the the routing strategies
 
 
 ### **Dispatchers and Executors**
-
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">akka<span style="color: #666666">.</span>actor<span style="color: #666666">.</span>deployment <span style="color: #666666">{</span>
-    <span style="color: #666666">/</span>my<span style="color: #666666">-</span>service <span style="color: #666666">{</span>
-      dispatcher <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-      <span style="color: #007020; font-weight: bold">type</span> <span style="color: #666666">=</span> <span style="color: #666666">???</span>
-    <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-</pre></div>
+````
+akka.actor.deployment {
+    /my-service {
+      dispatcher = ???
+      type = ???
+    }
+}
+````
 
 Dispatchers are [what makes Akka actors "tick"](https://doc.akka.io/docs/akka/2.5/java/dispatchers.html), means put messages in mailboxes and route them. In addition, they are also an implementation of ExecutionContext, means they can execute Runnables and so a Scala Future.
-
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">my<span style="color: #666666">-</span>dispatcher <span style="color: #666666">{</span>
-  executor <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-  throughput <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-<span style="color: #666666">....</span>
-<span style="color: #666666">}</span>
-</pre></div>
-
+````
+my-dispatcher {
+  executor = ???
+  throughput = ???
+....
+}
+````
 
 #### Fork-Join-executor
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">my<span style="color: #666666">-</span>dispatcher <span style="color: #666666">{</span>
-  executor <span style="color: #007020; font-weight: bold">=</span> <span style="color: #4070a0">&quot;fork-join-executor&quot;</span>
-<span style="color: #666666">....</span>
-<span style="color: #666666">}</span>
-</pre></div>
+````
+my-dispatcher {
+  executor = "fork-join-executor"
+....
+}
+````
 
 Java 7 introduced the Fork-Join executor.
 
@@ -368,23 +366,23 @@ From the first statement, when a 'Fork' performed, we have multiple threads and 
 From the second, when a thread is done it can take some other task. But what if he got stuck on this task? The other threads will wait on the 'Join' at some point, which is a threads starvation.
 
 <img align="right" src="/img/fork.jpg">
-
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">my<span style="color: #666666">-</span>dispatcher <span style="color: #666666">{</span>
-  executor <span style="color: #007020; font-weight: bold">=</span> <span style="color: #4070a0">&quot;fork-join-executor&quot;</span>
-  fork<span style="color: #666666">-</span>join<span style="color: #666666">-</span>executor <span style="color: #666666">{</span>
-    <span style="color: #007020; font-weight: bold">#</span> <span style="color: #0e84b5; font-weight: bold">Min</span> number of threads to cap factor<span style="color: #666666">-</span>based parallelism number to
-    <span style="color: #007020; font-weight: bold">#</span> <span style="color: #0e84b5; font-weight: bold">Note</span> that these threads will be created anyway on fork<span style="border: 1px solid #FF0000">&#39;</span><span style="color: #666666"></span>
-    <span style="color: #007020; font-weight: bold">#</span> so <span style="color: #007020; font-weight: bold">try</span> to avoid an unnecessary overhead<span style="color: #666666">.</span>
-    parallelism<span style="color: #666666">-</span>min <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-    <span style="color: #007020; font-weight: bold">#</span> <span style="color: #0e84b5; font-weight: bold">Parallelism</span> <span style="color: #666666">(</span>threads<span style="color: #666666">)</span> <span style="color: #666666">...</span> ceil<span style="color: #666666">(</span>available processors <span style="color: #666666">*</span> factor<span style="color: #666666">)</span>
-    parallelism<span style="color: #666666">-</span>factor <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-    <span style="color: #007020; font-weight: bold">#</span> <span style="color: #0e84b5; font-weight: bold">This</span> is <span style="color: #0e84b5; font-weight: bold">NOT</span> an upper bound on the total number of threads<span style="color: #666666">!</span>
-    <span style="color: #007020; font-weight: bold">#</span> <span style="color: #0e84b5; font-weight: bold">Max</span> number of threads to cap factor<span style="color: #666666">-</span>based parallelism number to
-    parallelism<span style="color: #666666">-</span>max <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-<span style="color: #666666">....</span>
-  <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-</pre></div>
+````
+my-dispatcher {
+  executor = "fork-join-executor"
+  fork-join-executor {
+    # Min number of threads to cap factor-based parallelism number to
+    # Note that these threads will be created anyway on fork'
+    # so try to avoid an unnecessary overhead.
+    parallelism-min = ???
+    # Parallelism (threads) ... ceil(available processors * factor)
+    parallelism-factor = ???
+    # This is NOT an upper bound on the total number of threads!
+    # Max number of threads to cap factor-based parallelism number to
+    parallelism-max = ???
+....
+  }
+}
+````
 
 A common case is to use Fork-Join executor for futures inside an actor. Here, the dispatcher's configuration of the actor should be considered as well. For example, the more threads you have for the actor, the more 'future’ tasks would be performed, and you’ll may want more threads for them.
 
@@ -398,20 +396,21 @@ Thread-pool executor is used by akka Dispatcher and PinnedDispatcher.
 
 **Dispatcher** let you define min, max and increase factor / fixed size for your threadpool.
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">my<span style="color: #666666">-</span>dispatcher <span style="color: #666666">{</span>
-  <span style="color: #007020; font-weight: bold">type</span> <span style="color: #666666">=</span> <span style="color: #0e84b5; font-weight: bold">Dispatcher</span>
-  executor <span style="color: #007020; font-weight: bold">=</span> <span style="color: #4070a0">&quot;thread-pool-executor&quot;</span>
-  thread<span style="color: #666666">-</span>pool<span style="color: #666666">-</span>executor <span style="color: #666666">{</span>
-    <span style="color: #007020; font-weight: bold">#</span> <span style="color: #0e84b5; font-weight: bold">Min</span> number of threads to cap factor<span style="color: #666666">-</span>based parallelism number to
-    parallelism<span style="color: #666666">-</span>min <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-    <span style="color: #007020; font-weight: bold">#</span> <span style="color: #0e84b5; font-weight: bold">Parallelism</span> <span style="color: #666666">(</span>threads<span style="color: #666666">)</span> <span style="color: #666666">...</span> ceil<span style="color: #666666">(</span>available processors <span style="color: #666666">*</span> factor<span style="color: #666666">)</span>
-    parallelism<span style="color: #666666">-</span>factor <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-    <span style="color: #007020; font-weight: bold">#</span> <span style="color: #0e84b5; font-weight: bold">Max</span> number of threads to cap factor<span style="color: #666666">-</span>based parallelism number to
-    parallelism<span style="color: #666666">-</span>max <span style="color: #007020; font-weight: bold">=</span> <span style="color: #666666">???</span>
-  <span style="color: #666666">}</span>
-<span style="color: #666666">....</span>
-<span style="color: #666666">}</span>
-</pre></div>
+````
+my-dispatcher {
+  type = Dispatcher
+  executor = "thread-pool-executor"
+  thread-pool-executor {
+    # Min number of threads to cap factor-based parallelism number to
+    parallelism-min = ???
+    # Parallelism (threads) ... ceil(available processors * factor)
+    parallelism-factor = ???
+    # Max number of threads to cap factor-based parallelism number to
+    parallelism-max = ???
+  }
+....
+}
+````
 
 The key is to find the right balance for an actor instances to work in parallel and use the threads as much as they need so other actors and processes would be able to work as well. Its also true for the Fork-Join executor and needs to be quite accurate. In Part 2 //TBA (link to part 2)
 
@@ -425,12 +424,12 @@ It is also not recommended for Futures, because  you'll probably need more than 
 
 #### Affinity-pool-executor
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">my<span style="color: #666666">-</span>dispatcher <span style="color: #666666">{</span>
-  executor <span style="color: #007020; font-weight: bold">=</span> <span style="color: #4070a0">&quot;affinity-pool-executor&quot;</span>
-<span style="color: #666666">....</span>
-<span style="color: #666666">}</span>
-</pre></div>
-
+````
+my-dispatcher {
+  executor = "affinity-pool-executor"
+....
+}
+````
 
 This executor tries its best to have your actor instance always schedule with the same thread, which should increase throughput.
 
