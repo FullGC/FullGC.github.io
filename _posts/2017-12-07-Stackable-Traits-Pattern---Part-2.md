@@ -17,6 +17,11 @@ header-img: "img/burger-stack.jpg"
 [Stackable traits](https://fullgc.github.io/stackable-traits-pattern/) can be applied to actors as well.
 Specifically, we can use stackable actor traits to modify the behavior of the 'receive' method.
 
+<i>This post is the second of a two parts series of articles on Stackable Traits</i>
+
+* [Part-1: Error reporting design with Stackable Traits](https://fullgc.github.io/stackable-traits-pattern/)
+* [Part-2: Gathering Metrics with Stackable Actors](https://fullgc.github.io/stackable-traits-pattern---part-2/)
+
 
 ## **Gathering Metrics**
 
