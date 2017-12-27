@@ -26,6 +26,7 @@ layout: none
         {% endfor %}
       </item>
     {% endfor %}
+    {% include svg-icons.html %}
   </channel>
 </rss>
 
