@@ -4,10 +4,9 @@ email: vdaubry@gmail.com
 author: Vincent Daubry
 description: "A blog about backend development, mobile development, and entrepreneurship"
 baseurl: ""
-url: "http://vdaubry.github.io"
-twitter_username: vdaubry
-github_username:  vdaubry
-linkedin_username: vincent daubry
+url: "http://fullgc.github.io"
+github_username:  FullGC
+linkedin_username: dani-shemesh
 
 # Build settings
 markdown: kramdown
