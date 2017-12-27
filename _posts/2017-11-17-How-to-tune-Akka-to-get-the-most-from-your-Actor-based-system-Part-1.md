@@ -347,7 +347,7 @@ my-dispatcher {
 
 Java 7 introduced the Fork-Join executor.
 
-As the name suggests, it *forks* a task into subtasks, each executed by a different thread, and *joined the *results.
+As the name suggests, it *forks* a task into subtasks, each executed by a different thread, and *joined* the results.
 
 There are 2 main characters that worth mentioning here. According to [Oracle docs](https://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html) - 
 
