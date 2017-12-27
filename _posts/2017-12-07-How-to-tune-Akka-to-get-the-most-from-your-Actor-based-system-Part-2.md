@@ -10,6 +10,8 @@ tags:
 source-id: 1F1uJy7CsdjhzUlCOz7EQXgHJJWlO_Yr0bI56PpvPpvI
 published: true
 date: 2017-12-09 14:40:45
+header-img: "img/post-bg-02.jpg"
+
 ---
 
 [Previously](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1/), we’ve tried to adjust Akka configurations for some possible use cases. After we set up a configuration and have a system up and running, we like to know how well we did and "re-tune" the configuration where needed.
