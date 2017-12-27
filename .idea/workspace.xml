@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="5336785e-d0d3-4a8f-af15-93f598a70879" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/_config.yml" afterPath="$PROJECT_DIR$/_config.yml" />
-    </list>
+    <list default="true" id="5336785e-d0d3-4a8f-af15-93f598a70879" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -82,8 +80,8 @@
         <entry file="file://$PROJECT_DIR$/_posts/2017-12-07-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-2.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="-3382">
-                <caret line="14" column="3" lean-forward="false" selection-start-line="14" selection-start-column="3" selection-end-line="14" selection-end-column="3" />
+              <first_editor relative-caret-position="428">
+                <caret line="268" column="132" lean-forward="false" selection-start-line="268" selection-start-column="132" selection-end-line="268" selection-end-column="132" />
                 <folding />
               </first_editor>
               <second_editor>
@@ -162,12 +160,12 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/_posts/2017-12-07-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-2.md" />
         <option value="$PROJECT_DIR$/about.html" />
         <option value="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" />
         <option value="$PROJECT_DIR$/_includes/head.html" />
         <option value="$PROJECT_DIR$/robots.txt" />
         <option value="$PROJECT_DIR$/_config.yml" />
+        <option value="$PROJECT_DIR$/_posts/2017-12-07-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-2.md" />
       </list>
     </option>
   </component>
@@ -382,12 +380,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1514388774090</updated>
-      <workItem from="1514388778595" duration="1636000" />
+      <workItem from="1514388778595" duration="1649000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1636000" />
+    <option name="totallyTimeSpent" value="1649000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="1985" y="24" width="1855" height="1056" extended-state="6" />
@@ -555,8 +553,8 @@
     <entry file="file://$PROJECT_DIR$/_posts/2017-12-07-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-2.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
         <state split_layout="SPLIT">
-          <first_editor relative-caret-position="-3382">
-            <caret line="14" column="3" lean-forward="false" selection-start-line="14" selection-start-column="3" selection-end-line="14" selection-end-column="3" />
+          <first_editor relative-caret-position="428">
+            <caret line="268" column="132" lean-forward="false" selection-start-line="268" selection-start-column="132" selection-end-line="268" selection-end-column="132" />
             <folding />
           </first_editor>
           <second_editor>
