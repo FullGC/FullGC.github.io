@@ -1,11 +1,10 @@
 # Site settings
-title: Dani Shemesh
+title: FullGC
 email: dani.shemesh@hotmail.com
-author: FullGC
+author: Dani Shemesh
 description: "A blog about backend development, Scala development and devops"
 baseurl: ""
 url: "http://fullgc.github.io"
-twitter_username: vdaubry
 github_username: FullGC
 linkedin_username: dani-shemesh
 
