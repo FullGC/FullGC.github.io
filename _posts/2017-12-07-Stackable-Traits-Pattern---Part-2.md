@@ -11,7 +11,9 @@ tags:
 source-id: 1m6eIR7wGA1qDRmceIp1S3If9B9k-lpDksi4aRdQ_d1Y
 published: true
 date: 2017-12-07 14:40:45
+header-img: "img/burger-stack.jpg"
 ---
+
 [Stackable traits](https://fullgc.github.io/stackable-traits-pattern/) can be applied to actors as well.
 Specifically, we can use stackable actor traits to modify the behavior of the 'receive' method.
 

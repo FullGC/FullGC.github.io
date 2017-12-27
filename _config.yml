@@ -10,7 +10,7 @@ linkedin_username: dani-shemesh
 
 # Build settings
 markdown: kramdown
-highlighter: pygments
+highlighter:
 permalink: pretty
 paginate: 5
 exclude: ["node_modules"]

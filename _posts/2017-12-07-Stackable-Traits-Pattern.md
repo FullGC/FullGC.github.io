@@ -10,7 +10,9 @@ tags:
 source-id: 1Fx2TpNbL_lKIOBoy4Fni0NjlHa-vjb_J-r_v6gSMUck
 published: true
 date: 2017-12-08 14:40:45
+header-img: "img/burger-stack.jpg"
 ---
+
 *"Traits let you modify the methods of a class, and they do so in a way that allows you to stack those modifications with each other" (Programming in Scala by Martin Odersky)*
 
 One of the reasons that Scala still feels to me as 'a better Java', is the power of its traits. Trait can be used for multiple inheritance as Java interface, as a rich interface with fields and a state, and to be mixed into a class.
