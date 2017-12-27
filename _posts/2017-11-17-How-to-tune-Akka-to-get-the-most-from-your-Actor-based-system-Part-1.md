@@ -1,7 +1,7 @@
 ---
 title: How to tune Akka to get the most from your Actor-based system - Part 1
 layout: post
-author: dani.shemesh
+author: "Dani Shemesh"
 permalink: /how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1/
 comments: true
 tags:
@@ -10,6 +10,7 @@ tags:
 source-id: 1iQAan2An0EVwukuK4r_L1rS6pCgLCtIVCp0qVxOZ-dk
 published: true
 date: 2017-12-10 14:40:45
+header-img: "img/post-bg-02.jpg"
 ---
 
 At some point, whether it during your new actor-based system planning, or after you have some prototype working, you'll probably find yourself dig into the Akka Docs to find the right combinations of the various possibilities of routing, dispatchers, number of actors instances and so forth..
