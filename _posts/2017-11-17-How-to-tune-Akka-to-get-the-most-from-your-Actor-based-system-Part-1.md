@@ -10,7 +10,7 @@ tags:
 source-id: 1iQAan2An0EVwukuK4r_L1rS6pCgLCtIVCp0qVxOZ-dk
 published: true
 date: 2017-12-10 14:40:45
-header-img: "img/post-bg-02.jpg"
+header-img: "img/tune-Akka.jpg"
 ---
 
 At some point, whether it during your new actor-based system planning, or after you have some prototype working, you'll probably find yourself dig into the Akka Docs to find the right combinations of the various possibilities of routing, dispatchers, number of actors instances and so forth..
