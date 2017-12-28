@@ -32,7 +32,7 @@
                         </a>
                     </li>
                     {% endif %}
-                    <!--{% if site.github_username %}-->
+                    {% if site.github_username %}
                     <li>
                         <a href="https://github.com/{{ site.github_username }}">
                             <span class="fa-stack fa-lg">
@@ -41,7 +41,7 @@
                             </span>
                         </a>
                     </li>
-                   <!-- {% endif %}-->
+                    {% endif %}
                 </ul>
                 <p class="copyright text-muted">Copyright &copy; {{ site.title }} {{ site.time | date: '%Y' }}</p>
             </div>
