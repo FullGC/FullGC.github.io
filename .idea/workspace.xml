@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5336785e-d0d3-4a8f-af15-93f598a70879" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" afterPath="$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -57,8 +57,8 @@
         <entry file="file://$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="483">
-                <caret line="460" column="30" lean-forward="true" selection-start-line="460" selection-start-column="30" selection-end-line="460" selection-end-column="30" />
+              <first_editor relative-caret-position="738">
+                <caret line="477" column="132" lean-forward="false" selection-start-line="477" selection-start-column="132" selection-end-line="477" selection-end-column="132" />
                 <folding />
               </first_editor>
               <second_editor>
@@ -800,7 +800,7 @@
       <option name="presentableId" value="Default" />
       <updated>1514388774090</updated>
       <workItem from="1514388778595" duration="6049000" />
-      <workItem from="1514486592185" duration="1049000" />
+      <workItem from="1514486592185" duration="1113000" />
     </task>
     <task id="LOCAL-00001" summary="Css fixes">
       <created>1514487524129</created>
@@ -820,7 +820,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="11475000" />
+    <option name="totallyTimeSpent" value="11539000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="65" y="24" width="1855" height="1056" extended-state="6" />
@@ -1202,8 +1202,8 @@
     <entry file="file://$PROJECT_DIR$/_posts/2017-11-17-How-to-tune-Akka-to-get-the-most-from-your-Actor-based-system-Part-1.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
         <state split_layout="SPLIT">
-          <first_editor relative-caret-position="483">
-            <caret line="460" column="30" lean-forward="true" selection-start-line="460" selection-start-column="30" selection-end-line="460" selection-end-column="30" />
+          <first_editor relative-caret-position="738">
+            <caret line="477" column="132" lean-forward="false" selection-start-line="477" selection-start-column="132" selection-end-line="477" selection-end-column="132" />
             <folding />
           </first_editor>
           <second_editor>
