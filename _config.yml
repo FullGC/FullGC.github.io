@@ -7,7 +7,6 @@ baseurl: ""
 url: "http://fullgc.github.io"
 github_username: FullGC
 linkedin_username: dani-shemesh
-twitter_username: vdaubry
 # Build settings
 markdown: kramdown
 highlighter: pygments
