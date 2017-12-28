@@ -130,13 +130,13 @@ hr.small {
 }
 
 
-.fa-github:before {
+/*.fa-github:before {
   content: "\f09b";
 }
 
 .fa-circle:before {
   content: "\f111";
-}
+}*/
 
 .intro-header {
   background-color: #808080;
