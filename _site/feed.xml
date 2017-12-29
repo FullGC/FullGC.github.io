@@ -1,0 +1,1375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>FullGC</title>
+    <description>A blog about backend development, Scala development and devops</description>
+    <link>http://localhost:4000/</link>
+    <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
+    <pubDate>Fri, 29 Dec 2017 02:39:35 +0200</pubDate>
+    <lastBuildDate>Fri, 29 Dec 2017 02:39:35 +0200</lastBuildDate>
+    <generator>Jekyll v3.6.2</generator>
+    
+      <item>
+        <title>How to tune Akka to get the most from your Actor-based system - Part 1</title>
+        <description>&lt;p&gt;&lt;i&gt;This post is the first of a two parts series of articles on how to tune Akka configurations&lt;/i&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1&quot;&gt;Part-1: Initial Akka Configurations&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2&quot;&gt;Part-2: Gather and analyze Akka metrics with Kamon and stackable traits&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;At some point, whether it during your new actor-based system planning, or after you have some prototype working, you’ll probably find yourself dig into the Akka Docs to find the right combinations of the various possibilities of routing, dispatchers, number of actors instances and so forth..
+Depending on the complexity of your system and performance requirements, this could get tedious.&lt;/p&gt;
+
+&lt;h2 id=&quot;part-1-initial-akka-configurations&quot;&gt;Part-1: Initial Akka Configurations&lt;/h2&gt;
+
+&lt;p&gt;Let’s start with Akka configuration, specifically the configuration of &lt;a href=&quot;#heading=h.hhztx0701fu1&quot;&gt;actor-instances&lt;/a&gt;, &lt;a href=&quot;#heading=h.cuvgdmxiz64e&quot;&gt;routing strategy&lt;/a&gt; and &lt;a href=&quot;#heading=h.no1l9o35uyp0&quot;&gt;dispatchers &amp;amp; executors&lt;/a&gt;. Below is the relevant section of the application.conf&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; {
+  akka {
+    actor {
+      akka.actor.deployment {
+        /my-service {
+           nr-of-instances = ???
+           router = ???
+           dispatcher = &quot;my-dispatcher&quot;
+    }
+  my-dispatcher {
+    executor = ???
+    type = ???
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Let’s review some scenarios in which you may want to scale your routees:&lt;/p&gt;
+
+&lt;h3 id=&quot;number-of-actor-instances&quot;&gt;&lt;strong&gt;Number of Actor Instances&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;p&gt;I like to start by thinking about how many instances of an actor should I have?&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; akka.actor.deployment {
+    /my-service {
+      nr-of-instances = ???
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The size may depend on other configurations like routing strategy, dispatcher, threadpool size and more. Nevertheless, the nr-of-actor ‘strategy’ can be decided at this point.
+Let’s review our options and use cases:&lt;/p&gt;
+
+&lt;h4 id=&quot;single-instance-or--domain-actor&quot;&gt;Single instance (or- Domain actor)&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;A dedicated actor for low-priority side-effects like sending metrics, write to a log or to a cache and so forth.&lt;/li&gt;
+  &lt;li&gt;A mutable, single-source that needs to be handled(Cache)&lt;/li&gt;
+  &lt;li&gt;When you just have to work sequentially for whatever reason&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;fixed-number-of-instances&quot;&gt;Fixed number of instances&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Instance per-a copy of a resource, or per a mutable resource&lt;/li&gt;
+  &lt;li&gt;For sharding, i.e. when you manage a distributed key-value cache, and want to shard the inputs, then you might want to have an actor to manage each shard.&lt;/li&gt;
+  &lt;li&gt;To execute tasks in parallel, and don’t think you’ll need to manage &lt;a href=&quot;https://www.reactivemanifesto.org/glossary&quot;&gt;Back-Pressure&lt;/a&gt; nor to scale up&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;resizeable-number-of-instanceswhen-using-a-router&quot;&gt;Resizeable number of instances(when using a router)&lt;/h4&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;akka.actor.deployment {
+  /parent/router {
+    resizer {
+      lower-bound = ???
+      upper-bound = ???
+      pressure-threshold = ???
+      messages-per-resize = ???
+      ...
+    }
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;It is possible to configure resizable routees(actors instances managed by a router).&lt;/p&gt;
+
+&lt;p&gt;routees can be added or removed dynamically, based on performance. You can configure specifically how much to scale up and down in case of unusual behavior.&lt;/p&gt;
+
+&lt;h5 id=&quot;scale---back-pressure-diy&quot;&gt;Scale /  &lt;a href=&quot;https://www.reactivemanifesto.org/glossary&quot;&gt;Back-Pressure&lt;/a&gt; DIY!&lt;/h5&gt;
+
+&lt;p&gt;When one component is struggling to keep-up, the system as a whole needs to respond in a sensible way.&lt;/p&gt;
+
+&lt;p&gt;You’re somewhat familiar with &lt;a href=&quot;https://doc.akka.io/docs/akka/2.5/scala/stream/index.html&quot;&gt;Akka-Streams&lt;/a&gt;, which widely known as a framework that manages back-pressure for you. You can imitate the general behavior by yourself.&lt;/p&gt;
+
+&lt;p&gt;Let’s review some scenarios in which you may want to scale your routees:&lt;/p&gt;
+
+&lt;p&gt;&lt;img align=&quot;right&quot; src=&quot;/img/loaded.png&quot; /&gt;&lt;/p&gt;
+&lt;h6 id=&quot;the-producerin-our-use-case-one-of-your-actors-can-produce-faster-than-the-received-consumeractor-or-any-other-source-can-handle&quot;&gt;&lt;em&gt;The producer(In our use case, one of your actors), can produce faster than the received consumer(actor or any other source) can handle.&lt;/em&gt;&lt;/h6&gt;
+
+&lt;p&gt;In this case you may:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Back-pressure the producer, i.e. reduce the number of producer’s routees.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Add more consumers(routees…)!&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Leave it. You don’t necessary need to back-pressure, Note it may lead to a loss of messages(Bounded mailbox)/ running out of memory…&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img align=&quot;left&quot; src=&quot;/img/easy.png&quot; /&gt;&lt;/p&gt;
+&lt;h6 id=&quot;the-consumer-is-faster-than-the-producer&quot;&gt;&lt;em&gt;The consumer is faster than the producer.&lt;/em&gt;&lt;/h6&gt;
+
+&lt;p&gt;Here the consumer will block waiting for the next item.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Remove some consumers(routees…)!&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Add more producers if your system can theoretically produce faster.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Leave it. Then you may not get the most from your machine.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img align=&quot;right&quot; src=&quot;/img/meeseeks.png&quot; /&gt;&lt;/p&gt;
+&lt;h5 id=&quot;actor-per-request&quot;&gt;&lt;em&gt;Actor per-request&lt;/em&gt;&lt;/h5&gt;
+
+&lt;p&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;“&lt;/span&gt;&lt;i&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;You press, you make a request, the &lt;/span&gt;&lt;/i&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Meeseeks_and_Destroy&quot;&gt;&lt;i&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Meeseeks&lt;/span&gt;&lt;/i&gt;&lt;/a&gt;&lt;i&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt; fulfills the request, and then it stops existing”(&lt;/span&gt;&lt;/i&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Rick_Sanchez_(Rick_and_Morty)&quot;&gt;&lt;i&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Rick Sanchez&lt;/span&gt;&lt;/i&gt;&lt;/a&gt;&lt;i&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;)&lt;/span&gt;&lt;/i&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Actor per request works very similarly. An instance is created for every request, process it and then will be destroyed.&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;You can configure Spray/Akka-HTTP to work in actor-per-r&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;You can configure Spray/Akka-HTTP to work in actor-per-request mode, or do it yourself, however it is not part of the Akka configuration so I won’t get deep into details. In a nutshell-&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Easy to manage state in the actor, because the context is always of a specific request, hence you don’t have to maintain any mapping of State =&amp;gt; Request&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;a href=&quot;http://techblog.net-a-porter.com/2013/12/ask-tell-and-per-request-actors/&quot;&gt;And here are some more reasons&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Note that there is a context-switches overhead and could theoretically lead to memory issues&lt;/p&gt;
+
+&lt;h3 id=&quot;routing&quot;&gt;&lt;strong&gt;Routing&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;p&gt;Akka provides “strategies” for the Akka router to define workload distribution among actors.&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;akka.actor.deployment {
+    /my-service {
+      router = ???
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;strategies-overview&quot;&gt;Strategies Overview&lt;/h4&gt;
+
+&lt;p&gt;Let’s quickly review the the routing strategies&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Random&lt;/strong&gt; - Distributes messages *randomly&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Round-Robin&lt;/strong&gt; - Distributes messages sequencely*&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Smallest-Mailbox&lt;/strong&gt; - Sends the message to the smallest mailbox&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Broadcast&lt;/strong&gt; - Distributes every message to all routees.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Scatter-Gather-First&lt;/strong&gt; - Distributes every message to all routees. &lt;em&gt;Only&lt;/em&gt; the first to respond execute the task.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Tail-Chopping&lt;/strong&gt; - Sends the message to one, randomly picked, Routee and then after a small delay to a second Routee.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Consistent-hashing&lt;/strong&gt; - uses consistent hashing to select a Routee based on the sent message&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;In-Code&lt;/strong&gt; - Custom your own routing by route it yourself&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;strategies-cheatsheet&quot;&gt;&lt;em&gt;Strategies Cheatsheet&lt;/em&gt;&lt;/h4&gt;
+
+&lt;table&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;b&gt;Strategy&lt;/b&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;&lt;/span&gt;&lt;/td&gt;
+&lt;td&gt;&lt;b&gt;When?&lt;/b&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;&lt;/span&gt;&lt;/td&gt;
+&lt;td&gt;&lt;b&gt;Pros (when used as recommended&lt;/b&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;)&lt;/span&gt;&lt;/td&gt;
+&lt;td&gt;&lt;b&gt;Cons (and misused implications)&lt;/b&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;b&gt;Random&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;No more than a few routees  or&lt;/span&gt;&lt;/li&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Lightweight tasks or low throughput&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;~Evenly distributed&lt;/span&gt;&lt;/li&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;No overhead&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Some mailboxes significantly more loaded than others*&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;b&gt;&lt;i&gt;Round-Robin&lt;/i&gt;&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;router handles similar tasks&lt;/span&gt;&lt;/li&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Lightweight tasks or low throughput&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;~Evenly distributed&lt;/span&gt;&lt;/li&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Minimal overhead&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Some mailboxes more loaded than others*&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;b&gt;Smallest-Mailbox&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;router handles similar tasks&lt;/span&gt;&lt;/li&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;No more than hundreds of routees**&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Most evenly load of messages in mailboxes&lt;/span&gt;&lt;/li&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Significant overhead for a high number of routees&lt;/span&gt;&lt;/li&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Doesn’t hold with remote routees&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;b&gt;Broadcast&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Task must be completed at least ones &lt;/span&gt;&lt;/li&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Limited number of routees on the same machine or lightweight tasks&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Fault tolerance&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Significant Machine’s cores overhead***&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;b&gt;Scatter-Gather-First&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Latency is very important&lt;/span&gt;&lt;/li&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Using remote actors**&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Low latency&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Machine’s cores overhead&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;b&gt;Tail-Chopping&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Tasks must be completed&lt;/span&gt;&lt;/li&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Latency is not very important&lt;/span&gt;&lt;/li&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Using remote actors&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Fault tolerance&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Machine’s cores overhead&lt;/span&gt;&lt;/li&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Fault recovery is slow&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;b&gt;Consistent-hashing&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Each routee is responsible for a specific part of a resource&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;b&gt;In-Code&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;
+&lt;ul&gt;
+	&lt;li style=&quot;font-weight: 400;&quot;&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;When nothing else suites&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;*Can be solved by increasing the number of routees (which may cost in context-switches overhead)&lt;/p&gt;
+
+&lt;p&gt;**As a replacement for ‘smallest mailbox’. 2. Latency differences could be high among connections to remote actors )&lt;/p&gt;
+
+&lt;p&gt;***the overhead depends on the task, whether it on the same machine or not&lt;/p&gt;
+
+&lt;h3 id=&quot;dispatchers-and-executors&quot;&gt;&lt;strong&gt;Dispatchers and Executors&lt;/strong&gt;&lt;/h3&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;akka.actor.deployment {
+    /my-service {
+      dispatcher = ???
+      type = ???
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Dispatchers are &lt;a href=&quot;https://doc.akka.io/docs/akka/2.5/java/dispatchers.html&quot;&gt;what makes Akka actors “tick”&lt;/a&gt;, means put messages in mailboxes and route them. In addition, they are also an implementation of ExecutionContext, means they can execute Runnables and so a Scala Future.&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;my-dispatcher {
+  executor = ???
+  throughput = ???
+....
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;fork-join-executor&quot;&gt;Fork-Join-executor&lt;/h4&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;my-dispatcher {
+  executor = &quot;fork-join-executor&quot;
+....
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Java 7 introduced the Fork-Join executor.&lt;/p&gt;
+
+&lt;p&gt;As the name suggests, it &lt;em&gt;forks&lt;/em&gt; a task into subtasks, each executed by a different thread, and &lt;em&gt;joined&lt;/em&gt; the results.&lt;/p&gt;
+
+&lt;p&gt;There are 2 main characters that worth mentioning here. According to &lt;a href=&quot;https://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html&quot;&gt;Oracle docs&lt;/a&gt; -&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;em&gt;“It is designed for work that can be broken into smaller pieces recursively”.&lt;/em&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;It hence best for recursive problems - where a task can be broken into sub-tasks such that they would be executed in parallel and their results would be collected.&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;em&gt;“The fork/join framework is distinct because it uses a work-stealing algorithm. Worker threads that run out of things to do can steal tasks from other threads that are still busy”&lt;/em&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;strong&gt;Fork-Join shows better performance in most cases, compare to old Thread-Pool-Executor&lt;/strong&gt;, as it makes a better uses of the resources, as the idle threads can steal tasks from busier threads.&lt;/p&gt;
+
+&lt;p&gt;However there is a build-in danger here.&lt;/p&gt;
+
+&lt;p&gt;From the first statement, when a ‘Fork’ performed, we have multiple threads and each of them is responsible to run a task.&lt;/p&gt;
+
+&lt;p&gt;From the second, when a thread is done it can take some other task. But what if he got stuck on this task? The other threads will wait on the ‘Join’ at some point, which is a threads starvation.&lt;/p&gt;
+
+&lt;p&gt;&lt;img align=&quot;right&quot; src=&quot;/img/fork.jpg&quot; /&gt;&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;my-dispatcher {
+  executor = &quot;fork-join-executor&quot;
+  fork-join-executor {
+    # Min number of threads to cap factor-based parallelism number to
+    # Note that these threads will be created anyway on fork'
+    # so try to avoid an unnecessary overhead.
+    parallelism-min = ???
+    # Parallelism (threads) ... ceil(available processors * factor)
+    parallelism-factor = ???
+    # This is NOT an upper bound on the total number of threads!
+    # Max number of threads to cap factor-based parallelism number to
+    parallelism-max = ???
+....
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;A common case is to use Fork-Join executor for futures inside an actor. Here, the dispatcher’s configuration of the actor should be considered as well. For example, the more threads you have for the actor, the more ‘future’ tasks would be performed, and you’ll may want more threads for them.&lt;/p&gt;
+
+&lt;h4 id=&quot;thread-pool-executor&quot;&gt;Thread-pool-executor&lt;/h4&gt;
+
+&lt;p&gt;The old Java 5 executor for asynchronous task execution can still fit in some cases, and without the Fork-Join overhead.&lt;/p&gt;
+
+&lt;p&gt;While Fork-Join breaks the task for you, if you know how to break the task yourself, then your code built already as minimal task that should be executed by a single thread, which fit thread-pool-executor.&lt;/p&gt;
+
+&lt;p&gt;Thread-pool executor is used by akka Dispatcher and PinnedDispatcher.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Dispatcher&lt;/strong&gt; let you define min, max and increase factor / fixed size for your threadpool.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;my-dispatcher {
+  type = Dispatcher
+  executor = &quot;thread-pool-executor&quot;
+  thread-pool-executor {
+    # Min number of threads to cap factor-based parallelism number to
+    parallelism-min = ???
+    # Parallelism (threads) ... ceil(available processors * factor)
+    parallelism-factor = ???
+    # Max number of threads to cap factor-based parallelism number to
+    parallelism-max = ???
+  }
+....
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The key is to find the right balance for an actor instances to work in parallel and use the threads as much as they need so other actors and processes would be able to work as well. Its also true for the Fork-Join executor and needs to be quite accurate. In Part 2 //TBA (link to part 2)&lt;/p&gt;
+
+&lt;p&gt;We’ll talk about how to measure it.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;PinnedDispatcher&lt;/strong&gt; dedicates a unique thread for each actor. This is usually not the pattern you want for the machine’s resources are limited. Hence it makes sense for the actor to share a pool of threads. However, if your actor performs a prefered task and you don’t want its instances to share its pool.&lt;/p&gt;
+
+&lt;p&gt;Do not use it if you have more instances than the number of cores in the machine.&lt;/p&gt;
+
+&lt;p&gt;It is also not recommended for Futures, because  you’ll probably need more than 1 thread…&lt;/p&gt;
+
+&lt;h4 id=&quot;affinity-pool-executor&quot;&gt;Affinity-pool-executor&lt;/h4&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;my-dispatcher {
+  executor = &quot;affinity-pool-executor&quot;
+....
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This executor tries its best to have your actor instance always schedule with the same thread, which should increase throughput.&lt;/p&gt;
+
+&lt;p&gt;It is recommended for small number of actor instances, for if you have much more instances than threads, it is just not possible.&lt;/p&gt;
+
+&lt;h4 id=&quot;tips&quot;&gt;Tips&lt;/h4&gt;
+&lt;p&gt;&lt;img align=&quot;right&quot; src=&quot;/img/dispatcher.jpg&quot; /&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Don’t use the &lt;a href=&quot;https://doc.akka.io/docs/akka/2.5/scala/dispatchers.html&quot;&gt;Akka default dispatcher&lt;/a&gt; for your actorSystem nor for the actors themselves. Note that external Akka based frameworks use it as default, and you should configure a dedicated dispatcher for them as well.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Have a different Dispatcher for each actor, and for Futures inside an actor.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Dispatchers has ‘throughput’ parameter, which “&lt;em&gt;defines the maximum number of messages to be processed per actor before the thread jumps to the next actor”&lt;/em&gt; Setting It to higher value than the default, 1, is likely to improve performance if it is not part of Affinity-pool dispatcher, and if your actors generally not very busy (otherwise the lack of fairness can cause a high load in some mailboxes).&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Read &lt;a href=&quot;https://blog.scalac.io/improving-akka-dispatcher.html&quot;&gt;this terrific post in ScalaC blog&lt;/a&gt;. It explains Dispatcher’s internals in details.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;next&quot;&gt;&lt;strong&gt;Next&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;p&gt;In &lt;a href=&quot;https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2&quot;&gt;Part-2&lt;/a&gt; I will show how we monitor and analyze our actor-based system.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Inneractive maintains an Exchange server, which, simply put, gets an advertisement for a mobile application from Ad-Networks.
+In fact there are ~500 server instances at a given moment, dealing with ~10,000,000 Ad requests per a minute.
+During the process the Exchange server performs a real-time auction by going out (with scala.Future)s to multiple Ad-Networks(consumers).
+This translates to ~150,000,000 transactions per a minute.
+The Exchange server is akka-based, it uses Spray as a server side-http, and the entire flow is actor-based.
+We use other Akka frameworks in other modules like Akka-Http and Akka Streams.
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div id=&quot;disqus_thread&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+var disqus_config = function () {
+this.page.url = &quot;https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1/&quot;
+this.page.identifier = Akka-1
+};
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://FullGC.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+&lt;/script&gt;
+
+&lt;noscript&gt;Please enable JavaScript to view the &lt;a href=&quot;https://disqus.com/?ref_noscript&quot;&gt;comments powered by Disqus.&lt;/a&gt;&lt;/noscript&gt;
+</description>
+        <pubDate>Sun, 10 Dec 2017 16:40:45 +0200</pubDate>
+        <link>http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1/</link>
+        <guid isPermaLink="true">http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1/</guid>
+        
+        <category>scala</category>
+        
+        <category>akka</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>How to tune Akka to get the most from your Actor-based system - Part 2</title>
+        <description>&lt;p&gt;&lt;i&gt;This post is the second of a two parts series of articles on how to tune Akka configurations&lt;/i&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1&quot;&gt;Part-1: Initial Akka Configurations&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2&quot;&gt;Part-2: Gather and analyze Akka metrics with Kamon and stackable traits&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1/&quot;&gt;Previously&lt;/a&gt;, we’ve tried to adjust Akka configurations for some possible use cases. After we set up a configuration and have a system up and running, we like to know how well we did and “re-tune” the configuration where needed.&lt;/p&gt;
+
+&lt;h2 id=&quot;part-2-gather-and-analyze-akka-metrics-with-kamon-and-stackable-traits&quot;&gt;Part-2: Gather and analyze Akka metrics with Kamon and stackable traits&lt;/h2&gt;
+
+&lt;p&gt;This part focuses on Akka metrics, means a high level data on the Akka Objects we’ve configured( i.e. Dispatchers, Routes, Actors(Routees), and Messages), how we gather them at Inneractive and some useful tips.&lt;/p&gt;
+
+&lt;h3 id=&quot;monitoring-tools-for-akka&quot;&gt;&lt;strong&gt;Monitoring Tools for Akka&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;p&gt;Akka library does not include a native monitoring tool, however there are a few tools that provide additional metrics for Akka-based application(i.e. memory usage, trace information), profiling and more capabilities that help identify performance issues or to put the finger on a bottleneck.&lt;/p&gt;
+
+&lt;p&gt;To name a few:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;a href=&quot;https://developer.lightbend.com/docs/monitoring/2.0.x/home.html&quot;&gt;‘Lightbend Monitoring’ &lt;/a&gt;&lt;/p&gt;
+
+    &lt;p&gt;Provides about all necessary features, including key Akka metrics and &lt;a href=&quot;https://developer.lightbend.com/docs/monitoring/2.0.x/instrumentations/akka/akka.html#span-tracer&quot;&gt;span traces&lt;/a&gt;.&lt;/p&gt;
+
+    &lt;p&gt;Takipi plugin provides actor events that can trigger debug snapshots of the stack trace, i.e. the state at the time of the error. Btw It’s not free…&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;a href=&quot;https://docs.newrelic.com/&quot;&gt;Newrelic&lt;/a&gt;&lt;/p&gt;
+
+    &lt;p&gt;A powerful performance monitoring and management framework, has Spray and&lt;/p&gt;
+
+    &lt;p&gt;Akka-Http instrumented features. However it’s most important feature, at least regarding our purpose, the &lt;a href=&quot;https://docs.newrelic.com/docs/apm/transactions/x-ray-sessions/introduction-x-ray-sessions&quot;&gt;X-ray&lt;/a&gt;, which gives deeper insight into a key transaction’s, is available only with a ‘Pro’ subscription.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Flame Graphs / VirtualVm or any other JVM profiling tool&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Kamon&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;Kamon&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;overview&quot;&gt;Overview&lt;/h4&gt;
+
+&lt;p&gt;Kamon is an open source tool for monitoring applications running on the JVM. It supports various backends and has &lt;a href=&quot;http://kamon.io/documentation/get-started&quot;&gt;modules&lt;/a&gt; that integrate and gather metrics for Akka, Play, Spray/Akka-Http and more.&lt;/p&gt;
+
+&lt;p&gt;Kamon uses &lt;a href=&quot;http://www.eclipse.org/aspectj/&quot;&gt;Aspectj&lt;/a&gt; to add a layer of code before and after a method is executed, and in this &lt;a href=&quot;https://en.wikipedia.org/wiki/Aspect-oriented_programming&quot;&gt;aspect- oriented&lt;/a&gt; fashion records metrics data(e.g.  Records time before and after processing of messages/futures/routing (See &lt;a href=&quot;#appendix&quot;&gt;Appendix&lt;/a&gt;).&lt;/p&gt;
+
+&lt;p&gt;Here at Inneractive we use Kamon to gather all metrics, including application custom metrics, even in applications that do not usu Akka, because it proves to perform better (CPU wise) than other alternatives.&lt;/p&gt;
+
+&lt;p&gt;It contains metric types functionalities like .histogram(..), .counter(..), .gauge(..) and .minMaxCounter(..)&lt;/p&gt;
+
+&lt;h4 id=&quot;configuration-for-kamon-akka-metrics&quot;&gt;Configuration for Kamon Akka metrics&lt;/h4&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://kamon.io/documentation/kamon-akka/0.6.6/overview/&quot;&gt;Akka integration &lt;/a&gt;has a &lt;a href=&quot;http://kamon.io/documentation/kamon-akka/0.6.6/actor-router-and-dispatcher-metrics/&quot;&gt;collection of metrics&lt;/a&gt; for actor, router and dispatcher objects. At first, In our Exchange server, we collected them all. Soon enough our monitoring tools, &lt;a href=&quot;https://prometheus.io/&quot;&gt;Prometheus&lt;/a&gt; and &lt;a href=&quot;https://www.datadoghq.com/dg/slpg/?utm_source=Advertisement&amp;amp;utm_medium=GoogleAdsNon1stTierBrand&amp;amp;utm_campaign=GoogleAdsNon1stTierBrand-Non1st&amp;amp;utm_content=Datadog&amp;amp;utm_keyword=%7Bkeyword%7D&amp;amp;utm_matchtype=%7Bmatchtype%7D&amp;amp;gclid=EAIaIQobChMI19CG9MjA1wIVEpMbCh1t0Q4dEAAYASAAEgLd4vD_BwE&quot;&gt;Datadog&lt;/a&gt; went down / froze because of a &lt;em&gt;crazy&lt;/em&gt; load of metrics. The reason is that we have 1000-1500 Actor instances. The metrics’s names include the instance name (it is not a Tag as you might expect). We do have our own tags like ‘environment’ and ‘host’, and about ~600 Exchange instances, and there you get a huge number of metrics that our monitors could not handle.&lt;/p&gt;
+
+&lt;p&gt;Also the ‘aspect’ way of gathering metric’s data is quite expensive, performance wise.&lt;/p&gt;
+
+&lt;p&gt;Our metric configuration looks as follows:&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;metric&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+  &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;filters&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;akka-actor&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+     &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;excludes&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;[&lt;/span&gt;&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;**&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;],&lt;/span&gt;
+     &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;includes&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;[]&lt;/span&gt;
+   &lt;span style=&quot;color: #666666&quot;&gt;},&lt;/span&gt;
+   &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;akka-dispatcher&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+     &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;excludes&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;[],&lt;/span&gt;
+     &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;includes&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;[&lt;/span&gt;&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;**&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;]&lt;/span&gt;
+   &lt;span style=&quot;color: #666666&quot;&gt;},&lt;/span&gt;
+   &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;akka-router&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+     &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;excludes&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;[],&lt;/span&gt;
+     &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;includes&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;[&lt;/span&gt;&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;**&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;]&lt;/span&gt;
+   &lt;span style=&quot;color: #666666&quot;&gt;},&lt;/span&gt;
+   &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;trace&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+     &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;excludes&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;[],&lt;/span&gt;
+     &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;includes&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;[&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;**&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;]&lt;/span&gt;
+   &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;...&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;As you may noticed,  we exclude akka-actor, which means all routees metrics(time-in-mailbox, processing-time, mailbox-size), and gather metrics for actors ourselves. This is because:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Routees metrics outnumbered all the others combined, since we have lots of actor instances, and we desperately needed our monitors to be working…&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;We don’t really mind for a single routee in pretty much all cases, so gathered information like average, sum, 95 can do the trick&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The metrics’s names are somewhat awkward(partially because the name of the routees is like $a $b… and naming them means to create them explicitly in the code)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;We know the names of our actors, and have a foothold in our own actor’s code. So we could gather metrics ourselves easily enough, and with a more concise information.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;In addition, we wanted metrics about the messages, processing time and the time it took the&lt;/p&gt;
+
+&lt;p&gt;message to arrive.&lt;/p&gt;
+
+&lt;h4 id=&quot;tips&quot;&gt;Tips&lt;/h4&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;When you route manually, means when you don’t have a router, or whenever you have create the routees explicitly, you can give them names yourself(see &lt;a href=&quot;https://doc.akka.io/api/akka/2.0/akka/actor/ActorContext.html&quot;&gt;actorOf&lt;/a&gt; parameters).&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Akka does not provide an Api to know the size of the mailbox. you can monitor  by&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Have a messages counterlike Kamon does)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Override the MessageQueue. Google it.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&quot;configuration-for-kamon-akka-actorsystem&quot;&gt;Configuration for Kamon Akka ActorSystem&lt;/h4&gt;
+
+&lt;p&gt;As stated, the aspectj operating by Kamon is quite expensive, even when excluding of all routees metrics. By default, Kamon uses the default-dispatcher. If you don’t set a default-dispatcher yourself, the threadpool size of the default-dispatcher will be the number of cores. In practice Kamon told us that about 75% of the running threads were Kamon’s.. You can set a dispatcher for Kamon as follows 
+&lt;img align=&quot;right&quot; src=&quot;/img/kamon_the_rock.png&quot; /&gt;&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;akka&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;actor&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+     &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;default-dispatcher&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+       &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;fork-join-executor&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+         &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;parallelism-factor&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;0.25&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt;
+         &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;parallelism-max&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;2&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt;
+         &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;parallelism-min&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;1&lt;/span&gt;
+       &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+     &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+   &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Here we allow up to 2 threads(but even 1 would probably be enough), with a parallelism-factor of 0.25, means up to 2 threads when the machine has at least 8 cores. 
+This does the job.&lt;/p&gt;
+
+&lt;h4 id=&quot;appendix&quot;&gt;Appendix&lt;/h4&gt;
+
+&lt;p&gt;class &lt;a href=&quot;https://github.com/kamon-io/kamon-akka/blob/master/kamon-akka-2.4.x/src/main/scala/kamon/akka/instrumentation/ActorMonitor.scala&quot;&gt;ActorMonitor.scala&lt;/a&gt; from the module kamon-akka&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+109
+110&lt;/pre&gt;&lt;/td&gt;&lt;td&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; processMessage&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;pjp&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ProceedingJoinPoint&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; envelopeContext&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;EnvelopeContext&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;AnyRef&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+       &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; timestampBeforeProcessing &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;RelativeNanoTimestamp&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;now
+
+      &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;try&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+        &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Tracer&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;withContext&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;envelopeContext&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;context&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+          pjp&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;proceed&lt;span style=&quot;color: #666666&quot;&gt;()&lt;/span&gt;
+        &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+
+      &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;finally&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+        &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; timestampAfterProcessing &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;RelativeNanoTimestamp&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;now
+        &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; timeInMailbox &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; timestampBeforeProcessing &lt;span style=&quot;color: #666666&quot;&gt;-&lt;/span&gt; envelopeContext&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;nanoTime
+        &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; processingTime &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; timestampAfterProcessing &lt;span style=&quot;color: #666666&quot;&gt;-&lt;/span&gt; timestampBeforeProcessing
+
+        actorMetrics&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;foreach &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt; am &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&amp;gt;&lt;/span&gt;
+          am&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;processingTime&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;record&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;processingTime&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;nanos&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+          am&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;timeInMailbox&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;record&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;timeInMailbox&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;nanos&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+          am&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;mailboxSize&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;decrement&lt;span style=&quot;color: #666666&quot;&gt;()&lt;/span&gt;
+        &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+       &lt;span style=&quot;color: #666666&quot;&gt;...&lt;/span&gt;
+      &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+    &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+
+&lt;span&gt;…&lt;/span&gt;
+  &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/div&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Line&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;83&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;-&lt;/span&gt; 'processMessage' executes 'around'&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;before and after&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt; message processing by the actor&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;jpg&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; line &lt;span style=&quot;color: #40a070&quot;&gt;88&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+&lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Line&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;84&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;-&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Takes&lt;/span&gt; start time before the message being processed
+&lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Line&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;88&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;-&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Invokes&lt;/span&gt; the method that handles message is processing
+&lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Lines&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;92&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;-&lt;/span&gt;&lt;span style=&quot;color: #40a070&quot;&gt;94&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;-&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Latency&lt;/span&gt; calculations
+&lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Lines&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;96&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;-&lt;/span&gt;&lt;span style=&quot;color: #40a070&quot;&gt;99&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Updates&lt;/span&gt; metrics cache
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;Monitor with Stackable Actor Traits&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;We like to collect aggregated data for the routees and messages then.&lt;/p&gt;
+
+&lt;p&gt;In order to monitor time-in-mailbox, processing-time, mailbox-size that we excluded from Kamon metric configuration, we need to monitor ‘around’ the message processing, i.e. around the ‘receive’ method&lt;/p&gt;
+
+&lt;p&gt;It can be achieved by imitating Kamon’s usage of &lt;a href=&quot;http://www.eclipse.org/aspectj/&quot;&gt;Aspectj&lt;/a&gt; as we just saw.&lt;/p&gt;
+
+&lt;p&gt;We however, use a ‘stackable-traits‘ mixed to the Actors, for a monitoring layer around ‘receive’.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern/&quot;&gt;I wrote about stackable traits pattern here&lt;/a&gt;. in &lt;a href=&quot;https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/&quot;&gt;part-2&lt;/a&gt; &lt;strong&gt;I describe(a simplified version of) how we use stackable actor traits in Inneractive, with code samples.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;dashboard-overview&quot;&gt;&lt;strong&gt;Dashboard Overview&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;p&gt;Our &lt;a href=&quot;#bookmark=id.gdmyvra3gln&quot;&gt;dashboard&lt;/a&gt; consists of Kamon’s Akka metrics and custom metrics.&lt;/p&gt;
+
+&lt;p&gt;Akka metrics collection explained in details in the &lt;a href=&quot;http://kamon.io/documentation/kamon-akka/0.6.6/actor-router-and-dispatcher-metrics/&quot;&gt;docs&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Among all metrics, put special attention to:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;‘active-threads’ and ‘running-threads’, these give a very good view of your threads distribution so you would tune the dispatcher’s configuration if needed&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;‘pool-size’, when you set upper, lower and increment factor and not a fixed size. This tells you how many threads are allocated in the pool in practice.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;‘processed-tasks’ - How busy is the executor, maybe more threads are needed&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;‘routing-time’ - tells if the routing strategy fits.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Custom metrics - ‘time-in-mailbox by actor/message’ for routees. Maybe a specific message handling does the trouble.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Custom metrics ‘message-start-process’ for routees, when the value is high it can indicate that the receiver needs more resources or there are too many instances, lead to lots of context-switches. Increase of the “thoughput” parameter may help.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://localhost:4000/public/asNMIb0wNDGjYnrdr4zCuQ_img_0.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;wrapping-up&quot;&gt;Wrapping up&lt;/h3&gt;
+
+&lt;p&gt;Monitoring of the Akka objects plays an important and integral part of the tuning step (and generally important for keep track of the system behavior).
+There are various tools and ways to do so, Kamon is friendly and recommended, and you can gather metric yourself.&lt;/p&gt;
+
+&lt;h3 id=&quot;references&quot;&gt;References&lt;/h3&gt;
+
+&lt;p&gt;&lt;em&gt;&lt;a href=&quot;http://kamon.io/documentation/get-started/&quot;&gt;Kamon Documentation&lt;/a&gt;&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;&lt;a href=&quot;https://github.com/kamon-io/kamon-akka&quot;&gt;Kamon-Akka repository&lt;/a&gt;&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;&lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern---part-2/&quot;&gt;Stackable Actor Traits&lt;/a&gt;&lt;/em&gt;&lt;/p&gt;
+
+&lt;div id=&quot;disqus_thread&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+var disqus_config = function () {
+this.page.url = &quot;https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/&quot;
+this.page.identifier = Akka-2
+};
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://FullGC.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+&lt;/script&gt;
+
+&lt;noscript&gt;Please enable JavaScript to view the &lt;a href=&quot;https://disqus.com/?ref_noscript&quot;&gt;comments powered by Disqus.&lt;/a&gt;&lt;/noscript&gt;
+</description>
+        <pubDate>Sat, 09 Dec 2017 16:40:45 +0200</pubDate>
+        <link>http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/</link>
+        <guid isPermaLink="true">http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/</guid>
+        
+        <category>scala</category>
+        
+        <category>akka</category>
+        
+        <category>kamon</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Stackable Traits pattern - Part 1</title>
+        <description>&lt;p&gt;&lt;i&gt;This post is the first of a two parts series of articles on Stackable Traits&lt;/i&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern/&quot;&gt;Part-1: Error reporting design with Stackable Traits&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern---part-2/&quot;&gt;Part-2: Gathering Metrics with Stackable Actors&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;em&gt;“Traits let you modify the methods of a class, and they do so in a way that allows you to stack those modifications with each other” (Programming in Scala by Martin Odersky)&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;One of the reasons that Scala still feels to me as ‘a better Java’, is the power of its traits. Trait can be used for multiple inheritance as Java interface, as a rich interface with fields and a state, and to be mixed into a class.&lt;/p&gt;
+
+&lt;p&gt;An interesting behavior of traits, as opposed to classes, is the call for a super method. Call for a super method in classes is statically bound, means that the exact implementation that would be invoked is known upfront. In traits however it is dynamically bound. The term is usually refers to an invocation of a method in an object, where the implementation is decided on runtime, i.e. a polymorphic call. The super call is not defined when a trait defined, but only when it is mixed into a concrete class. This behavior allows us to ‘stack’ the traits, and used them the super call as ‘pipe’ and redirect output, quite similar to ‘pipe’ in linux. This is the basis for the use-cases we’ll review.&lt;/p&gt;
+
+&lt;p&gt;&lt;img align=&quot;right&quot; src=&quot;/img/stackable_narrative.png&quot; /&gt;&lt;/p&gt;
+&lt;h2 id=&quot;part-1-error-reporting-design&quot;&gt;Part-1: Error reporting design&lt;/h2&gt;
+
+&lt;p&gt;Consider the following:&lt;/p&gt;
+
+&lt;p&gt;An Ad-Server gets a request for an Advertisement from a mobile phone.&lt;/p&gt;
+
+&lt;p&gt;Here we’ll discuss a solution for executing the actions that need to be taken when the Ad-Server encounter errors. There are 2 types of errors which should be handled appropriately as follows:&lt;/p&gt;
+
+&lt;p&gt;On &lt;strong&gt;FatalError&lt;/strong&gt;:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;The Logger &lt;em&gt;prints&lt;/em&gt; to the Log&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The Monitor &lt;em&gt;increments&lt;/em&gt; the counter Metric.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Kafka-Producer &lt;em&gt;sends&lt;/em&gt; a Json Event with a timestamp  to Kafka.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;em&gt;when step 3 failed&lt;/em&gt;, S3-Client &lt;em&gt;uploads&lt;/em&gt; the Event as CSV with a timestamp to to S3 (backup)&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;On &lt;strong&gt;InvalidRequestError&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;The Logger &lt;em&gt;prints&lt;/em&gt; to the Log&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The Monitor &lt;em&gt;increments&lt;/em&gt; the counter Metric.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Kafka-Producer &lt;em&gt;sends&lt;/em&gt; a Json Event to Kafka.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;An Error has a code, a description, and unique properties&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; code&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Int&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; description&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;class&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;FatalError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; code&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Int&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;1&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; exceptionCause&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingError&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; description&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt;  s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;Fatal Error code $code accrued&lt;/span&gt;
+&lt;span style=&quot;color: #4070a0&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #4070a0&quot;&gt;case class InvalidRequestError(paramName: String, paramValue: String, override val code: Int = 2) extends ServingError{&lt;/span&gt;
+&lt;span style=&quot;color: #4070a0&quot;&gt; override val description: String = s&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Invalid&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Request&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Bad&lt;/span&gt;  parameter&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;$paramName&lt;/span&gt;&lt;span style=&quot;border: 1px solid #FF0000&quot;&gt;&amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;+&lt;/span&gt; &lt;span style=&quot;border: 1px solid #FF0000&quot;&gt;&amp;quot;&lt;/span&gt; &lt;span style=&quot;border: 1px solid #FF0000&quot;&gt;&amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;+&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;s&lt;/span&gt;&lt;span style=&quot;border: 1px solid #FF0000&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #902000&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;value:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;$paramValue&lt;/span&gt;&lt;span style=&quot;border: 1px solid #FF0000&quot;&gt;&amp;quot;&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;And these are mocks for the Scala Clients&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;object&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;KafkaProducer&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;eventContent&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; println&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;sending to Kafka: $eventContent&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;object&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Monitor&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; incrementCounter&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;counterName&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; tags&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;&lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;))&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; println&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;incrementing counter $counterName&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;object&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Logger&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; log&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; println&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;error: $event&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;object&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;S3_Client&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; upload&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;eventContent&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; println&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;uploading event $eventContent to S3&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;step-by-step-implementation-using-stackable-traits&quot;&gt;&lt;strong&gt;Step by step implementation, using stackable-traits&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;h5 id=&quot;create-traits-that-represent-the-subscribers-and-mix-them&quot;&gt;Create traits that represent the subscribers and mix them.&lt;/h5&gt;
+
+&lt;p&gt;We’ll create the following traits, each represent a subscriber for an error event&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Log&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Metric&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;S3_Backup&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Kafka&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;And mix them to the Error classes. Here, we use Scala type system to describe the Error classes, and the actions that need to be taken.&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; code&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Int&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; description&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h5 id=&quot;turn-the-traits-into-services-that-activates-the-clients&quot;&gt;Turn the traits into services that activates the Clients&lt;/h5&gt;
+
+&lt;p&gt;Now it is clear which subscribers should receive a notification on error. We will enrich the traits so they would be able to activate the clients as well:&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;abstract&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;class&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Sender&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Log&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Sender&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Logger&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;log&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;description&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Metric&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Sender&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Monitor&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;incrementCounter&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;getClass&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;getSimpleName&lt;span style=&quot;color: #60a0b0; font-style: italic&quot;&gt;/*this is not recommended...*/&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;errorCode&amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;-&amp;gt;&lt;/span&gt;
+   event&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;code&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;toString&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;S3_Backup&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Sender&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   S3_Client&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;upload&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;content&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Kafka&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Sender&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;KafkaProducer&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;content&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Alright, so now each trait have a “send” method that handles the event using the appropriate client.&lt;/p&gt;
+
+&lt;p&gt;But we still need to trigger it on error, and call them in the order described above&lt;/p&gt;
+
+&lt;h5 id=&quot;stack-the-services-traits-with-each-other&quot;&gt;‘Stack’ the services traits with each other&lt;/h5&gt;
+
+&lt;p&gt;I.e., Pipe of calls for the ‘send’ method in the services. As discussed, we’ll need to use super method calls for that.&lt;/p&gt;
+
+&lt;p&gt;Note that at this step we won’t be stacking modifications, but the side-effects that triggered on error.&lt;/p&gt;
+
+&lt;p&gt;Alright so we need to stack the traits according to the order and logic defined in the narrative described above. The order of the invocation of the traits will be right to left.&lt;/p&gt;
+
+&lt;p&gt;Hence the order for FatalError: S3_Backup ← Kafka ← Monitor ← Log&lt;/p&gt;
+
+&lt;p&gt;Where S3_Backup should be invoked only when the Kafka-Producer failed to send the event to Kafka.&lt;/p&gt;
+
+&lt;p&gt;And for InvalidRequestError: Kafka ← Monitor ← Log&lt;/p&gt;
+
+&lt;p&gt;Let’s re-arranged the mixing on the Error classes:&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;class&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;FatalError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; code&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Int&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;1&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; exceptionCause&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingError&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; S3_Backup &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Kafka&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Monitor&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Log&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; description&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;Fatal Error code $code accrued&amp;quot;&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;class&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;InvalidRequestError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;paramName&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; paramValue&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; code&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Int&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;2&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingError&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Kafka&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Monitoring&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Log&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; description&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;Invalid Request. Bad  parameter: $paramName&amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;+&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot; &amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;+&lt;/span&gt; s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;with value: $paramValue&amp;quot;&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;class&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;FatalError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; code&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Int&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;1&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; exceptionCause&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingError&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; S3_Backup &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Kafka&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Monitor&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Log&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; description&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;Fatal Error code $code accrued&amp;quot;&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;class&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;InvalidRequestError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;paramName&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; paramValue&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; code&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Int&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;2&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingError&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Kafka&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Monitoring&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Log&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; description&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;Invalid Request. Bad  parameter: $paramName&amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;+&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot; &amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;+&lt;/span&gt; s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;with value: $paramValue&amp;quot;&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;And stack the traits:&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Log&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Sender&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;abstract&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Logger&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;log&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;description&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+   &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;super&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Metric&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Sender&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;abstract&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Monitor&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;incrementCounter&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;getClass&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;getSimpleName&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;errorCode&amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;-&amp;gt;&lt;/span&gt; event&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;code&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;toString&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+   &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;super&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;S3_Backup&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Sender&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;abstract&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   S3_Client&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;upload&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;content&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+   &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;super&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Kafka&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Sender&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;abstract&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Try&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;&lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;KafkaProducer&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;content&lt;span style=&quot;color: #666666&quot;&gt;)).&lt;/span&gt;getOrElse&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;super&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;))&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;You might notice that&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;The call ‘super.send(event)’ was added to ‘send’ method.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The ‘override’ modifier changed to &lt;em&gt;‘abstract override’&lt;/em&gt;, because the send method now overrides the behavior but also calls for an abstract method with super.send. The modifier tells that this trait has to be mixed with a concrete class(later…).&lt;/p&gt;
+
+    &lt;p&gt;btw, If we’ll omit the ‘abstract’ from the modifier, we’ll get the following error:&lt;/p&gt;
+
+    &lt;p&gt;&lt;em&gt;“method send in class Sender is accessed from super. It may not be abstract unless it is overridden by a member declared ‘abstract’ and `override’ super.send(event)”&lt;/em&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Kafka would call super, i.e. S3-Backup would be invoked only when KafkaProducer fails to deliver.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;img align=&quot;right&quot; src=&quot;/img/stack-traits.jpg&quot; /&gt;&lt;/p&gt;
+
+&lt;h5 id=&quot;create-and-stack-modification-traits&quot;&gt;Create and ‘Stack’ modification traits:&lt;/h5&gt;
+
+&lt;p&gt;The event’s content that needs to be modified to be in the right format (json, csv) before sent as an input to KafkaProducer and S3. A Fatal error needs to be sent with a timestamp&lt;/p&gt;
+
+&lt;p&gt;Let’s write the modification method and the stackable modification traits:&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;object&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+&lt;span style=&quot;color: #60a0b0; font-style: italic&quot;&gt;// we are adding a method modification content method, to be used by the modification traits &lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; modifyContent&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;error&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; content&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   error &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;match&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+     &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; f&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;FatalError&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;FatalError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;exceptionCause &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; f&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;exceptionCause&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; content &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; content&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+     &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; i&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;InvalidRequestError&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;InvalidRequestError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;i&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;paramName&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; i&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;paramValue&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; content &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; content&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+   &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;JsonTransformer&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Sender&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;import&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingError._&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;abstract&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;super&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;modifyContent&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+     &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; date &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; event &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;match&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+       &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; d&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;DateTimestampedMessage&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;\&amp;quot;date\&amp;quot;:&amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;+&lt;/span&gt; d&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;date
+       &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;_&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;
+     &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+     &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; cause &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; event &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;match&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+       &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; f&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;FatalError&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;\&amp;quot;cause\&amp;quot;:&amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;+&lt;/span&gt; f&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;exceptionCause
+       &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; i&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;InvalidRequestError&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;\&amp;quot;cause\&amp;quot;:&amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;+&lt;/span&gt; i&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;paramName &lt;span style=&quot;color: #666666&quot;&gt;+&lt;/span&gt;&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;:&amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;+&lt;/span&gt;i&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;paramValue
+     &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+     s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+&lt;span style=&quot;color: #4070a0&quot;&gt;             {&lt;/span&gt;
+&lt;span style=&quot;color: #4070a0&quot;&gt;                &amp;quot;code:&amp;quot;${event.code},&lt;/span&gt;
+&lt;span style=&quot;color: #4070a0&quot;&gt;                $date&lt;/span&gt;
+&lt;span style=&quot;color: #4070a0&quot;&gt;                $cause&lt;/span&gt;
+&lt;span style=&quot;color: #4070a0&quot;&gt;             }&lt;/span&gt;
+&lt;span style=&quot;color: #4070a0&quot;&gt;      &amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+   &lt;span style=&quot;color: #666666&quot;&gt;}))&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;CsVTransformer&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Sender&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;import&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingError._&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;abstract&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;super&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;modifyContent&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+     &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; date &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; event &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;match&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+       &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; d&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;DateTimestampedMessage&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&amp;gt;&lt;/span&gt; d&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;date
+       &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;_&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;
+     &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+     &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; cause &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; event &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;match&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+       &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; f&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;FatalError&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&amp;gt;&lt;/span&gt; f&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;exceptionCause
+       &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; i&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;InvalidRequestError&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&amp;gt;&lt;/span&gt; i&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;paramName &lt;span style=&quot;color: #666666&quot;&gt;+&lt;/span&gt;&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;,&amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;+&lt;/span&gt;i&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;paramValue
+     &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+     s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;&amp;quot;&amp;quot;${event.code},$date$cause&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+   &lt;span style=&quot;color: #666666&quot;&gt;}))&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Timestamp&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; date&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Date&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;new&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Date&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;()&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;And mix the modification traits to the error classes&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;class&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;FatalError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; code&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Int&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;1&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; exceptionCause&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; content&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingError&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; S3_Backup &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;CsVTransformer&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Kafka&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;JsonTransformer&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Timestamp&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Metric&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Log&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; description&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;Fatal Error code $code accrued&amp;quot;&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;class&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;InvalidRequestError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;paramName&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; paramValue&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; code&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Int&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #40a070&quot;&gt;2&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; content&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingError&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Kafka&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;JsonTransformer&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Log&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; description&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;Invalid Request. Bad  parameter: $paramName&amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;+&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot; &amp;quot;&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;+&lt;/span&gt; s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;with value: $paramValue&amp;quot;&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h5 id=&quot;create-and-mix-servingerrorsender-&quot;&gt;Create and mix ‘ServingErrorSender’ :&lt;/h5&gt;
+
+&lt;p&gt;Last, in order to trigger the error reports once an error object is created, we’ll mix them with a sending trait.&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingErrorSender&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Sender&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;this:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&amp;gt;&lt;/span&gt;   &lt;span style=&quot;color: #60a0b0; font-style: italic&quot;&gt;// force to be mixed with a ServingError class, (look for 'see cake-pattern')&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;()&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;this&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; send&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;event&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;ServingError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Unit&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingError&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ServingErrorSender&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; code&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Int&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; description&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; content&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;try-it-out&quot;&gt;&lt;strong&gt;Try it out&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;p&gt;We have completed the task!&lt;/p&gt;
+
+&lt;p&gt;Now, when invoking a ‘send’’ for an error, like the following:&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;FatalError&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;exceptionCause &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;new&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;IllegalArgumentException&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;().&lt;/span&gt;getClass&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;getSimpleName&lt;span style=&quot;color: #666666&quot;&gt;).&lt;/span&gt;send&lt;span style=&quot;color: #666666&quot;&gt;()&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Results with the following printed to the log:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;error: Fatal Error code 1 accrued //Log
+incrementing counter FatalError // Metric
+sending to Kafka:  // Kafka
+{
+  &quot;code:&quot;1,
+  &quot;date&quot;:Thu Nov 30 16:56:33 IST 2017
+  &quot;cause&quot;:IllegalArgumentException
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;next&quot;&gt;&lt;strong&gt;Next&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;p&gt;In &lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern---part-2/&quot;&gt;part-2&lt;/a&gt; we’ll use stackable-actor traits for gathering actor’s metrics.&lt;/p&gt;
+
+&lt;h3 id=&quot;references&quot;&gt;&lt;strong&gt;References&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;p&gt;&lt;em&gt;&lt;a href=&quot;https://www.artima.com/shop/programming_in_scala_3ed&quot;&gt;Programming in Scala(chapter 12.5) / Martin Odersky and co&lt;/a&gt;&lt;/em&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;&lt;em&gt;The complete source code and more running examples can be found in my &lt;a href=&quot;https://github.com/FullGC/stackable-traits&quot;&gt;github&lt;/a&gt;&lt;/em&gt;.&lt;/p&gt;
+
+&lt;div id=&quot;disqus_thread&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+var disqus_config = function () {
+this.page.url = &quot;https://fullgc.github.io/stackable-traits-pattern/&quot;
+this.page.identifier = stackable-1
+};
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://FullGC.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+&lt;/script&gt;
+
+&lt;noscript&gt;Please enable JavaScript to view the &lt;a href=&quot;https://disqus.com/?ref_noscript&quot;&gt;comments powered by Disqus.&lt;/a&gt;&lt;/noscript&gt;
+</description>
+        <pubDate>Fri, 08 Dec 2017 16:40:45 +0200</pubDate>
+        <link>http://localhost:4000/stackable-traits-pattern/</link>
+        <guid isPermaLink="true">http://localhost:4000/stackable-traits-pattern/</guid>
+        
+        <category>scala</category>
+        
+        <category>stackable</category>
+        
+        <category>traits</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Stackable Traits pattern - Part 2</title>
+        <description>&lt;p&gt;&lt;i&gt;This post is the second of a two parts series of articles on Stackable Traits&lt;/i&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern/&quot;&gt;Part-1: Error reporting design with Stackable Traits&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern---part-2/&quot;&gt;Part-2: Gathering Metrics with Stackable Actors&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern/&quot;&gt;Stackable traits&lt;/a&gt; can be applied to actors as well.
+Specifically, we can use stackable actor traits to modify the behavior of the ‘receive’ method.&lt;/p&gt;
+
+&lt;h2 id=&quot;part-2-gathering-metrics&quot;&gt;&lt;strong&gt;Part-2: Gathering Metrics&lt;/strong&gt;&lt;/h2&gt;
+
+&lt;p&gt;We like to gather the following metrics&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;time-in-mailbox: The time from the moment a message was enqueued into an actor’s mailbox until the moment it was dequeued for processing.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;processing-time: How long did it take for the actor to process a message.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;And to log when an actor starts to handle a message and before it finishes.&lt;/p&gt;
+
+&lt;h3 id=&quot;stackable-actors-based-implementation&quot;&gt;&lt;strong&gt;Stackable Actors based implementation&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;p&gt;Say we have the following actor that we like to monitor:&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;abstract&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;class&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;MyActor&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Actor&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;StrictLogging&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; receive&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Receive&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; message &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&amp;gt;&lt;/span&gt; logger&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;info&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;performing some work...&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Let’s start with the ‘time-in-mailbox’ metric. The simple way to implement it is to take time before the message is sent, and calculate the time in mailbox when the actor is starting pressing it. For the sake of the example we’ll assume that a message is created just before it being sent.&lt;/p&gt;
+
+&lt;p&gt;The message class that should be monitored be:&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;RecordableMessage&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;RichMessage&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+  &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; dispatchTime&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Long&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt;
+  &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;System&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;currentTimeMillis&lt;span style=&quot;color: #666666&quot;&gt;()&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;RichMessage&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+  &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; messageName&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;We initializing the time before the message is being sent, and give it a name, to be use as a tag for the metric.&lt;/p&gt;
+
+&lt;p&gt;Next, create the stackable trait for monitoring the actor on RecordableMessage&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;LatencyRecorderActor&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Actor&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;StrictLogging&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; actorName&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;this&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;getClass&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;getSimpleName
+
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;abstract&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; receive&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Receive&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; recordableMessage&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;RecordableMessage&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&amp;gt;&lt;/span&gt;
+     &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Monitor&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;record&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;time-in-mailbox&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; actorName&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; recordableMessage&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;messageName&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt;
+        recordableMessage&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;dispatchTime&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+     &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; start &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;System&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;currentTimeMillis&lt;span style=&quot;color: #666666&quot;&gt;()&lt;/span&gt;
+     &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;super&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;receive&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;recordableMessage&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+     &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Monitor&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;record&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;processing-time&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; actorName&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; recordableMessage&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;messageName&lt;span style=&quot;color: #666666&quot;&gt;,&lt;/span&gt; start&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+   &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; message &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;super&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;receive&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;message&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;You might notice that&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;As discussed in &lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern/&quot;&gt;part-1&lt;/a&gt;, the modifier of the ‘receive’ method should be “abstract override”&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;We gather the metrics only on RecordableMessage message&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;For calculating ‘time-in-mailbox’, ‘dispatchTime’ is used&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;For calculating ‘processing-time’, we take take time before invoking the action, then invoking the action, and record the ‘processing-time’ when it finished.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The LoggerActor is the following&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;trait&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;LoggerActor&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Actor&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;StrictLogging&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+ &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;abstract&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;def&lt;/span&gt; receive&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;Receive&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; recordableMessage&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;RecordableMessage&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&amp;gt;&lt;/span&gt;
+     logger&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;info&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;handling message: ${recordableMessage.messageName}&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+     &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;super&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;receive&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;recordableMessage&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+     logger&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;info&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;s&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;done handling message: ${recordableMessage.messageName}&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+   &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; message &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;super&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;receive&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;message&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+ &lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Lastly, mix these traits to a concrete MyActor class&lt;/p&gt;
+
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;class&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;MyMonitoredActor&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;MyActor&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;LatencyRecorderActor&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;with&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;LoggerActor&lt;/span&gt;
+ &lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;try-it-out&quot;&gt;&lt;strong&gt;Try it out&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;p&gt;Create a concrete RecordableMessage:&lt;/p&gt;
+
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;case&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;class&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;SomeRecordableMessage&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;()&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;extends&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;RecordableMessage&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;{&lt;/span&gt;
+   &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;override&lt;/span&gt; &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; messageName&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #902000&quot;&gt;String&lt;/span&gt; &lt;span style=&quot;color: #666666&quot;&gt;=&lt;/span&gt;
+   &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;this&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;getClass&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;getSimpleName
+&lt;span style=&quot;color: #666666&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;And send it to a MonitoredActor instance&lt;/p&gt;
+
+&lt;!-- HTML generated using hilite.me --&gt;
+&lt;div style=&quot;background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;&quot;&gt;&lt;pre style=&quot;margin: 0; line-height: 125%&quot;&gt;&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; actorSystem &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;ActorSystem&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;&lt;span style=&quot;color: #4070a0&quot;&gt;&amp;quot;system&amp;quot;&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;)&lt;/span&gt;
+&lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;val&lt;/span&gt; myMonitoredActor &lt;span style=&quot;color: #007020; font-weight: bold&quot;&gt;=&lt;/span&gt; actorSystem&lt;span style=&quot;color: #666666&quot;&gt;.&lt;/span&gt;actorOf&lt;span style=&quot;color: #666666&quot;&gt;(&lt;/span&gt;&lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;Props&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;[&lt;/span&gt;&lt;span style=&quot;color: #902000&quot;&gt;MyMonitoredActor&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;])&lt;/span&gt;
+myMonitoredActor &lt;span style=&quot;color: #666666&quot;&gt;!&lt;/span&gt; &lt;span style=&quot;color: #0e84b5; font-weight: bold&quot;&gt;SomeRecordableMessage&lt;/span&gt;&lt;span style=&quot;color: #666666&quot;&gt;()&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Results with the following printed to the log:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;handling message: SomeTriggerMessage
+time-in-mailbox latency for message SomeTriggerMessage in actor MyMonitoredActor is 102
+performing some work...
+processing-time latency for message SomeTriggerMessage in actor MyMonitoredActor is 212
+done handling message: SomeTriggerMessage
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;wrapping-up&quot;&gt;&lt;strong&gt;Wrapping up&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;p&gt;Stackable traits pattern is a good choice when you need to ‘pipe’ actions or modify and redirect data for an action. Mix and stack traits to describe the state of the class and execute the actions are clean and flexible, and generally the scala-functional way to do it.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/img/scala_devs.png&quot; /&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;&lt;em&gt;The complete source code can be found in my &lt;a href=&quot;https://github.com/FullGC/stackable-traits&quot;&gt;github&lt;/a&gt;&lt;/em&gt;.&lt;/p&gt;
+
+&lt;div id=&quot;disqus_thread&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+var disqus_config = function () {
+this.page.url = &quot;https://fullgc.github.io/stackable-traits-pattern---part-2/&quot;
+this.page.identifier = stackable-1
+};
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://FullGC.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+&lt;/script&gt;
+
+&lt;noscript&gt;Please enable JavaScript to view the &lt;a href=&quot;https://disqus.com/?ref_noscript&quot;&gt;comments powered by Disqus.&lt;/a&gt;&lt;/noscript&gt;
+</description>
+        <pubDate>Thu, 07 Dec 2017 16:40:45 +0200</pubDate>
+        <link>http://localhost:4000/stackable-traits-pattern---part-2/</link>
+        <guid isPermaLink="true">http://localhost:4000/stackable-traits-pattern---part-2/</guid>
+        
+        <category>scala</category>
+        
+        <category>stackable</category>
+        
+        <category>traits</category>
+        
+        <category>akka</category>
+        
+        
+      </item>
+    
+  </channel>
+</rss>

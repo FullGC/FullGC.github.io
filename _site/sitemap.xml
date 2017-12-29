@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url>
+<loc>http://localhost:4000/stackable-traits-pattern---part-2/</loc>
+<lastmod>2017-12-07T16:40:45+02:00</lastmod>
+</url>
+<url>
+<loc>http://localhost:4000/stackable-traits-pattern/</loc>
+<lastmod>2017-12-08T16:40:45+02:00</lastmod>
+</url>
+<url>
+<loc>http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/</loc>
+<lastmod>2017-12-09T16:40:45+02:00</lastmod>
+</url>
+<url>
+<loc>http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1/</loc>
+<lastmod>2017-12-10T16:40:45+02:00</lastmod>
+</url>
+<url>
+<loc>http://localhost:4000/about/</loc>
+</url>
+<url>
+<loc>http://localhost:4000/contact/</loc>
+</url>
+<url>
+<loc>http://localhost:4000/</loc>
+</url>
+<url>
+<loc>http://localhost:4000/google4218bf4e7ccc7bff.html</loc>
+<lastmod>2017-12-27T17:32:35+02:00</lastmod>
+</url>
+</urlset>

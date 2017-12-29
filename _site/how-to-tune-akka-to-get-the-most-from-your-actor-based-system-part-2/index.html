@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A blog about backend development, Scala development and devops">
+
+    <title>How to tune Akka to get the most from your Actor-based system - Part 2 | vdaubry</title>
+
+    <link rel="canonical" href="http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/clean-blog.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Google+ author -->
+    <link rel="author" href="https://plus.google.com/+vincentdaubry"/>
+
+    <!-- Custom Fonts -->
+    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- facebook Open Graph Metadatas -->
+    <meta content="609039549219229" property="fb:app_id">
+    <meta content="FullGC" property="og:site_name">
+    
+      <meta content="How to tune Akka to get the most from your Actor-based system - Part 2" property="og:title">
+    
+    
+      <meta content="article" property="og:type">
+    
+    
+      <meta content="A blog about backend development, Scala development and devops" property="og:description">
+    
+    
+      <meta content="http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/" property="og:url">
+    
+    
+      <meta content="2017-12-09T16:40:45+02:00" property="article:published_time">
+      <meta content="http://localhost:4000/about/" property="article:author">
+    
+    
+      <meta content="http://localhost:4000/img/tune-Akka.jpg" property="og:image">
+    
+    
+      
+    
+    
+      
+      <meta content="scala" property="article:tag">
+      
+      <meta content="akka" property="article:tag">
+      
+      <meta content="kamon" property="article:tag">
+      
+    
+
+
+    <!-- Twitter cards metadatas -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@vdaubry">
+    <meta name="twitter:creator" content="@vdaubry">
+    
+      <meta name="twitter:title" content="How to tune Akka to get the most from your Actor-based system - Part 2">
+    
+    
+      <meta name="twitter:url" content="http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/">
+    
+    
+      <meta name="twitter:description" content="A blog about backend development, Scala development and devops">
+    
+    
+      <meta name="twitter:image:src" content="http://localhost:4000/img/tune-Akka.jpg">
+    
+
+    <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-57009102-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+</head>
+
+<!-- Begin Jekyll SEO tag v2.3.0 -->
+<title>How to tune Akka to get the most from your Actor-based system - Part 2 | FullGC</title>
+<meta property="og:title" content="How to tune Akka to get the most from your Actor-based system - Part 2" />
+<meta name="author" content="dani.shemesh" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="This post is the second of a two parts series of articles on how to tune Akka configurations" />
+<meta property="og:description" content="This post is the second of a two parts series of articles on how to tune Akka configurations" />
+<link rel="canonical" href="http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/" />
+<meta property="og:url" content="http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/" />
+<meta property="og:site_name" content="FullGC" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2017-12-09T16:40:45+02:00" />
+<script type="application/ld+json">
+{"name":null,"description":"This post is the second of a two parts series of articles on how to tune Akka configurations","author":{"@type":"Person","name":"dani.shemesh"},"@type":"BlogPosting","url":"http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/","publisher":null,"image":null,"headline":"How to tune Akka to get the most from your Actor-based system - Part 2","dateModified":"2017-12-09T16:40:45+02:00","datePublished":"2017-12-09T16:40:45+02:00","sameAs":null,"mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+<body>
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Dani Shemesh</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="/about/">About</a>
+                </li>
+                
+                <li>
+                    <a href="/contact/">Contact</a>
+                </li>
+                
+                <li>
+                    
+                </li>
+                
+                <li>
+                    
+                </li>
+                
+                <li>
+                    
+                </li>
+                
+                <li>
+                    
+                </li>
+                
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+
+    <!-- Post Header -->
+<header class="intro-header" style="background-image: url('/img/tune-Akka.jpg')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>How to tune Akka to get the most from your Actor-based system - Part 2</h1>
+                    
+                    <span class="meta">Posted by dani.shemesh on December 9, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Begin Jekyll SEO tag v2.3.0 -->
+<title>How to tune Akka to get the most from your Actor-based system - Part 2 | FullGC</title>
+<meta property="og:title" content="How to tune Akka to get the most from your Actor-based system - Part 2" />
+<meta name="author" content="dani.shemesh" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="This post is the second of a two parts series of articles on how to tune Akka configurations" />
+<meta property="og:description" content="This post is the second of a two parts series of articles on how to tune Akka configurations" />
+<link rel="canonical" href="http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/" />
+<meta property="og:url" content="http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/" />
+<meta property="og:site_name" content="FullGC" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2017-12-09T16:40:45+02:00" />
+<script type="application/ld+json">
+{"name":null,"description":"This post is the second of a two parts series of articles on how to tune Akka configurations","author":{"@type":"Person","name":"dani.shemesh"},"@type":"BlogPosting","url":"http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/","publisher":null,"image":null,"headline":"How to tune Akka to get the most from your Actor-based system - Part 2","dateModified":"2017-12-09T16:40:45+02:00","datePublished":"2017-12-09T16:40:45+02:00","sameAs":null,"mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+
+				      <p><i>This post is the second of a two parts series of articles on how to tune Akka configurations</i></p>
+
+<ul>
+  <li><a href="https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1">Part-1: Initial Akka Configurations</a></li>
+  <li><a href="https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2">Part-2: Gather and analyze Akka metrics with Kamon and stackable traits</a></li>
+</ul>
+
+<p><a href="https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1/">Previously</a>, we’ve tried to adjust Akka configurations for some possible use cases. After we set up a configuration and have a system up and running, we like to know how well we did and “re-tune” the configuration where needed.</p>
+
+<h2 id="part-2-gather-and-analyze-akka-metrics-with-kamon-and-stackable-traits">Part-2: Gather and analyze Akka metrics with Kamon and stackable traits</h2>
+
+<p>This part focuses on Akka metrics, means a high level data on the Akka Objects we’ve configured( i.e. Dispatchers, Routes, Actors(Routees), and Messages), how we gather them at Inneractive and some useful tips.</p>
+
+<h3 id="monitoring-tools-for-akka"><strong>Monitoring Tools for Akka</strong></h3>
+
+<p>Akka library does not include a native monitoring tool, however there are a few tools that provide additional metrics for Akka-based application(i.e. memory usage, trace information), profiling and more capabilities that help identify performance issues or to put the finger on a bottleneck.</p>
+
+<p>To name a few:</p>
+
+<ul>
+  <li>
+    <p><a href="https://developer.lightbend.com/docs/monitoring/2.0.x/home.html">‘Lightbend Monitoring’ </a></p>
+
+    <p>Provides about all necessary features, including key Akka metrics and <a href="https://developer.lightbend.com/docs/monitoring/2.0.x/instrumentations/akka/akka.html#span-tracer">span traces</a>.</p>
+
+    <p>Takipi plugin provides actor events that can trigger debug snapshots of the stack trace, i.e. the state at the time of the error. Btw It’s not free…</p>
+  </li>
+  <li>
+    <p><a href="https://docs.newrelic.com/">Newrelic</a></p>
+
+    <p>A powerful performance monitoring and management framework, has Spray and</p>
+
+    <p>Akka-Http instrumented features. However it’s most important feature, at least regarding our purpose, the <a href="https://docs.newrelic.com/docs/apm/transactions/x-ray-sessions/introduction-x-ray-sessions">X-ray</a>, which gives deeper insight into a key transaction’s, is available only with a ‘Pro’ subscription.</p>
+  </li>
+  <li>
+    <p>Flame Graphs / VirtualVm or any other JVM profiling tool</p>
+  </li>
+  <li>
+    <p>Kamon</p>
+  </li>
+</ul>
+
+<p><strong>Kamon</strong></p>
+
+<h4 id="overview">Overview</h4>
+
+<p>Kamon is an open source tool for monitoring applications running on the JVM. It supports various backends and has <a href="http://kamon.io/documentation/get-started">modules</a> that integrate and gather metrics for Akka, Play, Spray/Akka-Http and more.</p>
+
+<p>Kamon uses <a href="http://www.eclipse.org/aspectj/">Aspectj</a> to add a layer of code before and after a method is executed, and in this <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming">aspect- oriented</a> fashion records metrics data(e.g.  Records time before and after processing of messages/futures/routing (See <a href="#appendix">Appendix</a>).</p>
+
+<p>Here at Inneractive we use Kamon to gather all metrics, including application custom metrics, even in applications that do not usu Akka, because it proves to perform better (CPU wise) than other alternatives.</p>
+
+<p>It contains metric types functionalities like .histogram(..), .counter(..), .gauge(..) and .minMaxCounter(..)</p>
+
+<h4 id="configuration-for-kamon-akka-metrics">Configuration for Kamon Akka metrics</h4>
+
+<p><a href="http://kamon.io/documentation/kamon-akka/0.6.6/overview/">Akka integration </a>has a <a href="http://kamon.io/documentation/kamon-akka/0.6.6/actor-router-and-dispatcher-metrics/">collection of metrics</a> for actor, router and dispatcher objects. At first, In our Exchange server, we collected them all. Soon enough our monitoring tools, <a href="https://prometheus.io/">Prometheus</a> and <a href="https://www.datadoghq.com/dg/slpg/?utm_source=Advertisement&amp;utm_medium=GoogleAdsNon1stTierBrand&amp;utm_campaign=GoogleAdsNon1stTierBrand-Non1st&amp;utm_content=Datadog&amp;utm_keyword=%7Bkeyword%7D&amp;utm_matchtype=%7Bmatchtype%7D&amp;gclid=EAIaIQobChMI19CG9MjA1wIVEpMbCh1t0Q4dEAAYASAAEgLd4vD_BwE">Datadog</a> went down / froze because of a <em>crazy</em> load of metrics. The reason is that we have 1000-1500 Actor instances. The metrics’s names include the instance name (it is not a Tag as you might expect). We do have our own tags like ‘environment’ and ‘host’, and about ~600 Exchange instances, and there you get a huge number of metrics that our monitors could not handle.</p>
+
+<p>Also the ‘aspect’ way of gathering metric’s data is quite expensive, performance wise.</p>
+
+<p>Our metric configuration looks as follows:</p>
+
+<!-- HTML generated using hilite.me -->
+<div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #4070a0">&quot;metric&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">{</span>
+  <span style="color: #4070a0">&quot;filters&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">{</span>
+   <span style="color: #4070a0">&quot;akka-actor&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">{</span>
+     <span style="color: #4070a0">&quot;excludes&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">[</span><span style="color: #4070a0">&quot;**&quot;</span><span style="color: #666666">],</span>
+     <span style="color: #4070a0">&quot;includes&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">[]</span>
+   <span style="color: #666666">},</span>
+   <span style="color: #4070a0">&quot;akka-dispatcher&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">{</span>
+     <span style="color: #4070a0">&quot;excludes&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">[],</span>
+     <span style="color: #4070a0">&quot;includes&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">[</span><span style="color: #4070a0">&quot;**&quot;</span><span style="color: #666666">]</span>
+   <span style="color: #666666">},</span>
+   <span style="color: #4070a0">&quot;akka-router&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">{</span>
+     <span style="color: #4070a0">&quot;excludes&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">[],</span>
+     <span style="color: #4070a0">&quot;includes&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">[</span><span style="color: #4070a0">&quot;**&quot;</span><span style="color: #666666">]</span>
+   <span style="color: #666666">},</span>
+   <span style="color: #4070a0">&quot;trace&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">{</span>
+     <span style="color: #4070a0">&quot;excludes&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">[],</span>
+     <span style="color: #4070a0">&quot;includes&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">[</span> <span style="color: #4070a0">&quot;**&quot;</span><span style="color: #666666">]</span>
+   <span style="color: #666666">}</span>
+ <span style="color: #666666">}</span>
+<span style="color: #666666">...</span>
+<span style="color: #666666">}</span>
+</pre></div>
+
+<p>As you may noticed,  we exclude akka-actor, which means all routees metrics(time-in-mailbox, processing-time, mailbox-size), and gather metrics for actors ourselves. This is because:</p>
+
+<ul>
+  <li>
+    <p>Routees metrics outnumbered all the others combined, since we have lots of actor instances, and we desperately needed our monitors to be working…</p>
+  </li>
+  <li>
+    <p>We don’t really mind for a single routee in pretty much all cases, so gathered information like average, sum, 95 can do the trick</p>
+  </li>
+  <li>
+    <p>The metrics’s names are somewhat awkward(partially because the name of the routees is like $a $b… and naming them means to create them explicitly in the code)</p>
+  </li>
+  <li>
+    <p>We know the names of our actors, and have a foothold in our own actor’s code. So we could gather metrics ourselves easily enough, and with a more concise information.</p>
+  </li>
+</ul>
+
+<p>In addition, we wanted metrics about the messages, processing time and the time it took the</p>
+
+<p>message to arrive.</p>
+
+<h4 id="tips">Tips</h4>
+
+<ol>
+  <li>
+    <p>When you route manually, means when you don’t have a router, or whenever you have create the routees explicitly, you can give them names yourself(see <a href="https://doc.akka.io/api/akka/2.0/akka/actor/ActorContext.html">actorOf</a> parameters).</p>
+  </li>
+  <li>
+    <p>Akka does not provide an Api to know the size of the mailbox. you can monitor  by</p>
+  </li>
+  <li>
+    <p>Have a messages counterlike Kamon does)</p>
+  </li>
+  <li>
+    <p>Override the MessageQueue. Google it.</p>
+  </li>
+</ol>
+
+<h4 id="configuration-for-kamon-akka-actorsystem">Configuration for Kamon Akka ActorSystem</h4>
+
+<p>As stated, the aspectj operating by Kamon is quite expensive, even when excluding of all routees metrics. By default, Kamon uses the default-dispatcher. If you don’t set a default-dispatcher yourself, the threadpool size of the default-dispatcher will be the number of cores. In practice Kamon told us that about 75% of the running threads were Kamon’s.. You can set a dispatcher for Kamon as follows 
+<img align="right" src="/img/kamon_the_rock.png" /></p>
+
+<!-- HTML generated using hilite.me -->
+<div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"> <span style="color: #4070a0">&quot;akka&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">{</span>
+   <span style="color: #4070a0">&quot;actor&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">{</span>
+     <span style="color: #4070a0">&quot;default-dispatcher&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">{</span>
+       <span style="color: #4070a0">&quot;fork-join-executor&quot;</span><span style="color: #666666">:</span> <span style="color: #666666">{</span>
+         <span style="color: #4070a0">&quot;parallelism-factor&quot;</span><span style="color: #666666">:</span> <span style="color: #40a070">0.25</span><span style="color: #666666">,</span>
+         <span style="color: #4070a0">&quot;parallelism-max&quot;</span><span style="color: #666666">:</span> <span style="color: #40a070">2</span><span style="color: #666666">,</span>
+         <span style="color: #4070a0">&quot;parallelism-min&quot;</span><span style="color: #666666">:</span> <span style="color: #40a070">1</span>
+       <span style="color: #666666">}</span>
+     <span style="color: #666666">}</span>
+   <span style="color: #666666">}</span>
+ <span style="color: #666666">}</span>
+</pre></div>
+
+<p>Here we allow up to 2 threads(but even 1 would probably be enough), with a parallelism-factor of 0.25, means up to 2 threads when the machine has at least 8 cores. 
+This does the job.</p>
+
+<h4 id="appendix">Appendix</h4>
+
+<p>class <a href="https://github.com/kamon-io/kamon-akka/blob/master/kamon-akka-2.4.x/src/main/scala/kamon/akka/instrumentation/ActorMonitor.scala">ActorMonitor.scala</a> from the module kamon-akka</p>
+
+<!-- HTML generated using hilite.me -->
+<div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><table><tr><td><pre style="margin: 0; line-height: 125%">83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+109
+110</pre></td><td><pre style="margin: 0; line-height: 125%"> <span style="color: #007020; font-weight: bold">def</span> processMessage<span style="color: #666666">(</span>pjp<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ProceedingJoinPoint</span><span style="color: #666666">,</span> envelopeContext<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">EnvelopeContext</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">AnyRef</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
+       <span style="color: #007020; font-weight: bold">val</span> timestampBeforeProcessing <span style="color: #007020; font-weight: bold">=</span> <span style="color: #0e84b5; font-weight: bold">RelativeNanoTimestamp</span><span style="color: #666666">.</span>now
+
+      <span style="color: #007020; font-weight: bold">try</span> <span style="color: #666666">{</span>
+        <span style="color: #0e84b5; font-weight: bold">Tracer</span><span style="color: #666666">.</span>withContext<span style="color: #666666">(</span>envelopeContext<span style="color: #666666">.</span>context<span style="color: #666666">)</span> <span style="color: #666666">{</span>
+          pjp<span style="color: #666666">.</span>proceed<span style="color: #666666">()</span>
+        <span style="color: #666666">}</span>
+
+      <span style="color: #666666">}</span> <span style="color: #007020; font-weight: bold">finally</span> <span style="color: #666666">{</span>
+        <span style="color: #007020; font-weight: bold">val</span> timestampAfterProcessing <span style="color: #007020; font-weight: bold">=</span> <span style="color: #0e84b5; font-weight: bold">RelativeNanoTimestamp</span><span style="color: #666666">.</span>now
+        <span style="color: #007020; font-weight: bold">val</span> timeInMailbox <span style="color: #007020; font-weight: bold">=</span> timestampBeforeProcessing <span style="color: #666666">-</span> envelopeContext<span style="color: #666666">.</span>nanoTime
+        <span style="color: #007020; font-weight: bold">val</span> processingTime <span style="color: #007020; font-weight: bold">=</span> timestampAfterProcessing <span style="color: #666666">-</span> timestampBeforeProcessing
+
+        actorMetrics<span style="color: #666666">.</span>foreach <span style="color: #666666">{</span> am <span style="color: #007020; font-weight: bold">=&gt;</span>
+          am<span style="color: #666666">.</span>processingTime<span style="color: #666666">.</span>record<span style="color: #666666">(</span>processingTime<span style="color: #666666">.</span>nanos<span style="color: #666666">)</span>
+          am<span style="color: #666666">.</span>timeInMailbox<span style="color: #666666">.</span>record<span style="color: #666666">(</span>timeInMailbox<span style="color: #666666">.</span>nanos<span style="color: #666666">)</span>
+          am<span style="color: #666666">.</span>mailboxSize<span style="color: #666666">.</span>decrement<span style="color: #666666">()</span>
+        <span style="color: #666666">}</span>
+       <span style="color: #666666">...</span>
+      <span style="color: #666666">}</span>
+    <span style="color: #666666">}</span>
+
+<span>…</span>
+  <span style="color: #666666">}</span>
+</pre></td></tr></table></div>
+
+<!-- HTML generated using hilite.me -->
+<div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #0e84b5; font-weight: bold">Line</span> <span style="color: #40a070">83</span> <span style="color: #666666">-</span> 'processMessage' executes 'around'<span style="color: #666666">(</span>before and after<span style="color: #666666">)</span> message processing by the actor<span style="color: #666666">(</span>jpg<span style="color: #666666">,</span> line <span style="color: #40a070">88</span><span style="color: #666666">)</span>
+<span style="color: #0e84b5; font-weight: bold">Line</span> <span style="color: #40a070">84</span> <span style="color: #666666">-</span> <span style="color: #0e84b5; font-weight: bold">Takes</span> start time before the message being processed
+<span style="color: #0e84b5; font-weight: bold">Line</span> <span style="color: #40a070">88</span> <span style="color: #666666">-</span> <span style="color: #0e84b5; font-weight: bold">Invokes</span> the method that handles message is processing
+<span style="color: #0e84b5; font-weight: bold">Lines</span> <span style="color: #40a070">92</span><span style="color: #666666">-</span><span style="color: #40a070">94</span> <span style="color: #666666">-</span> <span style="color: #0e84b5; font-weight: bold">Latency</span> calculations
+<span style="color: #0e84b5; font-weight: bold">Lines</span> <span style="color: #40a070">96</span><span style="color: #666666">-</span><span style="color: #40a070">99</span> <span style="color: #0e84b5; font-weight: bold">Updates</span> metrics cache
+</pre></div>
+
+<p><strong>Monitor with Stackable Actor Traits</strong></p>
+
+<p>We like to collect aggregated data for the routees and messages then.</p>
+
+<p>In order to monitor time-in-mailbox, processing-time, mailbox-size that we excluded from Kamon metric configuration, we need to monitor ‘around’ the message processing, i.e. around the ‘receive’ method</p>
+
+<p>It can be achieved by imitating Kamon’s usage of <a href="http://www.eclipse.org/aspectj/">Aspectj</a> as we just saw.</p>
+
+<p>We however, use a ‘stackable-traits‘ mixed to the Actors, for a monitoring layer around ‘receive’.</p>
+
+<p><a href="https://fullgc.github.io/stackable-traits-pattern/">I wrote about stackable traits pattern here</a>. in <a href="https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/">part-2</a> <strong>I describe(a simplified version of) how we use stackable actor traits in Inneractive, with code samples.</strong></p>
+
+<h3 id="dashboard-overview"><strong>Dashboard Overview</strong></h3>
+
+<p>Our <a href="#bookmark=id.gdmyvra3gln">dashboard</a> consists of Kamon’s Akka metrics and custom metrics.</p>
+
+<p>Akka metrics collection explained in details in the <a href="http://kamon.io/documentation/kamon-akka/0.6.6/actor-router-and-dispatcher-metrics/">docs</a></p>
+
+<p>Among all metrics, put special attention to:</p>
+
+<ul>
+  <li>
+    <p>‘active-threads’ and ‘running-threads’, these give a very good view of your threads distribution so you would tune the dispatcher’s configuration if needed</p>
+  </li>
+  <li>
+    <p>‘pool-size’, when you set upper, lower and increment factor and not a fixed size. This tells you how many threads are allocated in the pool in practice.</p>
+  </li>
+  <li>
+    <p>‘processed-tasks’ - How busy is the executor, maybe more threads are needed</p>
+  </li>
+  <li>
+    <p>‘routing-time’ - tells if the routing strategy fits.</p>
+  </li>
+  <li>
+    <p>Custom metrics - ‘time-in-mailbox by actor/message’ for routees. Maybe a specific message handling does the trouble.</p>
+  </li>
+  <li>
+    <p>Custom metrics ‘message-start-process’ for routees, when the value is high it can indicate that the receiver needs more resources or there are too many instances, lead to lots of context-switches. Increase of the “thoughput” parameter may help.</p>
+  </li>
+</ul>
+
+<p><img src="http://localhost:4000/public/asNMIb0wNDGjYnrdr4zCuQ_img_0.png" alt="image alt text" /></p>
+
+<h3 id="wrapping-up">Wrapping up</h3>
+
+<p>Monitoring of the Akka objects plays an important and integral part of the tuning step (and generally important for keep track of the system behavior).
+There are various tools and ways to do so, Kamon is friendly and recommended, and you can gather metric yourself.</p>
+
+<h3 id="references">References</h3>
+
+<p><em><a href="http://kamon.io/documentation/get-started/">Kamon Documentation</a></em></p>
+
+<p><em><a href="https://github.com/kamon-io/kamon-akka">Kamon-Akka repository</a></em></p>
+
+<p><em><a href="https://fullgc.github.io/stackable-traits-pattern---part-2/">Stackable Actor Traits</a></em></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+var disqus_config = function () {
+this.page.url = "https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/"
+this.page.identifier = Akka-2
+};
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://FullGC.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+              <hr>
+
+              <div class="container">
+    <div class="row ">
+        <div class="col-xs-2"></div>
+        <div class="col-xs-8">
+
+        <!-- Twitter -->
+        <a href="https://twitter.com/share" class="twitter-share-button" data-via="vdaubry">Tweet</a>
+        <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+        <!-- Google + -->
+        <div class="g-plus" data-action="share" data-annotation="bubble"></div>
+        <script src="https://apis.google.com/js/platform.js" async defer></script>
+
+        <!-- Facebook -->
+        <div class="fb-share-button" data-href="http://localhost:4000/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/" data-layout="button_count" style="position: relative; top: -8px; left: 33px;"></div>
+        <div id="fb-root"></div>
+        <script>(function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0];
+          if (d.getElementById(id)) return;
+          js = d.createElement(s); js.id = id;
+          js.src = "//connect.facebook.net/fr_FR/sdk.js#xfbml=1&appId=609039549219229&version=v2.0";
+          fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));</script>
+
+    </div>
+    </div>
+    <div class="col-xs-2"></div>
+</div>
+
+            </div>
+        </div>
+    </div>
+</article>
+<br>
+
+
+<!--  Disqus comments -->
+<!--
+
+
+<hr>-->
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="/feed.xml">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    
+                    <li>
+                        <a href="https://github.com/FullGC">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; FullGC 2017</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.js "></script>
+
+
+</body>
+
+</html>
