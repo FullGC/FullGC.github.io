@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
 
-    <title>{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %} | vdaubry</title>
+    <title>{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %} | Dani</title>
 
     <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
 
@@ -73,15 +73,6 @@
     {% endif %}
 
 
-    <!-- Twitter cards metadatas -->
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:site" content="@vdaubry">
-    <meta name="twitter:creator" content="@vdaubry">
-    {% if page.title %}
-      <meta name="twitter:title" content="{{ page.title }}">
-    {% else %}
-      <meta name="twitter:title" content="{{ site.title }}">
-    {% endif %}
     {% if page.url %}
       <meta name="twitter:url" content="{{ site.url }}{{ page.url }}">
     {% endif %}
