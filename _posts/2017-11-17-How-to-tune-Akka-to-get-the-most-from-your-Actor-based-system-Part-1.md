@@ -123,7 +123,7 @@ Here the consumer will block waiting for the next item.
 
 <span style="font-weight: 400;">Actor per request works very similarly. An instance is created for every request, process it and then will be destroyed.</span>
 
-<span style="font-weight: 400;">You can configure Spray/Akka-HTTP to work in actor-per-r</span>
+<span style="font-weight: 400;">You can configure Spray/Akka-HTTP to work in actor-per-request</span>
 
 You can configure Spray/Akka-HTTP to work in actor-per-request mode, or do it yourself, however it is not part of the Akka configuration so I won't get deep into details. In a nutshell-
 
