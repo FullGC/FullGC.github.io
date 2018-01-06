@@ -209,9 +209,8 @@ You might notice that
 
 3. Kafka would call super, i.e. S3-Backup would be invoked only when KafkaProducer fails to deliver.
 
-<img align="right" src="/img/stack-traits.jpg">
-
 ##### Create and 'Stack' modification traits:
+<img src="/img/stack-traits.jpg">
 
 The event's content that needs to be modified to be in the right format (json, csv) before sent as an input to KafkaProducer and S3. A Fatal error needs to be sent with a timestamp
 
