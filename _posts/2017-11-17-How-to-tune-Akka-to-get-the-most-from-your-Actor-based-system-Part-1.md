@@ -95,9 +95,8 @@ You're somewhat familiar with [Akka-Streams](https://doc.akka.io/docs/akka/2.5/s
 
 Let's review some scenarios in which you may want to scale your routees: 
 
-<img align="right" src="/img/loaded.png">
 ###### *The producer(In our use case, one of your actors), can produce faster than the received consumer(actor or any other source) can handle.*
-
+<img align="right" src="/img/loaded.png" height="300" width="300">
  In this case you may:
 
 * Back-pressure the producer, i.e. reduce the number of producer's routees.
@@ -106,7 +105,7 @@ Let's review some scenarios in which you may want to scale your routees:
 
 * Leave it. You don't necessary need to back-pressure, Note it may lead to a loss of messages(Bounded mailbox)/ running out of memory...
 
-<img align="left" src="/img/easy.png">
+<img align="right" src="/img/easy.png" height="300" width="300">
 ###### *The consumer is faster than the producer.*
 
 Here the consumer will block waiting for the next item.
@@ -117,11 +116,10 @@ Here the consumer will block waiting for the next item.
 
 * Leave it. Then you may not get the most from your machine.
 
-<img align="right" src="/img/meeseeks.png">
 ##### *Actor per-request*
 
 <span style="font-weight: 400;">“</span><i><span style="font-weight: 400;">You press, you make a request, the </span></i><a href="https://en.wikipedia.org/wiki/Meeseeks_and_Destroy"><i><span style="font-weight: 400;">Meeseeks</span></i></a><i><span style="font-weight: 400;"> fulfills the request, and then it stops existing”(</span></i><a href="https://en.wikipedia.org/wiki/Rick_Sanchez_(Rick_and_Morty)"><i><span style="font-weight: 400;">Rick Sanchez</span></i></a><i><span style="font-weight: 400;">)</span></i>
-
+<img align="right" src="/img/meeseeks.png" height="100" width="100">
 <span style="font-weight: 400;">Actor per request works very similarly. An instance is created for every request, process it and then will be destroyed.</span>
 
 <span style="font-weight: 400;">You can configure Spray/Akka-HTTP to work in actor-per-r</span>
@@ -365,7 +363,7 @@ From the first statement, when a 'Fork' performed, we have multiple threads and 
 
 From the second, when a thread is done it can take some other task. But what if he got stuck on this task? The other threads will wait on the 'Join' at some point, which is a threads starvation.
 
-<img align="right" src="/img/fork.jpg">
+<img align="right" src="/img/fork.jpg" height="300" width="270">
 ````
 my-dispatcher {
   executor = "fork-join-executor"
@@ -436,7 +434,7 @@ This executor tries its best to have your actor instance always schedule with th
 It is recommended for small number of actor instances, for if you have much more instances than threads, it is just not possible.
 
 #### Tips
-<img align="right" src="/img/dispatcher.jpg">
+<img align="right" src="/img/dispatcher.jpg" height="300" width="300">
 * Don't use the [Akka default dispatcher](https://doc.akka.io/docs/akka/2.5/scala/dispatchers.html) for your actorSystem nor for the actors themselves. Note that external Akka based frameworks use it as default, and you should configure a dedicated dispatcher for them as well.
 
 * Have a different Dispatcher for each actor, and for Futures inside an actor.
@@ -450,11 +448,15 @@ It is recommended for small number of actor instances, for if you have much more
 In [Part-2](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2) I will show how we monitor and analyze our actor-based system.
 
 ```
-Inneractive maintains an Exchange server, which, simply put, gets an advertisement for a mobile application from Ad-Networks.
-In fact there are ~500 server instances at a given moment, dealing with ~10,000,000 Ad requests per a minute.
-During the process the Exchange server performs a real-time auction by going out (with scala.Future)s to multiple Ad-Networks(consumers).
+Inneractive maintains an Exchange server, which, simply put,
+gets an advertisement for a mobile application from Ad-Networks.
+In fact there are ~500 server instances at a given moment,
+dealing with ~10,000,000 Ad requests per a minute.
+During the process the Exchange server performs a real-time auction by going out (with scala.Future)s
+to multiple Ad-Networks(consumers).
 This translates to ~150,000,000 transactions per a minute.
-The Exchange server is akka-based, it uses Spray as a server side-http, and the entire flow is actor-based.
+The Exchange server is akka-based, it uses Spray as a server side-http,
+and the entire flow is actor-based.
 We use other Akka frameworks in other modules like Akka-Http and Akka Streams.
 ```
 
