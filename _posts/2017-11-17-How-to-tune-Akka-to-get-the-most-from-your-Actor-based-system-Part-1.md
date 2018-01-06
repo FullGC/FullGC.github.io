@@ -292,7 +292,7 @@ This executor tries its best to have your actor instance always schedule with th
 It is recommended for small number of actor instances, for if you have much more instances than threads, it is just not possible.
 
 #### Tips
-<img align="right" src="/img/dispatcher.jpg" height="300" width="300">
+<img align="right" src="/img/dispatcher.jpg" height="250" width="250">
 * Don't use the [Akka default dispatcher](https://doc.akka.io/docs/akka/2.5/scala/dispatchers.html) for your actorSystem nor for the actors themselves. Note that external Akka based frameworks use it as default, and you should configure a dedicated dispatcher for them as well.
 
 * Have a different Dispatcher for each actor, and for Futures inside an actor.
