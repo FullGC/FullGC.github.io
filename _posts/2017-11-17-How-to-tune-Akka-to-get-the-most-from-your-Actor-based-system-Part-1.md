@@ -146,13 +146,20 @@ akka.actor.deployment {
 #### Strategies Overview
 
 Let's quickly review the the routing strategies
-* **Random** - Distributes messages *randomly
-* **Round-Robin** - Distributes messages sequencely*
+* **Random** - Distributes messages randomly
+
+* **Round-Robin** - Distributes messages sequencely
+
 * **Smallest-Mailbox** - Sends the message to the smallest mailbox
+
 * **Broadcast** - Distributes every message to all routees.
+
 * **Scatter-Gather-First** - Distributes every message to all routees. *Only* the first to respond execute the task.
+
 * **Tail-Chopping** - Sends the message to one, randomly picked, Routee and then after a small delay to a second Routee.
+
 * **Consistent-hashing** - uses consistent hashing to select a Routee based on the sent message
+
 * **In-Code** - Custom your own routing by route it yourself
 
 
