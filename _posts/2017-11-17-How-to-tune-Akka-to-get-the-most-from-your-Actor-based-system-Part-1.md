@@ -117,9 +117,8 @@ Here the consumer will block waiting for the next item.
 * Leave it. Then you may not get the most from your machine.
 
 ##### *Actor per-request*
-
-<span style="font-weight: 400;">“</span><i><span style="font-weight: 400;">You press, you make a request, the </span></i><a href="https://en.wikipedia.org/wiki/Meeseeks_and_Destroy"><i><span style="font-weight: 400;">Meeseeks</span></i></a><i><span style="font-weight: 400;"> fulfills the request, and then it stops existing”(</span></i><a href="https://en.wikipedia.org/wiki/Rick_Sanchez_(Rick_and_Morty)"><i><span style="font-weight: 400;">Rick Sanchez</span></i></a><i><span style="font-weight: 400;">)</span></i>
 <img align="right" src="/img/meeseeks.png" height="100" width="100">
+<span style="font-weight: 400;">“</span><i><span style="font-weight: 400;">You press, you make a request, the </span></i><a href="https://en.wikipedia.org/wiki/Meeseeks_and_Destroy"><i><span style="font-weight: 400;">Meeseeks</span></i></a><i><span style="font-weight: 400;"> fulfills the request, and then it stops existing”(</span></i><a href="https://en.wikipedia.org/wiki/Rick_Sanchez_(Rick_and_Morty)"><i><span style="font-weight: 400;">Rick Sanchez</span></i></a><i><span style="font-weight: 400;">)</span></i>
 
 <span style="font-weight: 400;">Actor per request works very similarly. An instance is created for every request, process it and then will be destroyed.</span>
 
@@ -156,8 +155,10 @@ Let's quickly review the the routing strategies
 * **Consistent-hashing** - uses consistent hashing to select a Routee based on the sent message
 * **In-Code** - Custom your own routing by route it yourself
 
-#### *Strategies Cheatsheet*
 
+#### *Strategies Cheatsheet*
+<img align="right" src="/img/strategies.jpg">
+<!--
 <table>
 <tbody>
 <tr>
@@ -307,6 +308,7 @@ Let's quickly review the the routing strategies
 </tr>
 </tbody>
 </table>
+ -->
 
 
 *Can be solved by increasing the number of routees (which may cost in context-switches overhead)
