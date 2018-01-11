@@ -134,7 +134,7 @@ Now it is clear which subscribers should receive a notification on error. We wil
 
 
 
-Alright, so now each trait have a "send" method that handles the event using the appropriate client.
+Now each trait have a "send" method that handles the event using the appropriate client.
 
 But we still need to trigger it on error, and call them in the order described above
 
@@ -144,7 +144,7 @@ But we still need to trigger it on error, and call them in the order described a
 
 Note that at this step we won't be stacking modifications, but the side-effects that triggered on error.
 
-Alright so we need to stack the traits according to the order and logic defined in the narrative described above. The order of the invocation of the traits will be right to left.
+Alright, so we need to stack the traits according to the order and logic defined in the narrative described above. The order of the invocation of the traits will be right to left.
 
 Hence the order for FatalError: S3_Backup ← Kafka ← Monitor ← Log
 
