@@ -42,6 +42,7 @@ Let's start with Akka configuration, specifically the configuration of [actor-in
 
 Let’s review some scenarios in which you may want to scale your routees:
 
+
 ### **Number of Actor Instances**
 
 I like to start by thinking about how many instances of an actor should I have?
@@ -133,6 +134,7 @@ You can configure Spray/Akka-HTTP to work in actor-per-request mode, or do it yo
 Note that there is a context-switches overhead and could theoretically lead to memory issues
 
 
+
 ### **Routing**
 
 Akka provides "strategies" for the Akka router to define workload distribution among actors. 
@@ -172,6 +174,7 @@ Let's quickly review the the routing strategies
 **As a replacement for 'smallest mailbox'. 2. Latency differences could be high among connections to remote actors
 
 ***the overhead depends on the task, whether it on the same machine or not
+
 
 
 ### **Dispatchers and Executors**
@@ -300,6 +303,7 @@ It is recommended for small number of actor instances, for if you have much more
 * Dispatchers has 'throughput' parameter, which "*defines the maximum number of messages to be processed per actor before the thread jumps to the next actor"* Setting It to higher value than the default, 1, is likely to improve performance if it is not part of Affinity-pool dispatcher, and if your actors generally not very busy (otherwise the lack of fairness can cause a high load in some mailboxes).
 
 * Read [this terrific post in ScalaC blog](https://blog.scalac.io/improving-akka-dispatcher.html). It explains Dispatcher's internals in details.
+
 
 
 ### **Next**
