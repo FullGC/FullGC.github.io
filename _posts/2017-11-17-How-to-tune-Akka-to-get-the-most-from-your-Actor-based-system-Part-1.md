@@ -222,7 +222,7 @@ From the first statement, when a 'Fork' performed, we have multiple threads and 
 
 From the second, when a thread is done it can take some other task. But what if he got stuck on this task? The other threads will wait on the 'Join' at some point, which is a threads starvation.
 
-<img align="right" src="/img/fork.jpg" height="390" width="30%">
+<img align="right" src="/img/fork.jpg" height="290" width="30%">
 ````
 my-dispatcher {
   executor = "fork-join-executor"
