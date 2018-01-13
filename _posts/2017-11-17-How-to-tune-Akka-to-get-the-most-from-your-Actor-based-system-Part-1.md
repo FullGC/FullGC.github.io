@@ -168,7 +168,7 @@ Let's quickly review the the routing strategies
 
 *Can be solved by increasing the number of routees (which may cost in context-switches overhead)
 
-**As a replacement for 'smallest mailbox'. 2. Latency differences could be high among connections to remote actors )
+**As a replacement for 'smallest mailbox'. 2. Latency differences could be high among connections to remote actors
 
 ***the overhead depends on the task, whether it on the same machine or not
 
