@@ -207,13 +207,13 @@ There are 2 main characters that worth mentioning here. According to [Oracle doc
 
 1. *"It is designed for work that can be broken into smaller pieces recursively".*
 
-It hence best for recursive problems - where a task can be broken into sub-tasks such that they would be executed in parallel and their results would be collected.
+    It hence best for recursive problems - where a task can be broken into sub-tasks such that they would be executed in parallel and their results would be collected.
 
 2. *"The fork/join framework is distinct because it uses a work-stealing algorithm. Worker threads that run out of things to do can steal tasks from other threads that are still busy"*
 
-**Fork-Join shows better performance in most cases, compare to old Thread-Pool-Executor**, as it makes a better uses of the resources, as the idle threads can steal tasks from busier threads. 
+    **Fork-Join shows better performance in most cases, compare to old Thread-Pool-Executor**, as it makes a better uses of the resources, as the idle threads can steal tasks from busier threads.
 
-However there is a build-in danger here. 
+    However there is a build-in danger here.
 
 From the first statement, when a 'Fork' performed, we have multiple threads and each of them is responsible to run a task. 
 
