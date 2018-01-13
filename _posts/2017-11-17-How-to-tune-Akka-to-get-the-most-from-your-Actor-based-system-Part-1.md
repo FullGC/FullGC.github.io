@@ -62,11 +62,13 @@ Let’s review our options and use cases:
 * A mutable, single-source that needs to be handled(Cache)
 * When you just have to work sequentially for whatever reason 
 
+
 #### Fixed number of instances
 
 * Instance per-a copy of a resource, or per a mutable resource
 * For sharding, i.e. when you manage a distributed key-value cache, and want to shard the inputs, then you might want to have an actor to manage each shard.
 * To execute tasks in parallel, and don't think you’ll need to manage [Back-Pressure](https://www.reactivemanifesto.org/glossary) nor to scale up	
+
 
 #### Resizeable number of instances(when using a router)
 ````
