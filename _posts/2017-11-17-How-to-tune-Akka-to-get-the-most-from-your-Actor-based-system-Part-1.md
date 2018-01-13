@@ -42,7 +42,7 @@ Let's start with Akka configuration, specifically the configuration of [actor-in
 
 Let’s review some scenarios in which you may want to scale your routees:
 
-
+<br><br>
 ### **Number of Actor Instances**
 
 I like to start by thinking about how many instances of an actor should I have?
@@ -133,8 +133,7 @@ You can configure Spray/Akka-HTTP to work in actor-per-request mode, or do it yo
 
 Note that there is a context-switches overhead and could theoretically lead to memory issues
 
-
-
+<br><br>
 ### **Routing**
 
 Akka provides "strategies" for the Akka router to define workload distribution among actors. 
@@ -176,7 +175,7 @@ Let's quickly review the the routing strategies
 ***the overhead depends on the task, whether it on the same machine or not
 
 
-
+<br><br>
 ### **Dispatchers and Executors**
 ````
 akka.actor.deployment {
@@ -304,8 +303,7 @@ It is recommended for small number of actor instances, for if you have much more
 
 * Read [this terrific post in ScalaC blog](https://blog.scalac.io/improving-akka-dispatcher.html). It explains Dispatcher's internals in details.
 
-
-
+<br><br>
 ### **Next**
 
 In [Part-2](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2) I will show how we monitor and analyze our actor-based system.
