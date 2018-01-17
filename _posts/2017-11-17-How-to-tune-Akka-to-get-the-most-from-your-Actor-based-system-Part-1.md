@@ -277,6 +277,7 @@ my-dispatcher {
 ````
 
 The key is to find the right balance for actor instances to work in parallel and use the threads as much as they are need so other actors and processes can work as well. It’s also true for the Fork-Join executor and needs to be quite accurate.
+
 **PinnedDispatcher** dedicates a unique thread to each actor. This is usually not the pattern you want for the machine, given the limited resources. Hence, it makes sense for the actor to share a pool of threads. However, if your actor performs a preferred task, you won’t want its instances to share the pool.
 
 Do not use it if you have more instances than the number of cores in the machine.
