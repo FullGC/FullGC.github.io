@@ -18,12 +18,13 @@ header-img: "img/tune-Akka.jpg"
 * [Part-1: Initial Akka Configurations](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1)
 * [Part-2: Gather and analyze Akka metrics with Kamon and stackable traits](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2)
 
-At some point, whether it during your new actor-based system planning, or after you have some prototype working, you'll probably find yourself dig into the Akka Docs to find the right combinations of the various possibilities of routing, dispatchers, number of actors instances and so forth..
+At some point, whether it is during your new actor-based system planning, or after you have a prototype working, you'll probably find yourself digging into the Akka Docs to find the right combination of possibilities for routing, dispatcher, number of actors instances and so forth...
 Depending on the complexity of your system and performance requirements, this could get tedious.
 
 ## Part-1: Initial Akka Configurations
 
-Let's start with Akka configuration, specifically the configuration of [actor-instances](#heading=h.hhztx0701fu1), [routing strategy](#heading=h.cuvgdmxiz64e) and [dispatchers & executors](#heading=h.no1l9o35uyp0). Below is the relevant section of the application.conf
+Let’s start with Akka configuration, specifically the configuration of [actor-instances](#heading=h.hhztx0701fu1), [routing strategy](#heading=h.cuvgdmxiz64e) and [dispatchers & executors](#heading=h.no1l9o35uyp0). Below is the relevant section of the application.conf
+
 ````
  {
   akka {
@@ -40,12 +41,10 @@ Let's start with Akka configuration, specifically the configuration of [actor-in
 }
 ````
 
-Let’s review some scenarios in which you may want to scale your routees:
-
 <br><br>
-### **Number of Actor Instances**
+### **The number of actor instances**
 
-I like to start by thinking about how many instances of an actor should I have?
+I like to start by thinking about how many instances of an actor are suitable?
 ````
  akka.actor.deployment {
     /my-service {
@@ -54,21 +53,22 @@ I like to start by thinking about how many instances of an actor should I have?
 }
 ````
 
-The size may depend on other configurations like routing strategy, dispatcher, threadpool size and more. Nevertheless, the nr-of-actor ‘strategy’ can be decided at this point.
+The size may depend on other configurations like routing strategy, dispatcher, threadpool size and more. Nevertheless, the nr-of-actor ‘strategy' can already be decided at this point.
 Let’s review our options and use cases:
 
 #### Single instance (or- Domain actor)
 
 * A dedicated actor for low-priority side-effects like sending metrics, write to a log or to a cache and so forth.
 * A mutable, single-source that needs to be handled(Cache)
-* When you just have to work sequentially for whatever reason 
+* When you need to work sequentially for whatever reason
+
 
 
 #### Fixed number of instances
 
-* Instance per-a copy of a resource, or per a mutable resource
-* For sharding, i.e. when you manage a distributed key-value cache, and want to shard the inputs, then you might want to have an actor to manage each shard.
-* To execute tasks in parallel, and don't think you’ll need to manage [Back-Pressure](https://www.reactivemanifesto.org/glossary) nor to scale up	
+* Instance per a copy of resource, or per a mutable resource
+* For sharding, i.e. when you manage a distributed key-value cache and want to shard the inputs, then you may want an actor to manage each shard
+* To execute tasks in parallel, and you don’t think you’ll need to manage [Back-Pressure](https://www.reactivemanifesto.org/glossary) nor to scale up
 
 
 #### Resizeable number of instances(when using a router)
@@ -86,17 +86,18 @@ akka.actor.deployment {
 }
 ````
 
-It is possible to configure resizable routees(actors instances managed by a router).
+It is possible to configure resizable routees (actor instances managed by a router).
 
-routees can be added or removed dynamically, based on performance. You can configure specifically how much to scale up and down in case of unusual behavior.
+Routees can be added or removed dynamically, based on performance. You can configure specifically how much to scale up and down in case of unusual behavior.
 
 ##### Scale /  [Back-Pressure](https://www.reactivemanifesto.org/glossary) DIY!
 
-When one component is struggling to keep-up, the system as a whole needs to respond in a sensible way.
+When one component is struggling to keep-up, the entire system needs to respond in a sensible way.
 
-You're somewhat familiar with [Akka-Streams](https://doc.akka.io/docs/akka/2.5/scala/stream/index.html), which widely known as a framework that manages back-pressure for you. You can imitate the general behavior by yourself.
+You’re might be somewhat familiar wit [Akka-Streams](https://doc.akka.io/docs/akka/2.5/scala/stream/index.html), widely known as a framework that manages your back-pressure. It’s possible to imitate the general behavior by yourself.
 
-Let's review some scenarios in which you may want to scale your routees: 
+Let’s review some scenarios in which you may want to scale your routees:
+
 
 ###### *The producer(In our use case, one of your actors), can produce faster than the received consumer(actor or any other source) can handle.*
 <img align="right" src="/img/loaded.png" height="300" width="300">
@@ -106,7 +107,7 @@ Let's review some scenarios in which you may want to scale your routees:
 
 * Add more consumers(routees...)!
 
-* Leave it. You don't necessary need to back-pressure, Note it may lead to a loss of messages(Bounded mailbox)/ running out of memory...
+* Leave it. You don’t necessarily need to back-pressure. It may lead to a loss of messages (bounded mailbox) or running out of memory...
 
 <img align="right" src="/img/easy.png" height="300" width="300">
 ###### *The consumer is faster than the producer.*
@@ -123,20 +124,20 @@ Here the consumer will block waiting for the next item.
 <img align="right" src="/img/meeseeks.png" height="100" width="100">
 <span style="font-weight: 400;">“</span><i><span style="font-weight: 400;">You press, you make a request, the </span></i><a href="https://en.wikipedia.org/wiki/Meeseeks_and_Destroy"><i><span style="font-weight: 400;">Meeseeks</span></i></a><i><span style="font-weight: 400;"> fulfills the request, and then it stops existing”(</span></i><a href="https://en.wikipedia.org/wiki/Rick_Sanchez_(Rick_and_Morty)"><i><span style="font-weight: 400;">Rick Sanchez</span></i></a><i><span style="font-weight: 400;">)</span></i>
 
-<span style="font-weight: 400;">Actor per request works very similarly. An instance is created for every request, process it and then will be destroyed.</span>
+Actor per request works very similarly. An instance is created for every request, process it and then it will be destroyed.
 
-You can configure Spray/Akka-HTTP to work in actor-per-request mode, or do it yourself, however it is not part of the Akka configuration so I won't get deep into details. In a nutshell-
+You can configure Spray/Akka-HTTP to work in actor-per-request mode or do it yourself. However, it is not part of the Akka configuration, so I won’t go into too much detail. In a nutshell:
 
-* Easy to manage state in the actor, because the context is always of a specific request, hence you don't have to maintain any mapping of State => Request
+* Easy to manage state in the actor, because the context is always of a specific request, hence you don’t have to maintain any mapping of State => Request
 
-* [And here are some more reasons](http://techblog.net-a-porter.com/2013/12/ask-tell-and-per-request-actors/)
+* [And here are some more insights](http://techblog.net-a-porter.com/2013/12/ask-tell-and-per-request-actors/)
 
-Note that there is a context-switches overhead and could theoretically lead to memory issues
+Note that there is a context-switches overhead which could theoretically lead to memory issues
 
 <br><br>
 ### **Routing**
 
-Akka provides "strategies" for the Akka router to define workload distribution among actors. 
+Akka provides “strategies” for the Akka router to define the workload distribution among actors.
 ````
 akka.actor.deployment {
     /my-service {
@@ -150,19 +151,19 @@ akka.actor.deployment {
 Let's quickly review the the routing strategies
 * **Random** - Distributes messages randomly
 
-* **Round-Robin** - Distributes messages sequencely
+* **Round-Robin** - Distributes messages in sequence
 
 * **Smallest-Mailbox** - Sends the message to the smallest mailbox
 
 * **Broadcast** - Distributes every message to all routees.
 
-* **Scatter-Gather-First** - Distributes every message to all routees. *Only* the first to respond execute the task.
+* **Scatter-Gather-First** - Distributes every message to all routees. Only the first to respond will execute the task.
 
-* **Tail-Chopping** - Sends the message to one, randomly picked, Routee and then after a small delay to a second Routee.
+* **Tail-Chopping** - Sends the message to one, randomly picked, routee and then after a small delay to a second routee.
 
-* **Consistent-hashing** - uses consistent hashing to select a Routee based on the sent message
+* **Consistent-hashing** - Uses consistent hashing to select a routee based on the sent message
 
-* **In-Code** - Custom your own routing by route it yourself
+* **In-Code** - Custom your own routing by routing it yourself
 
 
 #### *Strategies Cheatsheet*
@@ -170,9 +171,9 @@ Let's quickly review the the routing strategies
 
 *Can be solved by increasing the number of routees (which may cost in context-switches overhead)
 
-**As a replacement for 'smallest mailbox'. 2. Latency differences could be high among connections to remote actors
+**As a replacement for ‘smallest mailbox’. Latency differences could be high among connections to remote actors)
 
-***the overhead depends on the task, whether it on the same machine or not
+***The overhead depends on the task, whether it on the same machine or not
 
 
 <br><br>
@@ -208,21 +209,21 @@ Java 7 introduced the Fork-Join executor.
 
 As the name suggests, it *forks* a task into subtasks, each executed by a different thread, and *joined* the results.
 
-There are 2 main characters that worth mentioning here. According to [Oracle docs](https://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html) - 
+There are two main characters that are worth mentioning here. According to [Oracle docs](https://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html) -
 
 1. *"It is designed for work that can be broken into smaller pieces recursively".*
 
-    It hence best for recursive problems - where a task can be broken into sub-tasks such that they would be executed in parallel and their results would be collected.
+    Hence it is best for recursive problems - where a task can be broken into sub-tasks such that they would be executed in parallel and their results would be collected.
 
 2. *"The fork/join framework is distinct because it uses a work-stealing algorithm. Worker threads that run out of things to do can steal tasks from other threads that are still busy"*
 
-    **Fork-Join shows better performance in most cases, compare to old Thread-Pool-Executor**, as it makes a better uses of the resources, as the idle threads can steal tasks from busier threads.
+    Fork-Join shows better performance in most cases, compared to old Thread-Pool-Executor. It makes a better use of resources, since the idle threads can steal tasks from busier threads.
+    However, there is a built-in danger here.
 
-    However there is a build-in danger here.
+    Regarding the first statement, when a ‘Fork’ is performed, we have multiple threads and each of them is responsible for running a task.
+    From the second, when a thread is finished it can take another task. But what if he got stuck performing this task?
+    The other threads will wait on the ‘Join’ at some point, which is a threads starvation.
 
-From the first statement, when a 'Fork' performed, we have multiple threads and each of them is responsible to run a task. 
-
-From the second, when a thread is done it can take some other task. But what if he got stuck on this task? The other threads will wait on the 'Join' at some point, which is a threads starvation.
 
 ````
 my-dispatcher {
@@ -242,15 +243,18 @@ my-dispatcher {
 }
 ````
 
-A common case is to use Fork-Join executor for futures inside an actor. Here, the dispatcher's configuration of the actor should be considered as well. For example, the more threads you have for the actor, the more 'future’ tasks would be performed, and you’ll may want more threads for them.
-
+A common case is to use Fork-Join executor for future tasks inside an actor. Here, the dispatcher’s configuration of the actor should be considered as well. For example, the more threads you have for the actor, the more ‘future’ tasks will be performed, and you may want more threads for them.
 #### Thread-pool-executor
 
-The old Java 5 executor for asynchronous task execution can still fit in some cases, and without the Fork-Join overhead.
+The old Java 5 executor for asynchronous task execution can still fit in some cases and without the Fork-Join overhead.
 
-While Fork-Join breaks the task for you, if you know how to break the task yourself, then your code built already as minimal task that should be executed by a single thread, which fit thread-pool-executor.
+While Fork-Join breaks the task for you, if you know how to break the task yourself, then your code should be already built as a minimal task, executed by a single thread, which fits a thread-pool-executor.
 
-Thread-pool executor is used by akka Dispatcher and PinnedDispatcher. 
+The thread-pool executor is used by Akka Dispatcher and PinnedDispatcher.
+
+Dispatcher allows you to define ‘min’, ‘max’ and increase ‘factor’ / ‘fixed’ size for your thread pool.
+
+Thread-pool executor is used by akka Dispatcher and PinnedDispatcher.
 
 **Dispatcher** let you define min, max and increase factor / fixed size for your threadpool.
 
@@ -270,15 +274,11 @@ my-dispatcher {
 }
 ````
 
-The key is to find the right balance for an actor instances to work in parallel and use the threads as much as they need so other actors and processes would be able to work as well. Its also true for the Fork-Join executor and needs to be quite accurate. In Part 2 //TBA (link to part 2)
+The key is to find the right balance for actor instances to work in parallel and use the threads as much as they are need so other actors and processes can work as well. It’s also true for the Fork-Join executor and needs to be quite accurate.
+**PinnedDispatcher** dedicates a unique thread to each actor. This is usually not the pattern you want for the machine, given the limited resources. Hence, it makes sense for the actor to share a pool of threads. However, if your actor performs a preferred task, you won’t want its instances to share the pool.
 
-We'll talk about how to measure it.
-
-**PinnedDispatcher** dedicates a unique thread for each actor. This is usually not the pattern you want for the machine's resources are limited. Hence it makes sense for the actor to share a pool of threads. However, if your actor performs a prefered task and you don’t want its instances to share its pool. 
-
-Do not use it if you have more instances than the number of cores in the machine. 
-
-It is also not recommended for Futures, because  you'll probably need more than 1 thread... 
+Do not use it if you have more instances than the number of cores in the machine.
+It is also not recommended for Futures, because you’ll probably need more than 1 thread...
 
 #### Affinity-pool-executor
 
@@ -291,17 +291,17 @@ my-dispatcher {
 
 This executor tries its best to have your actor instance always schedule with the same thread, which should increase throughput.
 
-It is recommended for small number of actor instances, for if you have much more instances than threads, it is just not possible.
+This is recommended for a small number of actor instances, where you have much more instances than threads, it is just not possible.
 
 #### Tips
 <img align="right" src="/img/dispatcher.jpg" height="250" width="250">
-* Don't use the [Akka default dispatcher](https://doc.akka.io/docs/akka/2.5/scala/dispatchers.html) for your actorSystem nor for the actors themselves. Note that external Akka based frameworks use it as default, and you should configure a dedicated dispatcher for them as well.
+* Don't use the [Akka default dispatcher](https://doc.akka.io/docs/akka/2.5/scala/dispatchers.html) for your actorSystem, or for the actors themselves. Note that external Akka based frameworks use it as default, and you should configure a dedicated dispatcher for them as well.
 
-* Have a different Dispatcher for each actor, and for Futures inside an actor.
+* Have a different dispatcher for each actor, and for Futures inside an actor.
 
-* Dispatchers has 'throughput' parameter, which "*defines the maximum number of messages to be processed per actor before the thread jumps to the next actor"* Setting It to higher value than the default, 1, is likely to improve performance if it is not part of Affinity-pool dispatcher, and if your actors generally not very busy (otherwise the lack of fairness can cause a high load in some mailboxes).
+* Dispatchers have a ‘throughput’ parameter, which "*defines the maximum number of messages to be processed per actor before the thread jumps to the next actor"* Setting It to a higher value than the default, 1, is likely to improve performance so long as it is not part of the Affinity-pool dispatcher, and your actors are generally not very busy (otherwise the lack of fairness can cause a high load in some mailboxes).
 
-* Read [this terrific post in ScalaC blog](https://blog.scalac.io/improving-akka-dispatcher.html). It explains Dispatcher's internals in details.
+* Read [this terrific post in the ScalaC blog](https://blog.scalac.io/improving-akka-dispatcher.html). It explains dispatcher’s internals in details.
 
 <br><br>
 ### **Next**
@@ -309,15 +309,10 @@ It is recommended for small number of actor instances, for if you have much more
 In [Part-2](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2) I will show how we monitor and analyze our actor-based system.
 
 ```
-Inneractive maintains an Exchange server, which, simply put,
-gets an advertisement for a mobile application from Ad-Networks.
-In fact there are ~500 server instances at a given moment,
-dealing with ~10,000,000 Ad requests per a minute.
-During the process the Exchange server performs a real-time auction by going out (with scala.Future)s
-to multiple Ad-Networks(consumers).
-This translates to ~150,000,000 transactions per a minute.
-The Exchange server is akka-based, it uses Spray as a server side-http,
-and the entire flow is actor-based.
+Inneractive maintains an Exchange server, which, simply put, receives an advertisement for a mobile application from Ad-Networks.
+In fact, there are ~500 server instances at a given moment, dealing with ~10,000,000 Ad requests per  minute.
+During the process, the Exchange server performs a real-time auction by going out (with scala.Future) to multiple Ad-Networks (consumers). This translates to ~150,000,000 transactions per minute.
+The Exchange server is Akka-based and uses Spray as a server-side-HTTP. The entire flow is actor-based.
 We use other Akka frameworks in other modules like Akka-Http and Akka Streams.
 ```
 
