@@ -21,6 +21,7 @@ header-img: "img/tune-Akka.jpg"
 At some point, whether it is during your new actor-based system planning, or after you have a prototype working, you'll probably find yourself digging into the Akka Docs to find the right combination of possibilities for routing, dispatcher, number of actors instances and so forth...
 Depending on the complexity of your system and performance requirements, this could get tedious.
 
+<br><br>
 ## Part-1: Initial Akka Configurations
 
 Let’s start with Akka configuration, specifically the configuration of [actor-instances](#heading=h.hhztx0701fu1), [routing strategy](#heading=h.cuvgdmxiz64e) and [dispatchers & executors](#heading=h.no1l9o35uyp0). Below is the relevant section of the application.conf
@@ -120,7 +121,7 @@ Here the consumer will block waiting for the next item.
 
 * Leave it. Then you may not get the most from your machine.
 
-##### *Actor per-request*
+#### Actor per-request
 <img align="right" src="/img/meeseeks.png" height="100" width="100">
 <span style="font-weight: 400;">“</span><i><span style="font-weight: 400;">You press, you make a request, the </span></i><a href="https://en.wikipedia.org/wiki/Meeseeks_and_Destroy"><i><span style="font-weight: 400;">Meeseeks</span></i></a><i><span style="font-weight: 400;"> fulfills the request, and then it stops existing”(</span></i><a href="https://en.wikipedia.org/wiki/Rick_Sanchez_(Rick_and_Morty)"><i><span style="font-weight: 400;">Rick Sanchez</span></i></a><i><span style="font-weight: 400;">)</span></i>
 
@@ -145,6 +146,7 @@ akka.actor.deployment {
     }
 }
 ````
+
 
 #### Strategies Overview
 
