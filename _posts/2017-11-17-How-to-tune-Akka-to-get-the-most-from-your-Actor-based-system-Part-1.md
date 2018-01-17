@@ -169,7 +169,7 @@ Let's quickly review the the routing strategies
 
 
 #### *Strategies Cheatsheet*
-<img align="right" src="/img/routing-strategies.png">
+<img align="right" src="/img/routingstrategies.png">
 
 *Can be solved by increasing the number of routees (which may cost in context-switches overhead)
 
