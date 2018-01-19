@@ -120,9 +120,10 @@ As you may notice, we exclude akka-actor, which means all routees metrics (time-
 
 #### Configuration for Kamon Akka ActorSystem
 
-As stated, the aspectj operating by Kamon is quite expensive, even when excluding of all routees metrics. By default, Kamon uses the default-dispatcher. If you don't set a default-dispatcher yourself, the threadpool size of the default-dispatcher will be the number of cores. In practice Kamon told us that about 75% of the running threads were Kamon’s.. You can set a dispatcher for Kamon as follows 
-<img align="right" src="/img/kamon_the_rock.png">
+As stated, the aspectj operating by Kamon is quite expensive, even when excluding of all routees metrics. By default, Kamon uses the default-dispatcher. If you don't set a default-dispatcher yourself, the threadpool size of the default-dispatcher will be the number of cores. In practice Kamon told us that about 75% of the running threads were Kamon’s..
+<src="/img/kamon_the_rock.png" height = '400'>
 
+You can set a dispatcher for Kamon as follows:
 ````
 "internal-config": {
  "akka": {
