@@ -238,7 +238,7 @@ Among all metrics, put special attention to:
 
 * Custom metrics ‘message-start-process’ for routees. When the value is high, it can indicate that the receiver needs more resources or there are too many instances. This leads to lots of context-switches. An increase of the “throughput” parameter may help.
 
-![image alt text]({{ site.url }}/public/asNMIb0wNDGjYnrdr4zCuQ_img_0.png)
+![image alt text]({{ site.url }}/img/dashboard.png)
 
 <br><br>
 ### Wrapping up
