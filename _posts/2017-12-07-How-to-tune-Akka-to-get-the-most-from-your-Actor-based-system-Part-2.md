@@ -220,7 +220,7 @@ However, we use stackable-traits mixed to the Actors, for a monitoring layer aro
 <br><br>
 ### **Dashboard Overview**
 
-Our [dashboard](#bookmark=id.gdmyvra3gln)consists of Kamon’s Akka metrics and custom metrics.
+Our dashboard consists of Kamon’s Akka metrics and custom metrics.
 
 Akka metrics collection is explained in detail in the [docs](http://kamon.io/documentation/kamon-akka/0.6.6/actor-router-and-dispatcher-metrics/)
 
