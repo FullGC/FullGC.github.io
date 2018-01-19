@@ -217,7 +217,7 @@ To monitor time-in-mailbox, processing-time, mailbox-size that we excluded from 
 It can be achieved by imitating Kamon’s usage of Aspectj as we just saw.
 However, we use stackable-traits mixed to the Actors, for a monitoring layer around ‘receive’.
 
-[I wrote about the stackable traits pattern](https://fullgc.github.io/stackable-traits-pattern/). In [Part-2](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/) **I described (a simplified version of) how we use stackable actor traits at Inneractive, with code samples.**
+[I wrote about the stackable traits pattern](https://fullgc.github.io/stackable-traits-pattern/). In [Part-2](https://fullgc.github.io/stackable-traits-pattern---part-2/) **I described (a simplified version of) how we use stackable actor traits at Inneractive, with code samples.**
 
 <br><br>
 ### **Dashboard Overview**
