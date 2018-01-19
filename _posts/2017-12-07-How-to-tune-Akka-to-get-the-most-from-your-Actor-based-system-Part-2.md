@@ -70,7 +70,8 @@ In addition, the ‘aspect’ way of gathering metric’s data is quite expensiv
 
 Our metric configuration looks as follows:
 
-````"metric": {
+````
+"metric": {
       "filters": {
        "akka-actor": {
          "excludes": ["**"],
