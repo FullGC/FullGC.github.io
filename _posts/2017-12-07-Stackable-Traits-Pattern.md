@@ -50,7 +50,7 @@ On **InvalidRequestError**
 
 3. Kafka-Producer *sends* a Json Event to Kafka.
 
-<img align="right" src="/img/stackable_narrative.png">
+<img src="/img/stackable_narrative.png">
 
 An Error has a code, a description, and unique properties
 
