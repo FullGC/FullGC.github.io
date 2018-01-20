@@ -17,7 +17,9 @@ header-img: "img/burger-stack.jpg"
 
 * [Part-1: Error reporting design with Stackable Traits](https://fullgc.github.io/stackable-traits-pattern/)
 * [Part-2: Gathering Metrics with Stackable Actors](https://fullgc.github.io/stackable-traits-pattern---part-2/)
+
 ------------------------------------------------------------------------------------------
+
 *"Traits let you modify the methods of a class, and they do so in a way that allows you to stack those modifications with each other" (Programming in Scala by Martin Odersky)*
 
 One of the reasons that Scala still feels to me like ‘a better Java’, is the power of its traits. A trait can be used for multiple inheritances: A Java interface, a rich interface with fields and a state, and a mix into a class.
