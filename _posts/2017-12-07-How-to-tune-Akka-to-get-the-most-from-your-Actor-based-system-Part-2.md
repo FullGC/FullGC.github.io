@@ -18,6 +18,8 @@ header-img: "img/tune-Akka.jpg"
 * [Part-1: Initial Akka Configurations](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1)
 * [Part-2: Gather and analyze Akka metrics with Kamon and stackable traits](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2)
 
+------------------------------------------------------------------------------------------
+
 [Previously](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1/), we tried to adjust Akka configurations for some possible use cases. After we set up a configuration and have a system up and running, we’d like to know how well we did and “re-tune” the configuration where needed.
 
 <br><br>
