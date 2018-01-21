@@ -90,6 +90,7 @@ And these are mocks for the Scala Clients
 <br><br>
 ### **Step-by-step implementation, using stackable-traits**
 
+
 ##### Create traits that represent the subscribers and mix them.
 
 We’ll create the following traits, each represents a subscriber for an error event
@@ -281,6 +282,7 @@ And mix the modification traits to the 'Error' classes
  <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> description<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span> <span style="color: #666666">=</span> s<span style="color: #4070a0">&quot;Invalid Request. Bad  parameter: $paramName&quot;</span> <span style="color: #666666">+</span> <span style="color: #4070a0">&quot; &quot;</span> <span style="color: #666666">+</span> s<span style="color: #4070a0">&quot;with value: $paramValue&quot;</span>
 <span style="color: #666666">}</span>
 </pre></div>
+
 
 ##### Create and mix 'ServingErrorSender' :
 
