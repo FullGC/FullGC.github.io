@@ -151,6 +151,7 @@ Now we need to stack the traits according to the order and logic defined in the 
 
 Hence the order for FatalError: S3_Backup ← Kafka ← Monitor ← Log
 Where S3_Backup should be invoked only when the Kafka-Producer failed to send the event to Kafka.
+
 And for InvalidRequestError: Kafka ← Monitor ← Log
 
 Let’s re-arranged the mix of the 'Error' classes:
