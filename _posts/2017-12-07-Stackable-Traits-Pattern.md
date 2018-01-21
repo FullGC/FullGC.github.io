@@ -333,7 +333,6 @@ sending to Kafka:  // Kafka
 
 In [part-2](https://fullgc.github.io/stackable-traits-pattern---part-2/) we'll use stackable-actor traits for gathering actor’s metrics.
 
-<br><br>
 ### **References**
 
 *[Programming in Scala(chapter 12.5) / Martin Odersky and co](https://www.artima.com/shop/programming_in_scala_3ed)*
