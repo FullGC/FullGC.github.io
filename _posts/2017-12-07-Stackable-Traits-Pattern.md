@@ -22,9 +22,12 @@ header-img: "img/burger-stack.jpg"
 
 *"Traits let you modify the methods of a class, and they do so in a way that allows you to stack those modifications with each other" (Programming in Scala by Martin Odersky)*
 
-One of the reasons that Scala still feels to me like ‘a better Java’, is the power of its traits. A trait can be used for multiple inheritances: A Java interface, a rich interface with fields and a state, and a mix into a class.
+One of the reasons that Scala still feels to me like ‘a better Java’, is the power of its traits. A trait can be used for multiple inheritances, a Java interface, a rich interface with fields and a state, and a mix into a class.
 
-An interesting behavior of traits, as opposed to classes, is the call for a super method. In classes this is statically bound, meaning that the exact implementation to be invoked is known upfront. In traits however, this is dynamically bound. The term usually refers to an invocation of a method in an object, where the implementation is decided at runtime, i.e. a polymorphic call. The super call is not defined when a trait is defined, but only when it is mixed into a concrete class. Such behavior allows us to ‘stack’ the traits, and use the super call as a ‘pipe’, redirecting output - similar to the ‘pipe’ in Linux. This is the basis for the use-cases we’ll review.
+An interesting behavior of traits, as opposed to classes, is the call for a super method. In classes this is statically bound, meaning that the exact implementation to be invoked is known upfront. In traits however, this is dynamically bound.
+The term usually refers to an invocation of a method in an object, where the implementation is decided at runtime, i.e. a polymorphic call. The super call is not defined when a trait is defined, but only when it is mixed into a concrete class.
+Such behavior allows us to ‘stack’ the traits, and use the super call as a ‘pipe’, redirecting output - similar to the ‘pipe’ in Linux. This is the basis for the use-cases we’ll review.
+
 <br><br>
 ## Part-1: Error reporting design
 
@@ -213,7 +216,7 @@ You might notice that
 
 ##### Create and 'Stack' modification traits:
 
-<img src="/img/stack-traits.jpg" height = '400'>
+<img src="/img/stack-traits.jpg" height = '300'>
 
 The event content needs modification to be in the right format (json, csv) before being sent as an input to KafkaProducer and S3. A fatal error needs to be sent with a timestamp.
 
@@ -302,6 +305,7 @@ Last, to trigger error reports once an error object is created, we’ll mix them
 <span style="color: #666666">}</span>
 </pre></div>
 
+<br><br>
 ### **Try it out**
 
 We have completed the task!
@@ -324,10 +328,12 @@ sending to Kafka:  // Kafka
 }
 ````
 
+<br><br>
 ### **Next**
 
 In [part-2](https://fullgc.github.io/stackable-traits-pattern---part-2/) we'll use stackable-actor traits for gathering actor’s metrics.
 
+<br><br>
 ### **References**
 
 *[Programming in Scala(chapter 12.5) / Martin Odersky and co](https://www.artima.com/shop/programming_in_scala_3ed)*
