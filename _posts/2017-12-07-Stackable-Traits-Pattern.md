@@ -140,21 +140,17 @@ Now it is clear which subscribers should receive a notification on error. We wil
 
 
 Alright, so now each trait has a “send” method that handles the event using the appropriate client.
-
 But we still need to trigger it on the occurrence of an error, and call them in the order described above
 
 ##### 'Stack' the services traits with each other
 
 In other words, a pipe of calls for the ‘send’ method in the services. As discussed, we’ll need to use super method calls for that.
-
 Note that in this step we won’t be stacking modifications, but the side-effects that triggered an error.
 
 Now we need to stack the traits according to the order and logic defined in the narrative described above. The order of the invocation of the traits will be right to left.
 
 Hence the order for FatalError: S3_Backup ← Kafka ← Monitor ← Log
-
 Where S3_Backup should be invoked only when the Kafka-Producer failed to send the event to Kafka.
-
 And for InvalidRequestError: Kafka ← Monitor ← Log
 
 Let’s re-arranged the mix of the 'Error' classes:
@@ -209,7 +205,6 @@ You might notice that
 2. The ‘override’ modifier changed to ‘abstract override’, because the send method now overrides the behavior, but also calls for an abstract method with super.send. The modifier indicates that this trait must be mixed with a concrete class(later...).
 
    By the way, if we omit the ‘abstract’ from the modifier, we’ll get the following error:
-
    *“method send in class Sender is accessed from super. It may not be abstract unless it is overridden by a member declared 'abstract' and 'override' super.send(event)”*
 
 3. Kafka would call super, i.e. S3-Backup would be invoked only when KafkaProducer fails to deliver.
