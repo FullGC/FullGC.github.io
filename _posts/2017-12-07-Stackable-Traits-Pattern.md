@@ -65,7 +65,7 @@ trait ServingError{
  val description: String
 }
 case class FatalError(override val code: Int = 1, exceptionCause: String) extends ServingError {
- override val description: String =  s"Fatal Error code $code accrued”
+ override val description: String =  s"Fatal Error code $code accrued"
 }
 case class InvalidRequestError(paramName: String, paramValue: String, override val code: Int = 2) extends ServingError{
  override val description: String = s"Invalid Request. Bad  parameter: $paramName" + " " + s"with value: $paramValue"
@@ -73,19 +73,20 @@ case class InvalidRequestError(paramName: String, paramValue: String, override v
 ````
 And these are mocks for the Scala Clients
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">object</span> <span style="color: #0e84b5; font-weight: bold">KafkaProducer</span><span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">(</span>eventContent<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> println<span style="color: #666666">(</span>s<span style="color: #4070a0">&quot;sending to Kafka: $eventContent&quot;</span><span style="color: #666666">)</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">object</span> <span style="color: #0e84b5; font-weight: bold">Monitor</span><span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">def</span> incrementCounter<span style="color: #666666">(</span>counterName<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">,</span> tags<span style="color: #007020; font-weight: bold">:</span> <span style="color: #666666">(</span><span style="color: #902000">String</span><span style="color: #666666">,</span> <span style="color: #902000">String</span><span style="color: #666666">))</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> println<span style="color: #666666">(</span>s<span style="color: #4070a0">&quot;incrementing counter $counterName&quot;</span><span style="color: #666666">)</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">object</span> <span style="color: #0e84b5; font-weight: bold">Logger</span><span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">def</span> log<span style="color: #666666">(</span>event<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> println<span style="color: #666666">(</span>s<span style="color: #4070a0">&quot;error: $event&quot;</span><span style="color: #666666">)</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">object</span> <span style="color: #0e84b5; font-weight: bold">S3_Client</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">def</span> upload<span style="color: #666666">(</span>eventContent<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> println<span style="color: #666666">(</span>s<span style="color: #4070a0">&quot;uploading event $eventContent to S3&quot;</span><span style="color: #666666">)</span>
-<span style="color: #666666">}</span>
-</pre></div>
+````ruby
+object KafkaProducer{
+ def send(eventContent: String): Unit = println(s"sending to Kafka: $eventContent")
+}
+object Monitor{
+ def incrementCounter(counterName: String, tags: (String, String)): Unit = println(s"incrementing counter $counterName")
+}
+object Logger{
+ def log(event: String): Unit = println(s"error: $event")
+}
+object S3_Client {
+ def upload(eventContent: String): Unit = println(s"uploading event $eventContent to S3")
+}
+````
 
 <br><br>
 ### **Step-by-step implementation, using stackable-traits**
