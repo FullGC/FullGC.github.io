@@ -103,8 +103,7 @@ Let’s review some scenarios in which you may want to scale your routees:
 
 
 ###### *The producer(In our use case, one of your actors), can produce faster than the received consumer(actor or any other source) can handle.*
-
-<img align="right" src="/img/loaded.png" height="260" width="260">
+<img align="right" src="/img/loaded.png" height="300" width="300">
  In this case you may:
 
 * Back-pressure the producer, i.e. reduce the number of producer's routees.
@@ -113,9 +112,9 @@ Let’s review some scenarios in which you may want to scale your routees:
 
 * Leave it. You don’t necessarily need to back-pressure. It may lead to a loss of messages (bounded mailbox) or running out of memory...
 
+<img align="right" src="/img/easy.png" height="300" width="300">
 ###### *The consumer is faster than the producer.*
 
-<img align="right" src="/img/easy.png" height="260" width="260">
 Here the consumer will block waiting for the next item.
 
 * Remove some consumers(routees...)! 
@@ -125,7 +124,7 @@ Here the consumer will block waiting for the next item.
 * Leave it. Then you may not get the most from your machine.
 
 #### Actor per-request
-<img align="right" src="/img/meeseeks.png" height="80" width="90">
+<img align="right" src="/img/meeseeks.png" height="100" width="100">
 <span style="font-weight: 400;">“</span><i><span style="font-weight: 400;">You press, you make a request, the </span></i><a href="https://en.wikipedia.org/wiki/Meeseeks_and_Destroy"><i><span style="font-weight: 400;">Meeseeks</span></i></a><i><span style="font-weight: 400;"> fulfills the request, and then it stops existing”(</span></i><a href="https://en.wikipedia.org/wiki/Rick_Sanchez_(Rick_and_Morty)"><i><span style="font-weight: 400;">Rick Sanchez</span></i></a><i><span style="font-weight: 400;">)</span></i>
 
 Actor per request works very similarly. An instance is created for every request, process it and then it will be destroyed.
