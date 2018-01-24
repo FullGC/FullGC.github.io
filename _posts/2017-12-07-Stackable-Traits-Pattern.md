@@ -73,7 +73,7 @@ case class InvalidRequestError(paramName: String, paramValue: String, override v
 ````
 And these are mocks for the Scala Clients
 
-````ruby
+````scala
 object KafkaProducer{
  def send(eventContent: String): Unit = println(s"sending to Kafka: $eventContent")
 }
@@ -96,7 +96,7 @@ object S3_Client {
 
 We’ll create the following traits, each represents a subscriber for an error event
 
-````ruby
+````scala
 trait Log
 trait Metric
 trait S3_Backup
@@ -105,7 +105,7 @@ trait Kafka
 
 And mix them with the 'Error' classes. Here, we use a Scala-type system to describe the 'Error' classes and the actions that need to be taken
 
-````ruby
+````scala
 trait ServingError{
  val code: Int
  val description: String
@@ -116,7 +116,7 @@ trait ServingError{
 
 Now it is clear which subscribers should receive a notification on error. We will enrich the traits, so they can activate the clients as well:
 
-````ruby
+````scala
 abstract class Sender {
  def send(event: ServingError): Unit
 }
@@ -159,7 +159,7 @@ And for InvalidRequestError: Kafka ← Monitor ← Log
 
 Let’s re-arranged the mix of the 'Error' classes:
 
-````ruby
+````scala
 case class FatalError(override val code: Int = 1, exceptionCause: String) extends ServingError with S3_Backup with Kafka with Monitor with Log{
  override val description: String = s"Fatal Error code $code accrued"
 }
@@ -176,7 +176,7 @@ case class InvalidRequestError(paramName: String, paramValue: String, override v
 
 And stack the traits:
 
-````ruby
+````scala
 trait Log extends Sender {
  abstract override def send(event: ServingError): Unit = {
    Logger.log(event.description)
@@ -222,7 +222,7 @@ The event content needs modification to be in the right format (json, csv) befor
 
 Let’s write the modification method and the stackable modification traits:
 
-````ruby
+````scala
 object ServingError{
 // we are adding a method modification content method, to be used by the modification traits
  def modifyContent(error: ServingError, content: String): ServingError = {
@@ -279,7 +279,7 @@ trait Timestamp {
 
 And mix the modification traits to the 'Error' classes
 
-````ruby
+````scala
 case class FatalError(override val code: Int = 1, exceptionCause: String, content: String = "") extends ServingError with S3_Backup with CsVTransformer with Kafka with JsonTransformer with Timestamp with Metric with Log{
  override val description: String = s"Fatal Error code $code accrued"
 }
@@ -292,7 +292,7 @@ case class InvalidRequestError(paramName: String, paramValue: String, override v
 
 Last, to trigger error reports once an error object is created, we’ll mix them with a sending trait.
 
-````ruby
+````scala
 trait ServingErrorSender extends Sender{
  this: ServingError =>   // force to be mixed with a ServingError class, (look for 'see cake-pattern')
  def send(): Unit = send(this)
@@ -300,7 +300,7 @@ trait ServingErrorSender extends Sender{
 }
 ````
 
-````ruby
+````scala
 trait ServingError extends ServingErrorSender{
  val code: Int
  val description: String
@@ -315,7 +315,7 @@ We have completed the task!
 
 Now, when invoking a 'send'’ for an error, like the following:
 
-````ruby
+````scala
 FatalError(exceptionCause = new IllegalArgumentException().getClass.getSimpleName).send()
 ````
 
