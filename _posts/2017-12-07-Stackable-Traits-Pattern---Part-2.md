@@ -24,6 +24,7 @@ header-img: "img/burger-stack.jpg"
 Stackable traits can be applied to actors as well.
 Specifically, we can use stackable actor traits to modify the behavior of the ‘receive’ method.
 
+<br><br>
 ## **Part-2: Gathering Metrics**
 
 We like to gather the following metrics
@@ -34,48 +35,52 @@ We like to gather the following metrics
 
 And to log when an actor starts handling a message and before it finishes.
 
+<br><br>
 ### **Stackable Actors-based implementation**
 
 Say we have the following actor that we like to monitor:
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">abstract</span> <span style="color: #007020; font-weight: bold">class</span> <span style="color: #0e84b5; font-weight: bold">MyActor</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Actor</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">StrictLogging</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">def</span> receive<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Receive</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   <span style="color: #007020; font-weight: bold">case</span> message <span style="color: #007020; font-weight: bold">=&gt;</span> logger<span style="color: #666666">.</span>info<span style="color: #666666">(</span><span style="color: #4070a0">&quot;performing some work...&quot;</span><span style="color: #666666">)</span>
- <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-</pre></div>
+````ruby
+abstract class MyActor extends Actor with StrictLogging {
+ override def receive: Receive = {
+   case message => logger.info("performing some work...")
+ }
+}
+````
 
 Let’s start with the ‘time-in-mailbox’ metric. The simplest way to implement it is to take the time before the message was sent and calculate the time in the mailbox when the actor starting processing it. For the sake of example, we’ll assume that a message was created just before it was sent.
 
 The message class that should be monitored is:
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">RecordableMessage</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">RichMessage</span> <span style="color: #666666">{</span>
-  <span style="color: #007020; font-weight: bold">val</span> dispatchTime<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Long</span> <span style="color: #666666">=</span>
-  <span style="color: #0e84b5; font-weight: bold">System</span><span style="color: #666666">.</span>currentTimeMillis<span style="color: #666666">()</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">RichMessage</span> <span style="color: #666666">{</span>
-  <span style="color: #007020; font-weight: bold">val</span> messageName<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span>
-<span style="color: #666666">}</span>
-</pre></div>
+````ruby
+trait RecordableMessage extends RichMessage {
+  val dispatchTime: Long =
+  System.currentTimeMillis()
+}
+trait RichMessage {
+  val messageName: String
+}
+````
 
 We initialized the time before the message was sent, and gave it a name, to be used as a tag for the metric.
 
 Next, create the stackable trait for monitoring the actor on RecordableMessage
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">LatencyRecorderActor</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Actor</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">StrictLogging</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">val</span> actorName<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span> <span style="color: #666666">=</span> <span style="color: #007020; font-weight: bold">this</span><span style="color: #666666">.</span>getClass<span style="color: #666666">.</span>getSimpleName
+````ruby
+trait LatencyRecorderActor extends Actor with StrictLogging {
+ val actorName: String = this.getClass.getSimpleName
 
- <span style="color: #007020; font-weight: bold">abstract</span> <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">def</span> receive<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Receive</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   <span style="color: #007020; font-weight: bold">case</span> recordableMessage<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">RecordableMessage</span> <span style="color: #666666">=&gt;</span>
-     <span style="color: #0e84b5; font-weight: bold">Monitor</span><span style="color: #666666">.</span>record<span style="color: #666666">(</span><span style="color: #4070a0">&quot;time-in-mailbox&quot;</span><span style="color: #666666">,</span> actorName<span style="color: #666666">,</span> recordableMessage<span style="color: #666666">.</span>messageName<span style="color: #666666">,</span>
-        recordableMessage<span style="color: #666666">.</span>dispatchTime<span style="color: #666666">)</span>
-     <span style="color: #007020; font-weight: bold">val</span> start <span style="color: #007020; font-weight: bold">=</span> <span style="color: #0e84b5; font-weight: bold">System</span><span style="color: #666666">.</span>currentTimeMillis<span style="color: #666666">()</span>
-     <span style="color: #007020; font-weight: bold">super</span><span style="color: #666666">.</span>receive<span style="color: #666666">(</span>recordableMessage<span style="color: #666666">)</span>
-     <span style="color: #0e84b5; font-weight: bold">Monitor</span><span style="color: #666666">.</span>record<span style="color: #666666">(</span><span style="color: #4070a0">&quot;processing-time&quot;</span><span style="color: #666666">,</span> actorName<span style="color: #666666">,</span> recordableMessage<span style="color: #666666">.</span>messageName<span style="color: #666666">,</span> start<span style="color: #666666">)</span>
-   <span style="color: #007020; font-weight: bold">case</span> message <span style="color: #007020; font-weight: bold">=&gt;</span> <span style="color: #007020; font-weight: bold">super</span><span style="color: #666666">.</span>receive<span style="color: #666666">(</span>message<span style="color: #666666">)</span>
- <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-</pre></div>
+ abstract override def receive: Receive = {
+   case recordableMessage: RecordableMessage =>
+     Monitor.record("time-in-mailbox", actorName, recordableMessage.messageName,
+        recordableMessage.dispatchTime)
+     val start = System.currentTimeMillis()
+     super.receive(recordableMessage)
+     Monitor.record("processing-time", actorName, recordableMessage.messageName, start)
+   case message => super.receive(message)
+ }
+}
+````
 
 You might notice that
 
@@ -89,39 +94,41 @@ You might notice that
 
 The LoggerActor is the following 
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">LoggerActor</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Actor</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">StrictLogging</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">abstract</span> <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">def</span> receive<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Receive</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   <span style="color: #007020; font-weight: bold">case</span> recordableMessage<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">RecordableMessage</span> <span style="color: #666666">=&gt;</span>
-     logger<span style="color: #666666">.</span>info<span style="color: #666666">(</span>s<span style="color: #4070a0">&quot;handling message: ${recordableMessage.messageName}&quot;</span><span style="color: #666666">)</span>
-     <span style="color: #007020; font-weight: bold">super</span><span style="color: #666666">.</span>receive<span style="color: #666666">(</span>recordableMessage<span style="color: #666666">)</span>
-     logger<span style="color: #666666">.</span>info<span style="color: #666666">(</span>s<span style="color: #4070a0">&quot;done handling message: ${recordableMessage.messageName}&quot;</span><span style="color: #666666">)</span>
-   <span style="color: #007020; font-weight: bold">case</span> message <span style="color: #007020; font-weight: bold">=&gt;</span> <span style="color: #007020; font-weight: bold">super</span><span style="color: #666666">.</span>receive<span style="color: #666666">(</span>message<span style="color: #666666">)</span>
- <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-</pre></div>
-
+````ruby
+trait LoggerActor extends Actor with StrictLogging {
+ abstract override def receive: Receive = {
+   case recordableMessage: RecordableMessage =>
+     logger.info(s"handling message: ${recordableMessage.messageName}")
+     super.receive(recordableMessage)
+     logger.info(s"done handling message: ${recordableMessage.messageName}")
+   case message => super.receive(message)
+ }
+}
+````
 Lastly, mix these traits to a concrete MyActor class
 
- <div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">class</span> <span style="color: #0e84b5; font-weight: bold">MyMonitoredActor</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">MyActor</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">LatencyRecorderActor</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">LoggerActor</span>
- </pre></div>
+class MyMonitoredActor extends MyActor with LatencyRecorderActor with LoggerActor
 
 
+<br><br>
 ### **Try it out**
 
 Create a concrete RecordableMessage:
 
-<div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">case</span> <span style="color: #007020; font-weight: bold">class</span> <span style="color: #0e84b5; font-weight: bold">SomeRecordableMessage</span><span style="color: #666666">()</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">RecordableMessage</span> <span style="color: #666666">{</span>
-   <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> messageName<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span> <span style="color: #666666">=</span>
-   <span style="color: #007020; font-weight: bold">this</span><span style="color: #666666">.</span>getClass<span style="color: #666666">.</span>getSimpleName
-<span style="color: #666666">}</span>
-</pre></div>
+````ruby
+case class SomeRecordableMessage() extends RecordableMessage {
+   override val messageName: String =
+   this.getClass.getSimpleName
+}
+````
 
 And send it to a MonitoredActor instance
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">val</span> actorSystem <span style="color: #007020; font-weight: bold">=</span> <span style="color: #0e84b5; font-weight: bold">ActorSystem</span><span style="color: #666666">(</span><span style="color: #4070a0">&quot;system&quot;</span><span style="color: #666666">)</span>
-<span style="color: #007020; font-weight: bold">val</span> myMonitoredActor <span style="color: #007020; font-weight: bold">=</span> actorSystem<span style="color: #666666">.</span>actorOf<span style="color: #666666">(</span><span style="color: #0e84b5; font-weight: bold">Props</span><span style="color: #666666">[</span><span style="color: #902000">MyMonitoredActor</span><span style="color: #666666">])</span>
-myMonitoredActor <span style="color: #666666">!</span> <span style="color: #0e84b5; font-weight: bold">SomeRecordableMessage</span><span style="color: #666666">()</span>
-</pre></div>
+````ruby
+val actorSystem = ActorSystem("system")
+val myMonitoredActor = actorSystem.actorOf(Props[MyMonitoredActor])
+myMonitoredActor ! SomeRecordableMessage()
+````
 
 Results with the following printed to the log:
 
@@ -133,6 +140,7 @@ processing-time latency for message SomeTriggerMessage in actor MyMonitoredActor
 done handling message: SomeTriggerMessage
 ````
 
+<br><br>
 ### **Wrapping up**
 
 Stackable traits pattern is a good choice when you need to ‘pipe’ actions or modify and redirect data for an action. Mix and stack traits to describe the state of the class and execute the actions are clean and flexible, and generally the Scala-functional way to do it.

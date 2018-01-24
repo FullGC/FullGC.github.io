@@ -315,8 +315,9 @@ We have completed the task!
 
 Now, when invoking a 'send'’ for an error, like the following:
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #0e84b5; font-weight: bold">FatalError</span><span style="color: #666666">(</span>exceptionCause <span style="color: #007020; font-weight: bold">=</span> <span style="color: #007020; font-weight: bold">new</span> <span style="color: #0e84b5; font-weight: bold">IllegalArgumentException</span><span style="color: #666666">().</span>getClass<span style="color: #666666">.</span>getSimpleName<span style="color: #666666">).</span>send<span style="color: #666666">()</span>
-</pre></div>
+````ruby
+FatalError(exceptionCause = new IllegalArgumentException().getClass.getSimpleName).send()
+````
 
 Results are with the following printed to the log:
 
