@@ -59,7 +59,7 @@ On **InvalidRequestError**
 
 An Error has a code, a description, and unique properties
 
-````javascript
+````ruby
 trait ServingError{
  val code: Int
  val description: String
