@@ -96,50 +96,51 @@ object S3_Client {
 
 We’ll create the following traits, each represents a subscriber for an error event
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">Log</span>
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">Metric</span>
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">S3_Backup</span>
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">Kafka</span>
-</pre></div>
+````ruby
+trait Log
+trait Metric
+trait S3_Backup
+trait Kafka
+````
 
+````ruby
 And mix them with the ‘Error’ classes. Here, we use a Scala-type system to describe the ‘Error’ classes and the actions that need to be taken
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">ServingError</span><span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">val</span> code<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Int</span>
- <span style="color: #007020; font-weight: bold">val</span> description<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span>
-<span style="color: #666666">}</span>
-</pre></div>
-
+trait ServingError{
+ val code: Int
+ val description: String
+}
+````
 
 ##### Turn the traits into services that activates the Clients
 
 Now it is clear which subscribers should receive a notification on error. We will enrich the traits, so they can activate the clients as well:
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">abstract</span> <span style="color: #007020; font-weight: bold">class</span> <span style="color: #0e84b5; font-weight: bold">Sender</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">(</span>event<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">Log</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Sender</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">(</span>event<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   <span style="color: #0e84b5; font-weight: bold">Logger</span><span style="color: #666666">.</span>log<span style="color: #666666">(</span>event<span style="color: #666666">.</span>description<span style="color: #666666">)</span>
- <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">Metric</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Sender</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">(</span>event<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   <span style="color: #0e84b5; font-weight: bold">Monitor</span><span style="color: #666666">.</span>incrementCounter<span style="color: #666666">(</span>event<span style="color: #666666">.</span>getClass<span style="color: #666666">.</span>getSimpleName<span style="color: #60a0b0; font-style: italic">/*this is not recommended...*/</span><span style="color: #666666">,</span> <span style="color: #4070a0">&quot;errorCode&quot;</span> <span style="color: #666666">-&gt;</span>
-   event<span style="color: #666666">.</span>code<span style="color: #666666">.</span>toString<span style="color: #666666">)</span>
- <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">S3_Backup</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Sender</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">(</span>event<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   S3_Client<span style="color: #666666">.</span>upload<span style="color: #666666">(</span>event<span style="color: #666666">.</span>content<span style="color: #666666">)</span>
- <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">Kafka</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Sender</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">(</span>event<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   <span style="color: #0e84b5; font-weight: bold">KafkaProducer</span><span style="color: #666666">.</span>send<span style="color: #666666">(</span>event<span style="color: #666666">.</span>content<span style="color: #666666">)</span> <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-</pre></div>
-
+````ruby
+abstract class Sender {
+ def send(event: ServingError): Unit
+}
+trait Log extends Sender {
+ override def send(event: ServingError): Unit = {
+   Logger.log(event.description)
+ }
+}
+trait Metric extends Sender {
+ override def send(event: ServingError): Unit = {
+   Monitor.incrementCounter(event.getClass.getSimpleName/*this is not recommended...*/, "errorCode" ->
+   event.code.toString)
+ }
+}
+trait S3_Backup extends Sender {
+ override def send(event: ServingError): Unit = {
+   S3_Client.upload(event.content)
+ }
+}
+trait Kafka extends Sender {
+ def send(event: ServingError): Unit = {
+   KafkaProducer.send(event.content) }
+}
+````
 
 Alright, so now each trait has a “send” method that handles the event using the appropriate client.
 But we still need to trigger it on the occurrence of an error, and call them in the order described above
@@ -158,47 +159,48 @@ And for InvalidRequestError: Kafka ← Monitor ← Log
 
 Let’s re-arranged the mix of the 'Error' classes:
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">case</span> <span style="color: #007020; font-weight: bold">class</span> <span style="color: #0e84b5; font-weight: bold">FatalError</span><span style="color: #666666">(</span><span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> code<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Int</span> <span style="color: #666666">=</span> <span style="color: #40a070">1</span><span style="color: #666666">,</span> exceptionCause<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">)</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">ServingError</span> <span style="color: #007020; font-weight: bold">with</span> S3_Backup <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Kafka</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Monitor</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Log</span><span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> description<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span> <span style="color: #666666">=</span> s<span style="color: #4070a0">&quot;Fatal Error code $code accrued&quot;</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">case</span> <span style="color: #007020; font-weight: bold">class</span> <span style="color: #0e84b5; font-weight: bold">InvalidRequestError</span><span style="color: #666666">(</span>paramName<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">,</span> paramValue<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">,</span> <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> code<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Int</span> <span style="color: #666666">=</span> <span style="color: #40a070">2</span><span style="color: #666666">)</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">ServingError</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Kafka</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Monitoring</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Log</span><span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> description<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span> <span style="color: #666666">=</span> s<span style="color: #4070a0">&quot;Invalid Request. Bad  parameter: $paramName&quot;</span> <span style="color: #666666">+</span> <span style="color: #4070a0">&quot; &quot;</span> <span style="color: #666666">+</span> s<span style="color: #4070a0">&quot;with value: $paramValue&quot;</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">case</span> <span style="color: #007020; font-weight: bold">class</span> <span style="color: #0e84b5; font-weight: bold">FatalError</span><span style="color: #666666">(</span><span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> code<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Int</span> <span style="color: #666666">=</span> <span style="color: #40a070">1</span><span style="color: #666666">,</span> exceptionCause<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">)</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">ServingError</span> <span style="color: #007020; font-weight: bold">with</span> S3_Backup <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Kafka</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Monitor</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Log</span><span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> description<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span> <span style="color: #666666">=</span> s<span style="color: #4070a0">&quot;Fatal Error code $code accrued&quot;</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">case</span> <span style="color: #007020; font-weight: bold">class</span> <span style="color: #0e84b5; font-weight: bold">InvalidRequestError</span><span style="color: #666666">(</span>paramName<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">,</span> paramValue<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">,</span> <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> code<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Int</span> <span style="color: #666666">=</span> <span style="color: #40a070">2</span><span style="color: #666666">)</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">ServingError</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Kafka</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Monitoring</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Log</span><span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> description<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span> <span style="color: #666666">=</span> s<span style="color: #4070a0">&quot;Invalid Request. Bad  parameter: $paramName&quot;</span> <span style="color: #666666">+</span> <span style="color: #4070a0">&quot; &quot;</span> <span style="color: #666666">+</span> s<span style="color: #4070a0">&quot;with value: $paramValue&quot;</span>
-<span style="color: #666666">}</span>
-</pre></div>
+````ruby
+case class FatalError(override val code: Int = 1, exceptionCause: String) extends ServingError with S3_Backup with Kafka with Monitor with Log{
+ override val description: String = s"Fatal Error code $code accrued"
+}
+case class InvalidRequestError(paramName: String, paramValue: String, override val code: Int = 2) extends ServingError with Kafka with Monitoring with Log{
+ override val description: String = s"Invalid Request. Bad  parameter: $paramName" + " " + s"with value: $paramValue"
+}
+case class FatalError(override val code: Int = 1, exceptionCause: String) extends ServingError with S3_Backup with Kafka with Monitor with Log{
+ override val description: String = s"Fatal Error code $code accrued"
+}
+case class InvalidRequestError(paramName: String, paramValue: String, override val code: Int = 2) extends ServingError with Kafka with Monitoring with Log{
+ override val description: String = s"Invalid Request. Bad  parameter: $paramName" + " " + s"with value: $paramValue"
+}
+````
 
 And stack the traits:
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">Log</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Sender</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">abstract</span> <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">(</span>event<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   <span style="color: #0e84b5; font-weight: bold">Logger</span><span style="color: #666666">.</span>log<span style="color: #666666">(</span>event<span style="color: #666666">.</span>description<span style="color: #666666">)</span>
-   <span style="color: #007020; font-weight: bold">super</span><span style="color: #666666">.</span>send<span style="color: #666666">(</span>event<span style="color: #666666">)</span>
- <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">Metric</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Sender</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">abstract</span> <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">(</span>event<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   <span style="color: #0e84b5; font-weight: bold">Monitor</span><span style="color: #666666">.</span>incrementCounter<span style="color: #666666">(</span>event<span style="color: #666666">.</span>getClass<span style="color: #666666">.</span>getSimpleName<span style="color: #666666">,</span> <span style="color: #4070a0">&quot;errorCode&quot;</span> <span style="color: #666666">-&gt;</span> event<span style="color: #666666">.</span>code<span style="color: #666666">.</span>toString<span style="color: #666666">)</span>
-   <span style="color: #007020; font-weight: bold">super</span><span style="color: #666666">.</span>send<span style="color: #666666">(</span>event<span style="color: #666666">)</span>
- <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">S3_Backup</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Sender</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">abstract</span> <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">(</span>event<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   S3_Client<span style="color: #666666">.</span>upload<span style="color: #666666">(</span>event<span style="color: #666666">.</span>content<span style="color: #666666">)</span>
-   <span style="color: #007020; font-weight: bold">super</span><span style="color: #666666">.</span>send<span style="color: #666666">(</span>event<span style="color: #666666">)</span>
- <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">Kafka</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Sender</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">abstract</span> <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">(</span>event<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   <span style="color: #0e84b5; font-weight: bold">Try</span><span style="color: #666666">(</span><span style="color: #0e84b5; font-weight: bold">KafkaProducer</span><span style="color: #666666">.</span>send<span style="color: #666666">(</span>event<span style="color: #666666">.</span>content<span style="color: #666666">)).</span>getOrElse<span style="color: #666666">(</span><span style="color: #007020; font-weight: bold">super</span><span style="color: #666666">.</span>send<span style="color: #666666">(</span>event<span style="color: #666666">))</span>
- <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-</pre></div>
-
+````ruby
+trait Log extends Sender {
+ abstract override def send(event: ServingError): Unit = {
+   Logger.log(event.description)
+   super.send(event)
+ }
+}
+trait Metric extends Sender {
+ abstract override def send(event: ServingError): Unit = {
+   Monitor.incrementCounter(event.getClass.getSimpleName, "errorCode" -> event.code.toString)
+   super.send(event)
+ }
+}
+trait S3_Backup extends Sender {
+ abstract override def send(event: ServingError): Unit = {
+   S3_Client.upload(event.content)
+   super.send(event)
+ }
+}
+trait Kafka extends Sender {
+ abstract override def send(event: ServingError): Unit = {
+   Try(KafkaProducer.send(event.content)).getOrElse(super.send(event))
+ }
+}
+````
 
 
 You might notice that
@@ -220,89 +222,91 @@ The event content needs modification to be in the right format (json, csv) befor
 
 Let’s write the modification method and the stackable modification traits:
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">object</span> <span style="color: #0e84b5; font-weight: bold">ServingError</span><span style="color: #666666">{</span>
-<span style="color: #60a0b0; font-style: italic">// we are adding a method modification content method, to be used by the modification traits </span>
- <span style="color: #007020; font-weight: bold">def</span> modifyContent<span style="color: #666666">(</span>error<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span><span style="color: #666666">,</span> content<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   error <span style="color: #007020; font-weight: bold">match</span> <span style="color: #666666">{</span>
-     <span style="color: #007020; font-weight: bold">case</span> f<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">FatalError</span> <span style="color: #666666">=&gt;</span> <span style="color: #0e84b5; font-weight: bold">FatalError</span><span style="color: #666666">(</span>exceptionCause <span style="color: #007020; font-weight: bold">=</span> f<span style="color: #666666">.</span>exceptionCause<span style="color: #666666">,</span> content <span style="color: #007020; font-weight: bold">=</span> content<span style="color: #666666">)</span>
-     <span style="color: #007020; font-weight: bold">case</span> i<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">InvalidRequestError</span> <span style="color: #666666">=&gt;</span> <span style="color: #0e84b5; font-weight: bold">InvalidRequestError</span><span style="color: #666666">(</span>i<span style="color: #666666">.</span>paramName<span style="color: #666666">,</span> i<span style="color: #666666">.</span>paramValue<span style="color: #666666">,</span> content <span style="color: #007020; font-weight: bold">=</span> content<span style="color: #666666">)</span>
-   <span style="color: #666666">}</span>
- <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
+````ruby
+object ServingError{
+// we are adding a method modification content method, to be used by the modification traits
+ def modifyContent(error: ServingError, content: String): ServingError = {
+   error match {
+     case f: FatalError => FatalError(exceptionCause = f.exceptionCause, content = content)
+     case i: InvalidRequestError => InvalidRequestError(i.paramName, i.paramValue, content = content)
+   }
+ }
+}
 
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">JsonTransformer</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Sender</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">import</span> <span style="color: #0e84b5; font-weight: bold">ServingError._</span>
- <span style="color: #007020; font-weight: bold">abstract</span> <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">(</span>event<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   <span style="color: #007020; font-weight: bold">super</span><span style="color: #666666">.</span>send<span style="color: #666666">(</span>modifyContent<span style="color: #666666">(</span>event<span style="color: #666666">,</span> <span style="color: #666666">{</span>
-     <span style="color: #007020; font-weight: bold">val</span> date <span style="color: #007020; font-weight: bold">=</span> event <span style="color: #007020; font-weight: bold">match</span> <span style="color: #666666">{</span>
-       <span style="color: #007020; font-weight: bold">case</span> d<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">DateTimestampedMessage</span> <span style="color: #666666">=&gt;</span> <span style="color: #4070a0">&quot;\&quot;date\&quot;:&quot;</span> <span style="color: #666666">+</span> d<span style="color: #666666">.</span>date
-       <span style="color: #007020; font-weight: bold">case</span> <span style="color: #007020; font-weight: bold">_</span> <span style="color: #007020; font-weight: bold">=&gt;</span> <span style="color: #4070a0">&quot;&quot;</span>
-     <span style="color: #666666">}</span>
-     <span style="color: #007020; font-weight: bold">val</span> cause <span style="color: #007020; font-weight: bold">=</span> event <span style="color: #007020; font-weight: bold">match</span> <span style="color: #666666">{</span>
-       <span style="color: #007020; font-weight: bold">case</span> f<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">FatalError</span> <span style="color: #666666">=&gt;</span> <span style="color: #4070a0">&quot;\&quot;cause\&quot;:&quot;</span> <span style="color: #666666">+</span> f<span style="color: #666666">.</span>exceptionCause
-       <span style="color: #007020; font-weight: bold">case</span> i<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">InvalidRequestError</span> <span style="color: #666666">=&gt;</span> <span style="color: #4070a0">&quot;\&quot;cause\&quot;:&quot;</span> <span style="color: #666666">+</span> i<span style="color: #666666">.</span>paramName <span style="color: #666666">+</span><span style="color: #4070a0">&quot;:&quot;</span> <span style="color: #666666">+</span>i<span style="color: #666666">.</span>paramValue
-     <span style="color: #666666">}</span>
-     s<span style="color: #4070a0">&quot;&quot;&quot;</span>
-<span style="color: #4070a0">             {</span>
-<span style="color: #4070a0">                &quot;code:&quot;${event.code},</span>
-<span style="color: #4070a0">                $date</span>
-<span style="color: #4070a0">                $cause</span>
-<span style="color: #4070a0">             }</span>
-<span style="color: #4070a0">      &quot;&quot;&quot;</span>
-   <span style="color: #666666">}))</span>
- <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">CsVTransformer</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Sender</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">import</span> <span style="color: #0e84b5; font-weight: bold">ServingError._</span>
- <span style="color: #007020; font-weight: bold">abstract</span> <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">(</span>event<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> <span style="color: #666666">{</span>
-   <span style="color: #007020; font-weight: bold">super</span><span style="color: #666666">.</span>send<span style="color: #666666">(</span>modifyContent<span style="color: #666666">(</span>event<span style="color: #666666">,</span> <span style="color: #666666">{</span>
-     <span style="color: #007020; font-weight: bold">val</span> date <span style="color: #007020; font-weight: bold">=</span> event <span style="color: #007020; font-weight: bold">match</span> <span style="color: #666666">{</span>
-       <span style="color: #007020; font-weight: bold">case</span> d<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">DateTimestampedMessage</span> <span style="color: #666666">=&gt;</span> d<span style="color: #666666">.</span>date
-       <span style="color: #007020; font-weight: bold">case</span> <span style="color: #007020; font-weight: bold">_</span> <span style="color: #007020; font-weight: bold">=&gt;</span> <span style="color: #4070a0">&quot;&quot;</span>
-     <span style="color: #666666">}</span>
-     <span style="color: #007020; font-weight: bold">val</span> cause <span style="color: #007020; font-weight: bold">=</span> event <span style="color: #007020; font-weight: bold">match</span> <span style="color: #666666">{</span>
-       <span style="color: #007020; font-weight: bold">case</span> f<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">FatalError</span> <span style="color: #666666">=&gt;</span> f<span style="color: #666666">.</span>exceptionCause
-       <span style="color: #007020; font-weight: bold">case</span> i<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">InvalidRequestError</span> <span style="color: #666666">=&gt;</span> i<span style="color: #666666">.</span>paramName <span style="color: #666666">+</span><span style="color: #4070a0">&quot;,&quot;</span> <span style="color: #666666">+</span>i<span style="color: #666666">.</span>paramValue
-     <span style="color: #666666">}</span>
-     s<span style="color: #4070a0">&quot;&quot;&quot;${event.code},$date$cause&quot;&quot;&quot;</span>
-   <span style="color: #666666">}))</span>
- <span style="color: #666666">}</span>
-<span style="color: #666666">}</span>
+trait JsonTransformer extends Sender {
+ import ServingError._
+ abstract override def send(event: ServingError): Unit = {
+   super.send(modifyContent(event, {
+     val date = event match {
+       case d: DateTimestampedMessage => "\"date\":" + d.date
+       case _ => ""
+     }
+     val cause = event match {
+       case f: FatalError => "\"cause\":" + f.exceptionCause
+       case i: InvalidRequestError => "\"cause\":" + i.paramName +":" +i.paramValue
+     }
+     s"""
+             {
+                "code:"${event.code},
+                $date
+                $cause
+             }
+      """
+   }))
+ }
+}
+trait CsVTransformer extends Sender {
+ import ServingError._
+ abstract override def send(event: ServingError): Unit = {
+   super.send(modifyContent(event, {
+     val date = event match {
+       case d: DateTimestampedMessage => d.date
+       case _ => ""
+     }
+     val cause = event match {
+       case f: FatalError => f.exceptionCause
+       case i: InvalidRequestError => i.paramName +"," +i.paramValue
+     }
+     s"""${event.code},$date$cause"""
+   }))
+ }
+}
 
-<span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">Timestamp</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">val</span> date<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Date</span> <span style="color: #666666">=</span> <span style="color: #007020; font-weight: bold">new</span> <span style="color: #0e84b5; font-weight: bold">Date</span><span style="color: #666666">()</span>
-<span style="color: #666666">}</span>
-</pre></div>
+trait Timestamp {
+ val date: Date = new Date()
+}
+````
 
 And mix the modification traits to the 'Error' classes
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">case</span> <span style="color: #007020; font-weight: bold">class</span> <span style="color: #0e84b5; font-weight: bold">FatalError</span><span style="color: #666666">(</span><span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> code<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Int</span> <span style="color: #666666">=</span> <span style="color: #40a070">1</span><span style="color: #666666">,</span> exceptionCause<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">,</span> content<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span> <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;&quot;</span><span style="color: #666666">)</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">ServingError</span> <span style="color: #007020; font-weight: bold">with</span> S3_Backup <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">CsVTransformer</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Kafka</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">JsonTransformer</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Timestamp</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Metric</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Log</span><span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> description<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span> <span style="color: #666666">=</span> s<span style="color: #4070a0">&quot;Fatal Error code $code accrued&quot;</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">case</span> <span style="color: #007020; font-weight: bold">class</span> <span style="color: #0e84b5; font-weight: bold">InvalidRequestError</span><span style="color: #666666">(</span>paramName<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">,</span> paramValue<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">,</span> <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> code<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Int</span> <span style="color: #666666">=</span> <span style="color: #40a070">2</span><span style="color: #666666">,</span> content<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span> <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;&quot;</span><span style="color: #666666">)</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">ServingError</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Kafka</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">JsonTransformer</span> <span style="color: #007020; font-weight: bold">with</span> <span style="color: #0e84b5; font-weight: bold">Log</span><span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> description<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span> <span style="color: #666666">=</span> s<span style="color: #4070a0">&quot;Invalid Request. Bad  parameter: $paramName&quot;</span> <span style="color: #666666">+</span> <span style="color: #4070a0">&quot; &quot;</span> <span style="color: #666666">+</span> s<span style="color: #4070a0">&quot;with value: $paramValue&quot;</span>
-<span style="color: #666666">}</span>
-</pre></div>
-
+````ruby
+case class FatalError(override val code: Int = 1, exceptionCause: String, content: String = "") extends ServingError with S3_Backup with CsVTransformer with Kafka with JsonTransformer with Timestamp with Metric with Log{
+ override val description: String = s"Fatal Error code $code accrued"
+}
+case class InvalidRequestError(paramName: String, paramValue: String, override val code: Int = 2, content: String = "") extends ServingError with Kafka with JsonTransformer with Log{
+ override val description: String = s"Invalid Request. Bad  parameter: $paramName" + " " + s"with value: $paramValue"
+}
+````
 
 ##### Create and mix 'ServingErrorSender' :
 
 Last, to trigger error reports once an error object is created, we’ll mix them with a sending trait.
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">ServingErrorSender</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">Sender</span><span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">this:</span> <span style="color: #902000">ServingError</span> <span style="color: #666666">=&gt;</span>   <span style="color: #60a0b0; font-style: italic">// force to be mixed with a ServingError class, (look for 'see cake-pattern')</span>
- <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">()</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> send<span style="color: #666666">(</span><span style="color: #007020; font-weight: bold">this</span><span style="color: #666666">)</span>
- <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">def</span> send<span style="color: #666666">(</span>event<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">ServingError</span><span style="color: #666666">)</span><span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Unit</span> <span style="color: #666666">=</span> <span style="color: #4070a0">&quot;&quot;</span>
-<span style="color: #666666">}</span>
-</pre></div>
+````ruby
+trait ServingErrorSender extends Sender{
+ this: ServingError =>   // force to be mixed with a ServingError class, (look for 'see cake-pattern')
+ def send(): Unit = send(this)
+ override def send(event: ServingError): Unit = ""
+}
+````
 
-
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">ServingError</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">ServingErrorSender</span><span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">val</span> code<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Int</span>
- <span style="color: #007020; font-weight: bold">val</span> description<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span>
- <span style="color: #007020; font-weight: bold">val</span> content<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span>
-<span style="color: #666666">}</span>
-</pre></div>
+````ruby
+trait ServingError extends ServingErrorSender{
+ val code: Int
+ val description: String
+ val content: String
+}
+````
 
 <br><br>
 ### **Try it out**
