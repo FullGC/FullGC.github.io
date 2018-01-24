@@ -20,7 +20,7 @@ header-img: "img/tune-Akka.jpg"
 
 ------------------------------------------------------------------------------------------
 
-At some point, whether it is during your new actor-based system planning, or after you have a prototype working, you'll probably find yourself digging into the Akka Docs to find the right combination of possibilities for routing, dispatcher, number of actors instances and so forth...
+At some point, whether it is during your new actor-based system planning, or after you have a prototype working, you'll probably find yourself digging into the [Akka Docs](https://doc.akka.io/docs/akka/2.5/scala/index.html) to find the right combination of possibilities for routing, dispatcher, number of actors instances and so forth...
 Depending on the complexity of your system and performance requirements, this could get tedious.
 
 <br><br>
