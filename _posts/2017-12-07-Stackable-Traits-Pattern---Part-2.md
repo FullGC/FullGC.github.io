@@ -21,20 +21,20 @@ header-img: "img/burger-stack.jpg"
 
 ------------------------------------------------------------------------------------------
 
-[Stackable traits](https://fullgc.github.io/stackable-traits-pattern/) can be applied to actors as well.
-Specifically, we can use stackable actor traits to modify the behavior of the 'receive' method.
+Stackable traits can be applied to actors as well.
+Specifically, we can use stackable actor traits to modify the behavior of the ‘receive’ method.
 
 ## **Part-2: Gathering Metrics**
 
 We like to gather the following metrics
 
-* time-in-mailbox: The time from the moment a message was enqueued into an actor's mailbox until the moment it was dequeued for processing.
+* time-in-mailbox: The time from the moment a message was enqueued into an actor’s mailbox until the moment it was dequeued for processing.
 
-* processing-time: How long did it take for the actor to process a message.
+* processing-time:How long did it take for the actor to process a message.
 
-And to log when an actor starts to handle a message and before it finishes.
+And to log when an actor starts handling a message and before it finishes.
 
-### **Stackable Actors based implementation**
+### **Stackable Actors-based implementation**
 
 Say we have the following actor that we like to monitor:
 
@@ -45,9 +45,9 @@ Say we have the following actor that we like to monitor:
 <span style="color: #666666">}</span>
 </pre></div>
 
-Let's start with the 'time-in-mailbox’ metric. The simple way to implement it is to take time before the message is sent, and calculate the time in mailbox when the actor is starting pressing it. For the sake of the example we’ll assume that a message is created just before it being sent.
+Let’s start with the ‘time-in-mailbox’ metric. The simplest way to implement it is to take the time before the message was sent and calculate the time in the mailbox when the actor starting processing it. For the sake of example, we’ll assume that a message was created just before it was sent.
 
-The message class that should be monitored be:
+The message class that should be monitored is:
 
 <!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">RecordableMessage</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">RichMessage</span> <span style="color: #666666">{</span>
   <span style="color: #007020; font-weight: bold">val</span> dispatchTime<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Long</span> <span style="color: #666666">=</span>
@@ -58,7 +58,7 @@ The message class that should be monitored be:
 <span style="color: #666666">}</span>
 </pre></div>
 
-We initializing the time before the message is being sent, and give it a name, to be use as a tag for the metric.
+We initialized the time before the message was sent, and gave it a name, to be used as a tag for the metric.
 
 Next, create the stackable trait for monitoring the actor on RecordableMessage
 
@@ -79,13 +79,13 @@ Next, create the stackable trait for monitoring the actor on RecordableMessage
 
 You might notice that
 
-1. As discussed in [part-1](https://fullgc.github.io/stackable-traits-pattern/), the modifier of the 'receive' method should be "abstract override"
+1. As discussed in [Part-1](https://fullgc.github.io/stackable-traits-pattern/), the modifier of the ‘receive’ method should be “abstract override”
 
-2. We gather the metrics only on RecordableMessage message
+2. We gather the metrics only on the 'RecordableMessage' message
 
-3. For calculating 'time-in-mailbox', 'dispatchTime’ is used
+3. For calculating 'time-in-mailbox', 'dispatchTime' is used
 
-4. For calculating 'processing-time', we take take time before invoking the action, then invoking the action, and record the ‘processing-time’ when it finished.
+4. For calculating 'processing-time', we take time before invoking the action, then invoking the action, and record the ‘processing-time’ when it finished.
 
 The LoggerActor is the following 
 
@@ -135,7 +135,7 @@ done handling message: SomeTriggerMessage
 
 ### **Wrapping up**
 
-Stackable traits pattern is a good choice when you need to 'pipe' actions or modify and redirect data for an action. Mix and stack traits to describe the state of the class and execute the actions are clean and flexible, and generally the scala-functional way to do it.
+Stackable traits pattern is a good choice when you need to ‘pipe’ actions or modify and redirect data for an action. Mix and stack traits to describe the state of the class and execute the actions are clean and flexible, and generally the Scala-functional way to do it.
 
 <img src="/img/scala_devs.png">
 
