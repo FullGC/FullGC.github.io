@@ -103,9 +103,9 @@ trait S3_Backup
 trait Kafka
 ````
 
-````ruby
-And mix them with the ‘Error’ classes. Here, we use a Scala-type system to describe the ‘Error’ classes and the actions that need to be taken
+And mix them with the 'Error' classes. Here, we use a Scala-type system to describe the 'Error' classes and the actions that need to be taken
 
+````ruby
 trait ServingError{
  val code: Int
  val description: String
