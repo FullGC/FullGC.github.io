@@ -59,18 +59,18 @@ On **InvalidRequestError**
 
 An Error has a code, a description, and unique properties
 
-<!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">trait</span> <span style="color: #0e84b5; font-weight: bold">ServingError</span><span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">val</span> code<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Int</span>
- <span style="color: #007020; font-weight: bold">val</span> description<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span>
-<span style="color: #666666">}</span>
-<span style="color: #007020; font-weight: bold">case</span> <span style="color: #007020; font-weight: bold">class</span> <span style="color: #0e84b5; font-weight: bold">FatalError</span><span style="color: #666666">(</span><span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> code<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">Int</span> <span style="color: #666666">=</span> <span style="color: #40a070">1</span><span style="color: #666666">,</span> exceptionCause<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span><span style="color: #666666">)</span> <span style="color: #007020; font-weight: bold">extends</span> <span style="color: #0e84b5; font-weight: bold">ServingError</span> <span style="color: #666666">{</span>
- <span style="color: #007020; font-weight: bold">override</span> <span style="color: #007020; font-weight: bold">val</span> description<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">String</span> <span style="color: #666666">=</span>  s<span style="color: #4070a0">&quot;Fatal Error code $code accrued</span><span style="border: 1px solid #FF0000">&quot;</span>
-<span style="color: #4070a0">}</span>
-<span style="color: #4070a0">case class InvalidRequestError(paramName: String, paramValue: String, override val code: Int = 2) extends ServingError{</span>
-<span style="color: #4070a0"> override val description: String = s&quot;</span><span style="color: #0e84b5; font-weight: bold">Invalid</span> <span style="color: #0e84b5; font-weight: bold">Request</span><span style="color: #666666">.</span> <span style="color: #0e84b5; font-weight: bold">Bad</span>  parameter<span style="color: #007020; font-weight: bold">:</span> <span style="color: #902000">$paramName</span><span style="border: 1px solid #FF0000">&quot;</span> <span style="color: #902000">+</span> <span style="border: 1px solid #FF0000">&quot;</span> <span style="border: 1px solid #FF0000">&quot;</span> <span style="color: #902000">+</span> <span style="color: #902000">s</span><span style="border: 1px solid #FF0000">&quot;</span><span style="color: #902000">with</span> <span style="color: #902000">value:</span> <span style="color: #902000">$paramValue</span><span style="border: 1px solid #FF0000">&quot;</span>
-<span style="color: #666666">}</span>
-</pre></div>
-
+````javascript
+trait ServingError{
+ val code: Int
+ val description: String
+}
+case class FatalError(override val code: Int = 1, exceptionCause: String) extends ServingError {
+ override val description: String =  s"Fatal Error code $code accrued”
+}
+case class InvalidRequestError(paramName: String, paramValue: String, override val code: Int = 2) extends ServingError{
+ override val description: String = s"Invalid Request. Bad  parameter: $paramName" + " " + s"with value: $paramValue"
+}
+````
 And these are mocks for the Scala Clients
 
 <!-- HTML generated using hilite.me --><div style="background: #f0f0f0; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007020; font-weight: bold">object</span> <span style="color: #0e84b5; font-weight: bold">KafkaProducer</span><span style="color: #666666">{</span>
