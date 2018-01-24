@@ -59,7 +59,7 @@ On **InvalidRequestError**
 
 An Error has a code, a description, and unique properties
 
-````ruby
+````scala
 trait ServingError{
  val code: Int
  val description: String
