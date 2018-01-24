@@ -314,9 +314,11 @@ This is recommended for a small number of actor instances, where you have much m
 In [Part-2](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2) I will show how we monitor and analyze our actor-based system.
 
 ```
-Inneractive maintains an Exchange server, which, simply put, receives an advertisement for a mobile application from Ad-Networks.
+Inneractive maintains an Exchange server, which, simply put, receives an advertisement for a mobile application
+from Ad-Networks.
 In fact, there are ~500 server instances at a given moment, dealing with ~10,000,000 Ad requests per  minute.
-During the process, the Exchange server performs a real-time auction by going out (with scala.Future) to multiple Ad-Networks (consumers).
+During the process, the Exchange server performs a real-time auction by going out (with scala.Future)
+to multiple Ad-Networks (consumers).
 This translates to ~150,000,000 transactions per minute.
 The Exchange server is Akka-based and uses Spray as a server-side-HTTP. The entire flow is actor-based.
 We use other Akka frameworks in other modules like Akka-Http and Akka Streams.
