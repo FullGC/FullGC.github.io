@@ -40,7 +40,7 @@ And to log when an actor starts handling a message and before it finishes.
 
 Say we have the following actor that we like to monitor:
 
-````ruby
+````scala
 abstract class MyActor extends Actor with StrictLogging {
  override def receive: Receive = {
    case message => logger.info("performing some work...")
@@ -52,7 +52,7 @@ Let’s start with the ‘time-in-mailbox’ metric. The simplest way to impleme
 
 The message class that should be monitored is:
 
-````ruby
+````scala
 trait RecordableMessage extends RichMessage {
   val dispatchTime: Long =
   System.currentTimeMillis()
@@ -66,7 +66,7 @@ We initialized the time before the message was sent, and gave it a name, to be u
 
 Next, create the stackable trait for monitoring the actor on RecordableMessage
 
-````ruby
+````scala
 trait LatencyRecorderActor extends Actor with StrictLogging {
  val actorName: String = this.getClass.getSimpleName
 
@@ -94,7 +94,7 @@ You might notice that
 
 The LoggerActor is the following 
 
-````ruby
+````scala
 trait LoggerActor extends Actor with StrictLogging {
  abstract override def receive: Receive = {
    case recordableMessage: RecordableMessage =>
@@ -115,7 +115,7 @@ class MyMonitoredActor extends MyActor with LatencyRecorderActor with LoggerActo
 
 Create a concrete RecordableMessage:
 
-````ruby
+````scala
 case class SomeRecordableMessage() extends RecordableMessage {
    override val messageName: String =
    this.getClass.getSimpleName
@@ -124,7 +124,7 @@ case class SomeRecordableMessage() extends RecordableMessage {
 
 And send it to a MonitoredActor instance
 
-````ruby
+````scala
 val actorSystem = ActorSystem("system")
 val myMonitoredActor = actorSystem.actorOf(Props[MyMonitoredActor])
 myMonitoredActor ! SomeRecordableMessage()
