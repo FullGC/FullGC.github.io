@@ -104,7 +104,7 @@ Let’s review some scenarios in which you may want to scale your routees:
 
 ###### *The producer(In our use case, one of your actors), can produce faster than the received consumer(actor or any other source) can handle.*
 
-<img align="right" src="/img/loaded.png" height="280" width="280">
+<img align="right" src="/img/loaded.png" height="260" width="260">
  In this case you may:
 
 * Back-pressure the producer, i.e. reduce the number of producer's routees.
@@ -115,7 +115,7 @@ Let’s review some scenarios in which you may want to scale your routees:
 
 ###### *The consumer is faster than the producer.*
 
-<img align="right" src="/img/easy.png" height="280" width="280">
+<img align="right" src="/img/easy.png" height="260" width="260">
 Here the consumer will block waiting for the next item.
 
 * Remove some consumers(routees...)! 
