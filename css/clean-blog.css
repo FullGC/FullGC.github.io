@@ -50,7 +50,7 @@ hr.small {
 }
 .navbar-custom .navbar-brand {
   font-weight: 800;
-  text-shadow: 1px 1px 1px #000, -1px 1px 1px #000, 1px -1px 1px #000, -1px -1px 1px #000;
+  /*text-shadow: 1px 1px 1px #000, -1px 1px 1px #000, 1px -1px 1px #000, -1px -1px 1px #000;*/
 }
 .navbar-custom .nav li a {
   text-transform: uppercase;
