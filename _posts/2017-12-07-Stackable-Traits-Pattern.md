@@ -9,7 +9,7 @@ tags:
 - traits
 source-id: 1Fx2TpNbL_lKIOBoy4Fni0NjlHa-vjb_J-r_v6gSMUck
 published: true
-date: 2017-12-08 14:40:45
+date: 2018-08-24 14:40:45
 header-img: "img/burger-stack.jpg"
 ---
 
