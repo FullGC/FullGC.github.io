@@ -10,7 +10,7 @@ tags:
 - akka
 source-id: 1m6eIR7wGA1qDRmceIp1S3If9B9k-lpDksi4aRdQ_d1Y
 published: true
-date: 2018-08-25 14:40:45
+date: 2018-07-25 14:40:45
 header-img: "img/burger-stack.jpg"
 ---
 
