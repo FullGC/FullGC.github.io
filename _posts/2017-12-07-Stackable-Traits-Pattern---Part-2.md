@@ -1,7 +1,7 @@
 ---
 title: Stackable Traits pattern - Part 2
 layout: post
-author: dani.shemesh
+author: Dani Shemesh
 permalink: /stackable-traits-pattern---part-2/
 tags:
 - scala

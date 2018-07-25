@@ -1,7 +1,7 @@
 ---
 title: How to tune Akka to get the most from your Actor-based system - Part 2
 layout: post
-author: dani.shemesh
+author: Dani Shemesh
 permalink: /how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2/
 tags:
 - scala
