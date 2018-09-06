@@ -1,112 +1,350 @@
 ---
-title: Manage development and delivery workflow with jGit-flow and Jenkins-Pipeline
+title: Workflow Traits pattern - Part 1
 layout: post
 author: Dani Shemesh
-permalink: /manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1/
+permalink: /stackable-traits-pattern/
 tags:
-- jira 
-- jenkins
-- pipeline
-- git-flow
-- jgit-flow
-- ci/cd
-- release
-- deployment
-date: 2018-09-05 14:40:45
+- scala
+- stackable
+- traits
+source-id: 1Fx2TpNbL_lKIOBoy4Fni0NjlHa-vjb_J-r_v6gSMUck
 published: true
-header-img: "img/pipes.jpg"
+date: 2018-07-23 14:40:45
+header-img: "img/burger-stack.jpg"
 ---
 
-<i>This post is the first of a three parts series of articles on manage CI/CD workflow with jgit-flow and Pipeline</i>
+<i>This post is the first of a two parts series of articles on Stackable Traits</i>
 
-* [Part-1: Tools and Planning](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1)
-* [Part-2: Git workflow with JGit-Flow](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-2)
-* [Part-3: Development and Release process with Jenkins Pipeline](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3)
+* [Part-1: Error reporting design with Stackable Traits](https://fullgc.github.io/stackable-traits-pattern/)
+* [Part-2: Gathering Metrics with Stackable Actors](https://fullgc.github.io/stackable-traits-pattern---part-2/)
 
 ------------------------------------------------------------------------------------------
 
-Manage development and delivery workflow with jGit-flow and Jenkins-Pipeline
+*"Traits let you modify the methods of a class, and they do so in a way that allows you to stack those modifications with each other" (Programming in Scala by Martin Odersky)*
 
-This article describes a development and delivery workflow, from a Jira ticket to a version release (and deployment) using a popular stack, including Jira, Git, Maven, and Jenkins. 
+One of the reasons that Scala still feels to me like ‘a better Java’, is the power of its traits. A trait can be used for multiple inheritances, a Java interface, a rich interface with fields and a state, and a mix into a class.
 
-## Part 1 - Tools and Planning
+An interesting behavior of traits, as opposed to classes, is the call for a super method. In classes this is statically bound, meaning that the exact implementation to be invoked is known upfront. In traits however, this is dynamically bound.
+The term usually refers to an invocation of a method in an object, where the implementation is decided at runtime, i.e. a polymorphic call. The super call is not defined when a trait is defined, but only when it is mixed into a concrete class.
+Such behavior allows us to ‘stack’ the traits, and use the super call as a ‘pipe’, redirecting output - similar to the ‘pipe’ in Linux. This is the basis for the use-cases we’ll review.
 
-Let's start with a quick review of the tools we’ll use for the workflow implementation
+<br><br>
+## Part-1: Error reporting design
 
-### **Jira**
+Consider the following:
 
-[Atlassian Jira](https://en.wikipedia.org/wiki/Jira_(software)) is a popular proprietary issue tracking system.
+An Ad-Server gets a request for an advertisement from a mobile phone.
 
-We'll manipulate Atlassian Jira feature tickets along the flow. This can be skipped if you don’t use Jira.
+We’ll discuss a solution for executing the actions that need to be taken when the Ad-Server encounters errors. There are two types of error which should be handled appropriately as follows:
 
-The project we'll manage would be part of the Server team (ST) and the feature that we like to implement and deploy would be ST-145.
+On **FatalError**:
 
-Its initial ticket status is 'open', the resolution is ‘unresolved’:
+1. The Logger *prints* to the Log
 
-![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_0.png)
+2. The Monitor *increments* the counter Metric.
 
-### **GitFlow**
+3. Kafka-Producer *sends* a Json Event with a timestamp  to Kafka.
 
-[GitFlow](http://nvie.com/posts/a-successful-git-branching-model/) is a branching model for Git, created by Vincent Driessen.
+4. *when step 3 failed*, S3-Client *uploads* the Event as CSV with a timestamp to to S3 (backup)
 
-The GitFlow workflow defines a strict branching model designed around the project release. It uses the following branches:
+On **InvalidRequestError**
 
-* Master: Stores the official release history. The origin/master is the main branch where the source code of HEAD always reflects a *production-ready* state.
+1. The Logger *prints* to the Log
 
-* Develop: Serves as an integration branch for features
+2. The Monitor *increments* the counter Metric.
 
-* Feature: Each new feature resides in its own branch. Feature branches use 'develop' as their parent branch. When a feature is complete, it gets merged back into ‘develop’
+3. Kafka-Producer *sends* a Json Event to Kafka.
 
-* Release: Supports preparation of a new production release.
+<img src="/img/stackable_narrative.png">
 
-* Hotfix: When a critical bug in a production version must be resolved immediately, a 'hotfix' branch may be branched off from the corresponding tag on the 'master' branch that marks the production version.
+An Error has a code, a description, and unique properties
 
-If you're new to git-flow, please take some time to read about it [in Driessen's post](http://nvie.com/posts/a-successful-git-branching-model/) or in [Atlassian's Guid](https://www.atlassian.com/git/tutorials/comparing-workflows#!workflow-gitflow)e.
+````scala
+trait ServingError{
+ val code: Int
+ val description: String
+}
+case class FatalError(override val code: Int = 1, exceptionCause: String) extends ServingError {
+ override val description: String =  s"Fatal Error code $code accrued"
+}
+case class InvalidRequestError(paramName: String, paramValue: String, override val code: Int = 2) extends ServingError{
+ override val description: String = s"Invalid Request. Bad  parameter: $paramName" + " " + s"with value: $paramValue"
+}
+````
+And these are mocks for the Scala Clients
 
-### **Jgit-flow (Maven plugin)**
+````scala
+object KafkaProducer{
+ def send(eventContent: String): Unit = println(s"sending to Kafka: $eventContent")
+}
+object Monitor{
+ def incrementCounter(counterName: String, tags: (String, String)): Unit = println(s"incrementing counter $counterName")
+}
+object Logger{
+ def log(event: String): Unit = println(s"error: $event")
+}
+object S3_Client {
+ def upload(eventContent: String): Unit = println(s"uploading event $eventContent to S3")
+}
+````
 
-[JGit-Flow](https://bitbucket.org/atlassian/jgit-flow/wiki/Home) [maven plugin](https://mvnrepository.com/artifact/external.atlassian.jgitflow/jgitflow-maven-plugin) is a Java implementation of GitFlow, and like Jira, it was published by Atlassian. It was designed for releasing a maven-based project and includes many other useful features.
-
-jGit-flow provides the following git-flow basic functionality:
-
-* [jgitflow:feature-start](https://bitbucket.org/atlassian/jgit-flow/wiki/goals/feature-start) Starts a feature branch
-
-* [jgitflow:feature-finish](https://bitbucket.org/atlassian/jgit-flow/wiki/goals/feature-finish) Merges a feature branch
-
-* [jgitflow:release-start](https://bitbucket.org/atlassian/jgit-flow/wiki/goals/release-start) Starts a release
-
-* [jgitflow:release-finish](https://bitbucket.org/atlassian/jgit-flow/wiki/goals/release-finish) Merges a release
-
-* [jgitflow:hotfix-start](https://bitbucket.org/atlassian/jgit-flow/wiki/goals/hotfix-start) Starts a hotfix
-
-* [jgitflow:hotfix-finish](https://bitbucket.org/atlassian/jgit-flow/wiki/goals/hotfix-finish) Merges a hotfix
-
-Each feature contains many attributes, providing very useful functionality (described in the links), that we'll use later on.
-
-### **Jgit-flow-jira**
-
-[JGit-Flow-Jira](https://github.com/FullGC/jgit-flow-jira) is a fork that I made for jgit-flow, which uses a Jira client to change the state of a Jira ticket during the lifecycle of a feature. Unfortunately, the project is not bug-free, and currently maintained mostly by the users and not by Atlassian. It is, however, published as open source and written very clearly. Jgitflow-jira contains a fix for this [open bug](https://ecosystem.atlassian.net/browse/MJF-109) as well.
+<br><br>
+### **Step-by-step implementation, using stackable-traits**
 
 
-**Jenkins(Pipeline)**
+##### Create traits that represent the subscribers and mix them.
 
-[Jenkins Pipeline](https://jenkins.io/doc/book/pipeline/) (or simply "Pipeline") is a suite of plugins which supports implementing and integrating *continuous delivery pipelines* into Jenkins.
+We’ll create the following traits, each represents a subscriber for an error event
 
-As opposed to the historic Gui-driven CI/CD tools for Jenkins jobs, the definition of a Pipeline is written into a text file (called a [Jenkinsfile](https://jenkins.io/doc/book/pipeline/jenkinsfile)) as a code. This in turn can be committed to a project's source control repository.
+````scala
+trait Log
+trait Metric
+trait S3_Backup
+trait Kafka
+````
 
-We will use Pipeline for build, tests and release.
+And mix them with the 'Error' classes. Here, we use a Scala-type system to describe the 'Error' classes and the actions that need to be taken
 
-The Pipeline script would be written in Groovy and would use Jenkins syntax and shell commands. 
+````scala
+trait ServingError{
+ val code: Int
+ val description: String
+}
+````
 
-### **Complete development, release and deployment plan**
+##### Turn the traits into services that activates the Clients
 
-The flow-chart below represents the Jira, Git, and deployment flow that we'll learn how to implement in the following sections.
+Now it is clear which subscribers should receive a notification on error. We will enrich the traits, so they can activate the clients as well:
 
-We'll review a development flow of the server team feature, 'ST-145’, and the process of releasing and deploying the next version: 1.2.0, of an application called 'volcano’.
+````scala
+abstract class Sender {
+ def send(event: ServingError): Unit
+}
+trait Log extends Sender {
+ override def send(event: ServingError): Unit = {
+   Logger.log(event.description)
+ }
+}
+trait Metric extends Sender {
+ override def send(event: ServingError): Unit = {
+   Monitor.incrementCounter(event.getClass.getSimpleName/*this is not recommended...*/, "errorCode" ->
+   event.code.toString)
+ }
+}
+trait S3_Backup extends Sender {
+ override def send(event: ServingError): Unit = {
+   S3_Client.upload(event.content)
+ }
+}
+trait Kafka extends Sender {
+ def send(event: ServingError): Unit = {
+   KafkaProducer.send(event.content) }
+}
+````
 
-There are many shapes and arrows in the graph, but there's no need to make sense of them all right now, since we’re going to do exactly that in the following sections.![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_1.png)
+Alright, so now each trait has a “send” method that handles the event using the appropriate client.
+But we still need to trigger it on the occurrence of an error, and call them in the order described above
 
-![image alt text]({{ site.url }}/img/workflow.png)
+##### 'Stack' the services traits with each other
+
+In other words, a pipe of calls for the ‘send’ method in the services. As discussed, we’ll need to use super method calls for that.
+Note that in this step we won’t be stacking modifications, but the side-effects that triggered an error.
+
+Now we need to stack the traits according to the order and logic defined in the narrative described above. The order of the invocation of the traits will be right to left.
+
+Hence the order for FatalError: S3_Backup ← Kafka ← Monitor ← Log
+Where S3_Backup should be invoked only when the Kafka-Producer failed to send the event to Kafka.
+
+And for InvalidRequestError: Kafka ← Monitor ← Log
+
+Let’s re-arranged the mix of the 'Error' classes:
+
+````scala
+case class FatalError(override val code: Int = 1, exceptionCause: String) extends ServingError with S3_Backup with Kafka with Monitor with Log{
+ override val description: String = s"Fatal Error code $code accrued"
+}
+case class InvalidRequestError(paramName: String, paramValue: String, override val code: Int = 2) extends ServingError with Kafka with Monitoring with Log{
+ override val description: String = s"Invalid Request. Bad  parameter: $paramName" + " " + s"with value: $paramValue"
+}
+case class FatalError(override val code: Int = 1, exceptionCause: String) extends ServingError with S3_Backup with Kafka with Monitor with Log{
+ override val description: String = s"Fatal Error code $code accrued"
+}
+case class InvalidRequestError(paramName: String, paramValue: String, override val code: Int = 2) extends ServingError with Kafka with Monitoring with Log{
+ override val description: String = s"Invalid Request. Bad  parameter: $paramName" + " " + s"with value: $paramValue"
+}
+````
+
+And stack the traits:
+
+````scala
+trait Log extends Sender {
+ abstract override def send(event: ServingError): Unit = {
+   Logger.log(event.description)
+   super.send(event)
+ }
+}
+trait Metric extends Sender {
+ abstract override def send(event: ServingError): Unit = {
+   Monitor.incrementCounter(event.getClass.getSimpleName, "errorCode" -> event.code.toString)
+   super.send(event)
+ }
+}
+trait S3_Backup extends Sender {
+ abstract override def send(event: ServingError): Unit = {
+   S3_Client.upload(event.content)
+   super.send(event)
+ }
+}
+trait Kafka extends Sender {
+ abstract override def send(event: ServingError): Unit = {
+   Try(KafkaProducer.send(event.content)).getOrElse(super.send(event))
+ }
+}
+````
+
+
+You might notice that
+
+1. The call ‘super.send(event)’ was added to ‘send’ method.
+
+2. The ‘override’ modifier changed to ‘abstract override’, because the send method now overrides the behavior, but also calls for an abstract method with super.send. The modifier indicates that this trait must be mixed with a concrete class(later...).
+
+   By the way, if we omit the ‘abstract’ from the modifier, we’ll get the following error:
+   *“method send in class Sender is accessed from super. It may not be abstract unless it is overridden by a member declared 'abstract' and 'override' super.send(event)”*
+
+3. Kafka would call super, i.e. S3-Backup would be invoked only when KafkaProducer fails to deliver.
+
+##### Create and 'Stack' modification traits:
+
+<img src="/img/stack-traits.jpg" height = '300'>
+
+The event content needs modification to be in the right format (json, csv) before being sent as an input to KafkaProducer and S3. A fatal error needs to be sent with a timestamp.
+
+Let’s write the modification method and the stackable modification traits:
+
+````scala
+object ServingError{
+// we are adding a method modification content method, to be used by the modification traits
+ def modifyContent(error: ServingError, content: String): ServingError = {
+   error match {
+     case f: FatalError => FatalError(exceptionCause = f.exceptionCause, content = content)
+     case i: InvalidRequestError => InvalidRequestError(i.paramName, i.paramValue, content = content)
+   }
+ }
+}
+
+trait JsonTransformer extends Sender {
+ import ServingError._
+ abstract override def send(event: ServingError): Unit = {
+   super.send(modifyContent(event, {
+     val date = event match {
+       case d: DateTimestampedMessage => "\"date\":" + d.date
+       case _ => ""
+     }
+     val cause = event match {
+       case f: FatalError => "\"cause\":" + f.exceptionCause
+       case i: InvalidRequestError => "\"cause\":" + i.paramName +":" +i.paramValue
+     }
+     s"""
+             {
+                "code:"${event.code},
+                $date
+                $cause
+             }
+      """
+   }))
+ }
+}
+trait CsVTransformer extends Sender {
+ import ServingError._
+ abstract override def send(event: ServingError): Unit = {
+   super.send(modifyContent(event, {
+     val date = event match {
+       case d: DateTimestampedMessage => d.date
+       case _ => ""
+     }
+     val cause = event match {
+       case f: FatalError => f.exceptionCause
+       case i: InvalidRequestError => i.paramName +"," +i.paramValue
+     }
+     s"""${event.code},$date$cause"""
+   }))
+ }
+}
+
+trait Timestamp {
+ val date: Date = new Date()
+}
+````
+
+And mix the modification traits to the 'Error' classes
+
+````scala
+case class FatalError(override val code: Int = 1, exceptionCause: String, content: String = "") extends ServingError with S3_Backup with CsVTransformer with Kafka with JsonTransformer with Timestamp with Metric with Log{
+ override val description: String = s"Fatal Error code $code accrued"
+}
+case class InvalidRequestError(paramName: String, paramValue: String, override val code: Int = 2, content: String = "") extends ServingError with Kafka with JsonTransformer with Log{
+ override val description: String = s"Invalid Request. Bad  parameter: $paramName" + " " + s"with value: $paramValue"
+}
+````
+
+##### Create and mix 'ServingErrorSender' :
+
+Last, to trigger error reports once an error object is created, we’ll mix them with a sending trait.
+
+````scala
+trait ServingErrorSender extends Sender{
+ this: ServingError =>   // force to be mixed with a ServingError class, (look for 'see cake-pattern')
+ def send(): Unit = send(this)
+ override def send(event: ServingError): Unit = ""
+}
+````
+
+````scala
+trait ServingError extends ServingErrorSender{
+ val code: Int
+ val description: String
+ val content: String
+}
+````
+
+<br><br>
+### **Try it out**
+
+We have completed the task!
+
+Now, when invoking a 'send'’ for an error, like the following:
+
+````scala
+FatalError(exceptionCause = new IllegalArgumentException().getClass.getSimpleName).send()
+````
+
+Results are with the following printed to the log:
+
+````
+error: Fatal Error code 1 accrued //Log
+incrementing counter FatalError // Metric
+sending to Kafka:  // Kafka
+{
+  "code:"1,
+  "date":Thu Nov 30 16:56:33 IST 2017
+  "cause":IllegalArgumentException
+}
+````
+
+<br><br>
+### **Next**
+
+In [part-2](https://fullgc.github.io/stackable-traits-pattern---part-2/) we'll use stackable-actor traits for gathering actor’s metrics.
+
+<br><br>
+### **References**
+
+*[Programming in Scala(chapter 12.5) / Martin Odersky and co](https://www.artima.com/shop/programming_in_scala_3ed)*
+
+------------------------------------------------------------------------------------------
+
+*The complete source code and more running examples can be found in my [github](https://github.com/FullGC/stackable-traits)*.
 
 <div id="disqus_thread"></div>
 <script>
@@ -115,8 +353,8 @@ There are many shapes and arrows in the graph, but there's no need to make sense
 *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
 *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
 var disqus_config = function () {
-this.page.url = "https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1/"
-this.page.identifier = workflow-1
+this.page.url = "https://fullgc.github.io/stackable-traits-pattern/"
+this.page.identifier = stackable-1
 };
 (function() { // DON'T EDIT BELOW THIS LINE
 var d = document, s = d.createElement('script');
