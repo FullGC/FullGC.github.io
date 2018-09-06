@@ -25,7 +25,7 @@ header-img: "img/pipes.jpg"
 
 ------------------------------------------------------------------------------------------
 
-As the software teams and projects grows, a proper development workflow and [CI/CD](https://en.wikipedia.org/wiki/CI/CD/) process become more important.
+As the team and the projects grows, a proper development workflow and [CI/CD](https://en.wikipedia.org/wiki/CI/CD/) process become more important.
 In this series of posts I'll describe such process, from a Jira ticket to a version release (and deployment) using a popular stack, including Jira, Git, Maven, and Jenkins.
 
 <br><br>
