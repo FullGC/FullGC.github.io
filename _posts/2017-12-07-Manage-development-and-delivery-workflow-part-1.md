@@ -43,7 +43,7 @@ The project we'll manage would be part of the Server team (ST) and the feature t
 
 Its initial ticket status is 'open', the resolution is ‘unresolved’:
 
-![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_0.png)
+({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_0.png)
 
 ### **GitFlow**
 
