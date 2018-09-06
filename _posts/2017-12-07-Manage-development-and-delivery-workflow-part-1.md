@@ -46,6 +46,7 @@ Its initial ticket status is 'open', the resolution is ‘unresolved’:
 ![image alt text]({{ site.url }}/img/inital_task.png)
 
 
+
 ### **GitFlow**
 
 [GitFlow](http://nvie.com/posts/a-successful-git-branching-model/) is a branching model for Git, created by Vincent Driessen.
@@ -98,6 +99,7 @@ As opposed to the historic Gui-driven CI/CD tools for Jenkins jobs, the definiti
 We will use Pipeline for build, tests and release.
 
 The Pipeline script would be written in Groovy and would use Jenkins syntax and shell commands.
+<img align="right" src="/img/pipelinememe.png" height="290" width="290">
 
 ### **Complete development, release and deployment plan**
 
@@ -105,6 +107,6 @@ The flow-chart below represents the Jira, Git, and deployment flow that we'll le
 
 We'll review a development flow of the server team feature, 'ST-145’, and the process of releasing and deploying the next version: 1.2.0, of an application called 'volcano’.
 
-There are many shapes and arrows in the graph, but there's no need to make sense of them all right now, since we’re going to do exactly that in the following sections.![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_1.png)
+There are many shapes and arrows in the graph, but there's no need to make sense of them all right now, since we’re going to do exactly that in the following sections.
 
 ![image alt text]({{ site.url }}/img/workflow.png)
