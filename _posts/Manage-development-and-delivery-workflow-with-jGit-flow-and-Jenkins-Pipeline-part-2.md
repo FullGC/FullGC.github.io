@@ -12,18 +12,29 @@ tags:
 - ci/cd
 - release
 - deployment
+date: 2018-09-10 14:40:45
 source-id: 1Td5LRw5SmlrqLcm__0bKL8me9ylZu6Xgq1J0cF0FjHA
 published: true
+header-img: "img/pipes.jpg"
 ---
+
+<i>This post is the first of a three parts series of articles on manage CI/CD workflow with jgit-flow and Pipeline</i>
+
+* [Part-1: Tools and Planning](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1)
+* [Part-2: Git workflow with JGit-Flow](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2)
+* [Part-3: Development and Release process with Jenkins Pipeline](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2)
+
+------------------------------------------------------------------------------------------
+
 Manage development and delivery workflow with jGit-flow and Jenkins-Pipeline
 
 This article describes a development and delivery workflow, from a Jira ticket to a version release (and deployment) using a popular stack, including Jira, Git, Maven, and Jenkins. 
 
-# Part 1 - Tools: and Planning
+## Part 1 - Tools and Planning
 
 Let's start with a quick review of the tools we’ll use for the workflow implementation
 
-## **Jira**
+### **Jira**
 
 [Atlassian Jira](https://en.wikipedia.org/wiki/Jira_(software)) is a popular proprietary issue tracking system.
 
@@ -35,7 +46,7 @@ Its initial ticket status is 'open', the resolution is ‘unresolved’:
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_0.png)
 
-## **GitFlow**
+### **GitFlow**
 
 [GitFlow](http://nvie.com/posts/a-successful-git-branching-model/) is a branching model for Git, created by Vincent Driessen.
 
@@ -53,7 +64,7 @@ The GitFlow workflow defines a strict branching model designed around the projec
 
 If you're new to git-flow, please take some time to read about it [in Driessen's post](http://nvie.com/posts/a-successful-git-branching-model/) or in [Atlassian's Guid](https://www.atlassian.com/git/tutorials/comparing-workflows#!workflow-gitflow)e.
 
-## **Jgit-flow (Maven plugin)**
+### **Jgit-flow (Maven plugin)**
 
 [JGit-Flow](https://bitbucket.org/atlassian/jgit-flow/wiki/Home) [maven plugin](https://mvnrepository.com/artifact/external.atlassian.jgitflow/jgitflow-maven-plugin) is a Java implementation of GitFlow, and like Jira, it was published by Atlassian. It was designed for releasing a maven-based project and includes many other useful features.
 
@@ -73,7 +84,7 @@ jGit-flow provides the following git-flow basic functionality:
 
 Each feature contains many attributes, providing very useful functionality (described in the links), that we'll use later on.
 
-## **Jgit-flow-jira**
+### **Jgit-flow-jira**
 
 J[Git-Flow-Jira](https://github.com/FullGC/jgit-flow-jira) is a fork that I made for jgit-flow, which uses a Jira client to change the state of a Jira ticket during the lifecycle of a feature. Unfortunately, the project is not bug-free, and currently maintained mostly by the users and not by Atlassian. It is, however, published as open source and written very clearly. Jgitflow-jira contains a fix for this [open bug](https://ecosystem.atlassian.net/browse/MJF-109) as well.
 
@@ -87,7 +98,7 @@ We will use Pipeline for build, tests and release.
 
 The Pipeline script would be written in Groovy and would use Jenkins syntax and shell commands. 
 
-## **Complete development, release and deployment plan**
+### **Complete development, release and deployment plan**
 
 The flow-chart below represents the Jira, Git, and deployment flow that we'll learn how to implement in the following sections.
 
@@ -95,7 +106,7 @@ We'll review a development flow of the server team feature, 'ST-145’, and the 
 
 There are many shapes and arrows in the graph, but there's no need to make sense of them all right now, since we’re going to do exactly that in the following sections.![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_1.png)
 
-# Part 2: Git workflow with JGit-Flow:
+## Part 2: Git workflow with JGit-Flow:
 
 Git workflow is based on git-flow, with some modifications, and implemented here with Jgit-flow-jira.
 
@@ -144,7 +155,7 @@ A new feature starts with the command **mvn jgitflow:feature-start. **
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_4.png)
 
-The feature branch is then merged into 'develop', and ‘develop’ is pushed. 
+The feature branch is then merged into 'develop', and ‘develop’ is pushed.
 
 Before the merge, we like branch 'develop' to be pulled and the commits in the feature branch to be squashed, and so cleaner.
 
@@ -166,7 +177,7 @@ After all the features of the next version have been completed and merged to 'de
 
 A release process starts with the command **mvn jgitflow:release-start **on branch' develop’, which performs the following:
 
-1. Prompts the user for the version name. 
+1. Prompts the user for the version name.
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_6.png)
 
@@ -204,13 +215,13 @@ When there is a need for a quick fix for a code that is already in production, t
 
 The 'master' branch is always synced with the latest deployment code. The Feature starts with the command **mvn jgitflow:hotfix-start**, which performs the following:
 
-1. Prompts the user for the version name. 
+1. Prompts the user for the version name.
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_7.png)
 
 The default is the next minor version (according to the pom file), in this case, 1.2.1
 
-2. Pulls from the remote "master" branch (done by adding the configuration **<****pullMaster****>**true**</****pullMaster****>**).  
+2. Pulls from the remote "master" branch (done by adding the configuration **<****pullMaster****>**true**</****pullMaster****>**).
 
 3. Updates and commits the poms with the new version.
 
@@ -236,7 +247,7 @@ Checkout and push 'master' branch would start the release process
 
 ## **Summary **
 
-We've reviewed the git workflow of a new feature, 'release’ and ‘hotfix’, and ended up with the following jgit-flow configuration:  
+We've reviewed the git workflow of a new feature, 'release’ and ‘hotfix’, and ended up with the following jgit-flow configuration:
 
 <table>
   <tr>
@@ -274,7 +285,7 @@ In a [Multibranch Pipeline](https://jenkins.io/doc/book/pipeline/multibranch/) p
 
 #### Configuration
 
-The entire definition of the Pipeline would be written in the Jenkinsfile, except the following: In the 'Branch Source' we’ll declare the source control and repository that we’ll work with (this can also be done with code). In addition, we’ll set the branch discovery strategy to "All Branches", meaning the job would start for every modification of the repository (i.e. for every push). 
+The entire definition of the Pipeline would be written in the Jenkinsfile, except the following: In the 'Branch Source' we’ll declare the source control and repository that we’ll work with (this can also be done with code). In addition, we’ll set the branch discovery strategy to "All Branches", meaning the job would start for every modification of the repository (i.e. for every push).
 
 Then we'll exclude the release and 'hotfix’ branches (this will be explained later).
 
@@ -309,7 +320,7 @@ Then we'll exclude the release and 'hotfix’ branches (this will be explained l
 </table>
 
 
-3. **Build**. 
+3. **Build**.
 
 a. **Maven build**: We are using the maven build tool. Maven was built by a shell command. We like to get a detailed report from Pipeline on a failure, including failed tests, links to them, and statistics. Moreover, we like the job status to become automatically 'unstable' if there were failed tests. These are provided by the [Pipeline Maven plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Maven+Plugin), which wraps the maven build command.
 
@@ -326,7 +337,7 @@ a. **Maven build**: We are using the maven build tool. Maven was built by a shel
 
 b. **Handle build exceptions** and test failures: On maven build failure:
 
-If Pipeline checked out a feature branch (triggered by a push to a branch which starts with 'ST-'  ),  a notification email should be sent to the feature owner only. We’ll use the [Mailer plugin](https://wiki.jenkins.io/display/JENKINS/Mailer) for that. 
+If Pipeline checked out a feature branch (triggered by a push to a branch which starts with 'ST-'  ),  a notification email should be sent to the feature owner only. We’ll use the [Mailer plugin](https://wiki.jenkins.io/display/JENKINS/Mailer) for that.
 
 Otherwise, we like an email notification to be sent to all server members, and a notification to the slack channel as well ([Slack plugin](https://jenkins.io/doc/pipeline/steps/slack/)). This should include a list of the last Git commits with the committer name, so that we can get an idea of what code modification broke the build.
 
@@ -340,7 +351,8 @@ If an exception has been thrown during the build, we like to:
 
 4. Throw the exception
 
-The final script for the build looks like this:
+
+The final script for the build looks like this:
 
 <table>
   <tr>
@@ -391,23 +403,23 @@ stage('Maven build') {
 
 4. **Release process**. In this process, we'll upload a tar (the maven build output) to s3, where the environment depends on the git branch we’re working on. The code would be placed in the 'process’ step:
 
-              a.** Release tar name. **The release file is a tar file (the maven    
+              a.** Release tar name. **The release file is a tar file (the maven
 
-             build output). Its name should         
+             build output). Its name should
 
-             represent the release version. The release version is found in 
+             represent the release version. The release version is found in
 
-             the root pom.xml file, and we'll   
+             the root pom.xml file, and we'll
 
              extract it from there
 
-         
+
 
 b. **Release candidate tar name. **This is somewhat tricky.
 
-On **release/hotfix **only, we like to create a release candidate for QA. 
+On **release/hotfix **only, we like to create a release candidate for QA.
 
-The release candidate holds the name: 
+The release candidate holds the name:
 
 <volcano version>RC-<RC number>
 
@@ -462,7 +474,7 @@ step('Commit and push releases file') {
 
              Note that we did exclude the release/hotfix branches. This allows a couple of team members to work on the branch when QA has made a rejection or there is a bug to fix, without the new version being released with every push.
 
- 
+
 
 **c. Upload tar to s3. **Chef will deploy a new volcano version, with the appropriate version in s3.
 
@@ -501,7 +513,7 @@ Amazon CLI commands, using the shell.
   <tr>
     <td>if (!branch.startsWith('ST-')){
   stage('Deploy') {
-  
+
   def incrementVersion = {
      def environment = {
      switch(branch) {
@@ -523,7 +535,7 @@ Amazon CLI commands, using the shell.
    sh "git push"
 }
 
-checkout changelog: false, poll: false, scm: [$class: 'GitSCM', browser: [$class: 'BitbucketWeb', repoUrl:     'https://bitbucket.org/fullgc/chef'], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'LocalBranch', localBranch:   
+checkout changelog: false, poll: false, scm: [$class: 'GitSCM', browser: [$class: 'BitbucketWeb', repoUrl:     'https://bitbucket.org/fullgc/chef'], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'LocalBranch', localBranch:
   '**']], submoduleCfg: [], userRemoteConfigs: [[url: 'git@bitbucket.org:fullgc/chef']]]
    dir('environments/') {
        incrementVersion()
@@ -552,6 +564,9 @@ In the image below an example of a Pipeline run:
 * [Jenkins Blue Ocean](https://jenkins.io/doc/book/blueocean/) plugin provides a new awesome user experience, check it out.
 
 * Pipeline is still new, but you shouldn't get too frustrated by weird errors you may get while writing the script, most of them are common and the solution can be easily found on the web.
+
+* The [Pipeline Unit Testing](https://github.com/jenkinsci/JenkinsPipelineUnit/) Framework allows you to unit test Pipelines before running them in full.
+
 
 ## **Wrapping up**
 
