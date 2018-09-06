@@ -29,10 +29,12 @@ Manage development and delivery workflow with jGit-flow and Jenkins-Pipeline
 
 This article describes a development and delivery workflow, from a Jira ticket to a version release (and deployment) using a popular stack, including Jira, Git, Maven, and Jenkins.
 
+<br><br>
 ## Part 1 - Tools and Planning
 
 Let's start with a quick review of the tools we’ll use for the workflow implementation
 
+<br><br>
 ### **Jira**
 
 [Atlassian Jira](https://en.wikipedia.org/wiki/Jira_(software)) is a popular proprietary issue tracking system.
@@ -46,7 +48,7 @@ Its initial ticket status is 'open', the resolution is ‘unresolved’:
 ![image alt text]({{ site.url }}/img/inital_task.png)
 
 
-
+<br><br>
 ### **GitFlow**
 
 [GitFlow](http://nvie.com/posts/a-successful-git-branching-model/) is a branching model for Git, created by Vincent Driessen.
@@ -65,6 +67,7 @@ The GitFlow workflow defines a strict branching model designed around the projec
 
 If you're new to git-flow, please take some time to read about it [in Driessen's post](http://nvie.com/posts/a-successful-git-branching-model/) or in [Atlassian's Guid](https://www.atlassian.com/git/tutorials/comparing-workflows#!workflow-gitflow)e.
 
+<br><br>
 ### **Jgit-flow (Maven plugin)**
 
 [JGit-Flow](https://bitbucket.org/atlassian/jgit-flow/wiki/Home) [maven plugin](https://mvnrepository.com/artifact/external.atlassian.jgitflow/jgitflow-maven-plugin) is a Java implementation of GitFlow, and like Jira, it was published by Atlassian. It was designed for releasing a maven-based project and includes many other useful features.
@@ -85,12 +88,13 @@ jGit-flow provides the following git-flow basic functionality:
 
 Each feature contains many attributes, providing very useful functionality (described in the links), that we'll use later on.
 
+<br><br>
 ### **Jgit-flow-jira**
 
 [JGit-Flow-Jira](https://github.com/FullGC/jgit-flow-jira) is a fork that I made for jgit-flow, which uses a Jira client to change the state of a Jira ticket during the lifecycle of a feature. Unfortunately, the project is not bug-free, and currently maintained mostly by the users and not by Atlassian. It is, however, published as open source and written very clearly. Jgitflow-jira contains a fix for this [open bug](https://ecosystem.atlassian.net/browse/MJF-109) as well.
 
-
-**Jenkins(Pipeline)**
+<br><br>
+### **Jenkins(Pipeline)**
 
 [Jenkins Pipeline](https://jenkins.io/doc/book/pipeline/) (or simply "Pipeline") is a suite of plugins which supports implementing and integrating *continuous delivery pipelines* into Jenkins.
 <img align="right" src="/img/pipelinememe.png" height="200" width="150">
@@ -101,7 +105,7 @@ We will use Pipeline for build, tests and release.
 
 The Pipeline script would be written in Groovy and would use Jenkins syntax and shell commands.
 
-
+<br><br>
 ### **Complete development, release and deployment plan**
 
 The flow-chart below represents the Jira, Git, and deployment flow that we'll learn how to implement in the following sections.
