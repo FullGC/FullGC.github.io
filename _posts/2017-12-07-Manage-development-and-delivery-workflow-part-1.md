@@ -14,7 +14,7 @@ tags:
 - deployment
 date: 2018-09-05 14:40:45
 published: true
-header-img: "img/pipes.jpg"
+header-img: "img/workflow-main.jpg"
 ---
 
 <i>This post is the first of a three parts series of articles on manage CI/CD workflow with jgit-flow and Pipeline</i>
