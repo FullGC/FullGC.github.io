@@ -99,7 +99,8 @@ As opposed to the historic Gui-driven CI/CD tools for Jenkins jobs, the definiti
 We will use Pipeline for build, tests and release.
 
 The Pipeline script would be written in Groovy and would use Jenkins syntax and shell commands.
-<img align="right" src="/img/pipelinememe.png" height="290" width="290">
+
+<img align="right" src="/img/pipelinememe.png" height="200" width="150">
 
 ### **Complete development, release and deployment plan**
 
