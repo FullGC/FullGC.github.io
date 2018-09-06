@@ -111,3 +111,4 @@ We'll review a development flow of the server team feature, 'ST-145’, and the 
 There are many shapes and arrows in the graph, but there's no need to make sense of them all right now, since we’re going to do exactly that in the following sections.
 
 ![image alt text]({{ site.url }}/img/workflow.png)
+
