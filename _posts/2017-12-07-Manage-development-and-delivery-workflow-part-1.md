@@ -17,7 +17,7 @@ published: true
 header-img: "img/workflow-main.jpg"
 ---
 
-<i>This post is the first of a three parts series of articles on manage CI/CD workflow with jgit-flow and Pipeline</i>
+<i>This post is the first of a three parts series of articles on manage development and CI/CD workflow with jgit-flow and Pipeline</i>
 
 * [Part-1: Tools and Planning](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1)
 * [Part-2: Git workflow with JGit-Flow](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-2)
