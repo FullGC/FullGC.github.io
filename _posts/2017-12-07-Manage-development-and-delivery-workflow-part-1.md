@@ -17,15 +17,16 @@ published: true
 header-img: "img/pipes.jpg"
 ---
 
-<i>This post is the first of a three parts series of articles on manage CI/CD workflow with jgit-flow and Pipeline,
-which describe a development and delivery workflow,
-from a Jira ticket to a version release (and deployment) using a popular stack, including Jira, Git, Maven, and Jenkins</i>
+<i>This post is the first of a three parts series of articles on manage CI/CD workflow with jgit-flow and Pipeline</i>
 
 * [Part-1: Tools and Planning](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1)
 * [Part-2: Git workflow with JGit-Flow](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-2)
 * [Part-3: Development and Release process with Jenkins Pipeline](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3)
 
 ------------------------------------------------------------------------------------------
+
+As the software teams and projects grows, a proper development workflow and [CI/CD](https://en.wikipedia.org/wiki/CI/CD/) process become more important.
+In this series of posts I'll describe such process, from a Jira ticket to a version release (and deployment) using a popular stack, including Jira, Git, Maven, and Jenkins.
 
 <br><br>
 ## Part 1 - Tools and Planning
