@@ -91,9 +91,9 @@ Each feature contains many attributes, providing very useful functionality (desc
 
 
 **Jenkins(Pipeline)**
-<img align="right" src="/img/pipelinememe.png" height="200" width="150">
 
 [Jenkins Pipeline](https://jenkins.io/doc/book/pipeline/) (or simply "Pipeline") is a suite of plugins which supports implementing and integrating *continuous delivery pipelines* into Jenkins.
+<img align="right" src="/img/pipelinememe.png" height="200" width="150">
 
 As opposed to the historic Gui-driven CI/CD tools for Jenkins jobs, the definition of a Pipeline is written into a text file (called a [Jenkinsfile](https://jenkins.io/doc/book/pipeline/jenkinsfile)) as a code. This in turn can be committed to a project's source control repository.
 
@@ -108,6 +108,4 @@ The flow-chart below represents the Jira, Git, and deployment flow that we'll le
 
 We'll review a development flow of the server team feature, 'ST-145’, and the process of releasing and deploying the next version: 1.2.0, of an application called 'volcano’.
 
-There are many shapes and arrows in the graph, but there's no need to make sense of them all right now, since we’re going to do exactly that in the following sections.
-
-![image alt text]({{ site.url }}/img/workflow.png)
+There are many shapes and arrows in the graph, but there's no need to make sense of them all right now, since we’re going to do exactly that in the following sections. ![image alt text]({{ site.url }}/img/workflow.png)
