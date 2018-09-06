@@ -91,6 +91,7 @@ Each feature contains many attributes, providing very useful functionality (desc
 
 
 **Jenkins(Pipeline)**
+<img align="right" src="/img/pipelinememe.png" height="200" width="150">
 
 [Jenkins Pipeline](https://jenkins.io/doc/book/pipeline/) (or simply "Pipeline") is a suite of plugins which supports implementing and integrating *continuous delivery pipelines* into Jenkins.
 
@@ -100,7 +101,6 @@ We will use Pipeline for build, tests and release.
 
 The Pipeline script would be written in Groovy and would use Jenkins syntax and shell commands.
 
-<img align="right" src="/img/pipelinememe.png" height="200" width="150">
 
 ### **Complete development, release and deployment plan**
 
