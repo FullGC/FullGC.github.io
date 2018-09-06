@@ -12,7 +12,7 @@ tags:
 - ci/cd
 - release
 - deployment
-date: 2018-09-10 14:40:45
+date: 2018-09-05 14:40:45
 source-id: 1Td5LRw5SmlrqLcm__0bKL8me9ylZu6Xgq1J0cF0FjHA
 published: true
 header-img: "img/pipes.jpg"
