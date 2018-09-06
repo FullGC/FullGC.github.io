@@ -108,7 +108,6 @@ The flow-chart below represents the Jira, Git, and deployment flow that we'll le
 
 We'll review a development flow of the server team feature, 'ST-145’, and the process of releasing and deploying the next version: 1.2.0, of an application called 'volcano’.
 
-There are many shapes and arrows in the graph, but there's no need to make sense of them all right now, since we’re going to do exactly that in the following sections.
+There are many shapes and arrows in the graph, but there's no need to make sense of them all right now, since we’re going to do exactly that in the following sections.![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_1.png)
 
 ![image alt text]({{ site.url }}/img/workflow.png)
-
