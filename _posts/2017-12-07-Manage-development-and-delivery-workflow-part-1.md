@@ -25,8 +25,8 @@ header-img: "img/workflow-main.jpg"
 
 ------------------------------------------------------------------------------------------
 
-As the team and the projects grows, a proper development workflow and [CI/CD](https://en.wikipedia.org/wiki/CI/CD/) process become more important.
-In this series of posts I'll describe such process, from a Jira ticket to a version release (and deployment) using a popular stack, including Jira, Git, Maven, and Jenkins.
+As the team grows bigger, and the projects become more complex, a proper development conventions, workflow and [CI/CD](https://en.wikipedia.org/wiki/CI/CD/) process become very important.
+In this series of posts I'll describe such flow and process, from a Jira ticket to a version release (and deployment) using a popular stack, including Jira, Git, Maven, and Jenkins.
 
 <br><br>
 ## Part 1 - Tools and Planning
