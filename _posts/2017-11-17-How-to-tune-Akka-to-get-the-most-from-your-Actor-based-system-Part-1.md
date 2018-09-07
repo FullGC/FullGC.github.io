@@ -13,7 +13,7 @@ date: 2018-07-25 14:40:45
 header-img: "img/tune-Akka.jpg"
 ---
 
-<i>This post is the first of a two parts series of articles on how to tune Akka configurations</i>
+<i>This post is the first of a two parts series of articles about how to tune Akka configurations</i>
 
 * [Part-1: Initial Akka Configurations](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1)
 * [Part-2: Gather and analyze Akka metrics with Kamon and stackable traits](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2)
