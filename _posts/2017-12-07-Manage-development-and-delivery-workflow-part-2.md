@@ -1,8 +1,8 @@
 ---
-title: Manage development and delivery workflow with jGit-flow and Jenkins-Pipeline - Part 1
+title: Manage development and delivery workflow with jGit-flow and Jenkins-Pipeline - Part 2
 layout: post
 author: Dani Shemesh
-permalink: /manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1/
+permalink: /manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-2/
 tags:
 - jira
 - jenkins
