@@ -53,7 +53,7 @@ The basic plugin configurations needed for our story are from the 'master' branc
 
 ### **A Feature Lifecycle:**
 
-## Start a feature git flow process
+#### Start a feature git flow process
 
 A new feature starts with the command **mvn jgitflow:feature-start. **
 
@@ -65,11 +65,11 @@ A new feature starts with the command **mvn jgitflow:feature-start. **
 
 2. The ticket status is updated to 'IN PROGRESS':
 
-	![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_3.png)
+![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_3.png)
 
-## Complete a feature git flow process
+#### Complete a feature git flow process
 
-## The command** mvn jgitflow:feature-finish ends the feature lifecycle. **
+The command 'mvn jgitflow:feature-finish' ends the feature lifecycle.
 
 1. This prompts the user for the desired feature name to finish, where the default is the current branch.
 
@@ -80,20 +80,19 @@ The feature branch is then merged into 'develop', and ‘develop’ is pushed.
 Before the merge, we like branch 'develop' to be pulled and the commits in the feature branch to be squashed, and so cleaner.
 
 To achieve that, we'll add the followings configuration to jgit-flow plugin:
-
-<**pullDevelop**>true</**pullDevelop**>
-
-<**squash**>true</**squash**>
-
+````
+<pullDevelop>true</pullDevelop>
+<squash>true</squash>
+````
 2. When the feature is done, we like to resolve it and pass to the QA guy. Hence, it's resolution should be switched to 'Done’, and it’s status ‘QA’
 
-	![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_5.png)
+![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_5.png)
 
 ### **A Release Lifecycle:**
 
 After all the features of the next version have been completed and merged to 'develop' branch, it’s time for the git flow release process to kick in.
 
-## Start a release git flow process
+#### Start a release git flow process
 
 A release process starts with the command **mvn jgitflow:release-start **on branch' develop’, which performs the following:
 
@@ -111,19 +110,19 @@ The default is the next major version (according to the pom file), in this case,
 
 5. Pushes (this would trigger a release process of a 'release candidate' for QA machines. The release processes will be described in the next section, ‘Pipeline’)
 
-## Complete a release git-flow process
+#### Complete a release git-flow process
 
 Once the version is approved by QA, the git flow release can be completed. The command "mvn jgitflow:release-finish" performs the following actions:
 
-    1. Merges the 'release' branch back into ‘master’
+1. Merges the 'release' branch back into ‘master’
 
-    2. Tags the 'release' with its name.
+2. Tags the 'release' with its name.
 
-    3. Back merges the 'release' into ‘develop’
+3. Back merges the 'release' into ‘develop’
 
-    4. Updates 'develop's poms with "<next version>-SNAPSHOT". (1.3-SNAPSHOT).
+4. Updates 'develop's poms with '<next version>-SNAPSHOT'. (1.3-SNAPSHOT).
 
-    5. Removes the 'release' branch.
+5. Removes the 'release' branch.
 
 Checkout and push 'master' branch would start the release process
 
@@ -131,7 +130,7 @@ Checkout and push 'master' branch would start the release process
 
 When there is a need for a quick fix for a code that is already in production, the git-flow hotfix comes to the rescue.
 
-## Start a hotfix git flow process
+#### Start a hotfix git flow process
 
 The 'master' branch is always synced with the latest deployment code. The Feature starts with the command **mvn jgitflow:hotfix-start**, which performs the following:
 
@@ -141,15 +140,17 @@ The 'master' branch is always synced with the latest deployment code. The Featur
 
 The default is the next minor version (according to the pom file), in this case, 1.2.1
 
-2. Pulls from the remote "master" branch (done by adding the configuration **<****pullMaster****>**true**</****pullMaster****>**).
-
+2. Pulls from the remote "master" branch (done by adding the configuration).
+````
+<pullMaster>true</pullMaster>
+````
 3. Updates and commits the poms with the new version.
 
 4. Checks out to the new 'hotfix' branch, called hotfix-VERSION (e.g. release-1.2.1).
 
 5. Pushes (like the stage that triggers a release of a hotfix candidate' for QA machines).
 
-## Complete a release git-flow process
+#### Complete a release git-flow process
 
 Once the version is approved by QA, the 'hotfix' git flow can be completed. The command "mvn jgitflow:hotfix-finish" performs actions which are quite similar to the ‘release-finish’:
 
@@ -165,13 +166,11 @@ Once the version is approved by QA, the 'hotfix' git flow can be completed. The 
 
 Checkout and push 'master' branch would start the release process
 
-### **Summary **
+### Summary
 
 We've reviewed the git workflow of a new feature, 'release’ and ‘hotfix’, and ended up with the following jgit-flow configuration:
-
-<table>
-  <tr>
-    <td><configuration>
+````
+<configuration>
     <flowInitContext>
          <masterBranchName>master</masterBranchName>
          <developBranchName>develop</developBranchName>
@@ -186,9 +185,6 @@ We've reviewed the git workflow of a new feature, 'release’ and ‘hotfix’, 
     <squash>true</squash>
     <autoVersionSubmodules>true</autoVersionSubmodules>
 </configuration>
-</td>
-  </tr>
-</table>
-
+````
 
 In Part 3(note: add a link) we'll review the Jenkins Pipeline job, which compiles, runs the tests and performs the release process.
