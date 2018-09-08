@@ -46,7 +46,7 @@ Then we'll exclude the release and 'hotfix’ branches (this will be explained l
 
 ### Writing the Jenkinsfile, step-by-step
 
-step-1 **Context**. The Pipeline job should be run on a dedicated Jenkins slave, 'server CICD', hence the script would be written inside a node context:
+**Context**. The Pipeline job should be run on a dedicated Jenkins slave, 'server CICD', hence the script would be written inside a node context:
 
 ````
 node('Server CICD) {
@@ -54,7 +54,7 @@ node('Server CICD) {
    }
 ````
 
-step-2 **Checkout**. This step checkouts code from source control. Scm is a special variable which instructs the checkout step to clone the specific revision which triggers this Pipeline run.
+**Checkout**. This step checkouts code from source control. Scm is a special variable which instructs the checkout step to clone the specific revision which triggers this Pipeline run.
 
 ````
 stage('Checkout') {
@@ -67,9 +67,9 @@ stage('Checkout') {
 }
 ````
 
-step-3 **Build**.
+**Build**.
 
-1. **Maven build**: We are using the maven build tool. Maven was built by a shell command. We like to get a detailed report from Pipeline on a failure, including failed tests, links to them, and statistics. Moreover, we like the job status to become automatically 'unstable' if there were failed tests. These are provided by the [Pipeline Maven plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Maven+Plugin), which wraps the maven build command.
+   a. **Maven build**: We are using the maven build tool. Maven was built by a shell command. We like to get a detailed report from Pipeline on a failure, including failed tests, links to them, and statistics. Moreover, we like the job status to become automatically 'unstable' if there were failed tests. These are provided by the [Pipeline Maven plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Maven+Plugin), which wraps the maven build command.
 
 ````
 withMaven(jdk: 'JDK 8 update 66', maven: 'Maven 3.0.5') {
@@ -79,7 +79,7 @@ withMaven(jdk: 'JDK 8 update 66', maven: 'Maven 3.0.5') {
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_9.png)
 
-2. **Handle build exceptions** and test failures: On maven build failure:
+   b. **Handle build exceptions** and test failures: On maven build failure:
 
 If Pipeline checked out a feature branch (triggered by a push to a branch which starts with 'ST-'  ),  a notification email should be sent to the feature owner only. We’ll use the [Mailer plugin](https://wiki.jenkins.io/display/JENKINS/Mailer) for that.
 
@@ -142,10 +142,10 @@ stage('Maven build') {
 }
 ````
 
-step-4 **Release process**. In this process, we'll upload a tar (the maven build output) to s3, where the environment depends on the git branch we’re working on. The code would be placed in the 'process’ step:
+**Release process**. In this process, we'll upload a tar (the maven build output) to s3, where the environment depends on the git branch we’re working on. The code would be placed in the 'process’ step:
 
-1. **Release tar name.** The release file is a tar file (the maven build output). Its name should represent the release version. The release version is found in the root pom.xml file, and we'll extract it from there
-2. **Release candidate tar name.** This is somewhat tricky.
+   a. **Release tar name.** The release file is a tar file (the maven build output). Its name should represent the release version. The release version is found in the root pom.xml file, and we'll extract it from there
+   b. **Release candidate tar name.** This is somewhat tricky.
 
 On **release/hotfix** only, we like to create a release candidate for QA.
 
@@ -159,7 +159,7 @@ In our story, the first release candidate would be: 'volcano-1.2.0-RC-1'(‘volc
 The RC number starts with 1. If a QA person found a bug, we'd need to fix it, and then increment the RC number, i.e. 'volcano-1.2.0-RC-2’ and so on.
 We'll use a text file with the current RC number to know what the next version should be for release. We then update the file, commit changes and create a new tart with the correct name.
 
-````java
+````javascript
 def pom = readFile 'pom.xml'
 def project = new XmlSlurper().parseText(pom)
 String version = project.version.toString()
@@ -201,7 +201,7 @@ step('Commit and push releases file') {
 
 Note that we did exclude the release/hotfix branches. This allows a couple of team members to work on the branch when QA has made a rejection or there is a bug to fix, without the new version being released with every push.
 
-3. **Upload tar to s3.** Chef will deploy a new volcano version, with the appropriate version in s3. This would require amazon s3 credentials.
+**Upload tar to s3.** Chef will deploy a new volcano version, with the appropriate version in s3. This would require amazon s3 credentials.
 For the upload itself, there is a pipeline script. Nevertheless, we'll implement it here using
 Amazon CLI commands, using the shell.
 
@@ -215,19 +215,19 @@ step('Upload tar to s3 cli') {
 }
 ````
 
-5. **Deployment process.** Here we won't deploy using Pipeline, but by the deployment tool, Chef in our case. We won’t go too deeply into how Chef performs a deployment, but suffice to say this: In order for Chef to know that there is a new 'volcano’ version it needs to deploy, the version in the [environment](https://docs.chef.io/environments.html) (qa or development or production) file needs to be updated to the new version.
+**Deployment process.** Here we won't deploy using Pipeline, but by the deployment tool, Chef in our case. We won’t go too deeply into how Chef performs a deployment, but suffice to say this: In order for Chef to know that there is a new 'volcano’ version it needs to deploy, the version in the [environment](https://docs.chef.io/environments.html) (qa or development or production) file needs to be updated to the new version.
 
-    1. First, we'll check out the Chef repository and 'cd’  in the environments directory which the environment files rely on.
+   a. First, we'll check out the Chef repository and 'cd’  in the environments directory which the environment files rely on.
 
-    2. Replace the current version of the appropriate environment for the new version. This can be done by shell tools like jq. Here we'll use Groovy.
+   b. Replace the current version of the appropriate environment for the new version. This can be done by shell tools like jq. Here we'll use Groovy.
 
-    3. Commit and push changes
+   c. Commit and push changes
 
-    4. Send a slack notification
+   d. Send a slack notification
 
-    5. If the branch is develop or master, it removes the releases.txt file
+   e. If the branch is develop or master, it removes the releases.txt file
 
-````java
+````javascript
 if (!branch.startsWith('ST-')){
   stage('Deploy') {
 
@@ -249,7 +249,7 @@ if (!branch.startsWith('ST-')){
    writeFile file: $environment, text: environmentPrettyJsonString
 
   sh "git commit -am 'Changed volcano version in $environment env to '${version}"
-   sh "git push"
+  sh "git push"
 }
 
 checkout changelog: false, poll: false, scm: [$class: 'GitSCM', browser: [$class: 'BitbucketWeb', repoUrl:     'https://bitbucket.org/fullgc/chef'], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'LocalBranch', localBranch:
