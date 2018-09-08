@@ -143,9 +143,11 @@ The 'master' branch is always synced with the latest deployment code. The Featur
 The default is the next minor version (according to the pom file), in this case, 1.2.1
 
 2. Pulls from the remote "master" branch (done by adding the configuration).
+
 ````
 <pullMaster>true</pullMaster>
 ````
+
 3. Updates and commits the poms with the new version.
 
 4. Checks out to the new 'hotfix' branch, called hotfix-VERSION (e.g. release-1.2.1).
