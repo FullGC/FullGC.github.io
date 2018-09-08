@@ -98,9 +98,9 @@ If an exception has been thrown during the build, we like to:
 
 The final script for the build looks like this:
 
-````java
+````javascript
 String branch = env.BRANCH_NAME.toString()
-stage(`Maven build`) {
+stage('Maven build') {
 
     //returns a set of git revisions with the name of the committer
    @NonCPS
