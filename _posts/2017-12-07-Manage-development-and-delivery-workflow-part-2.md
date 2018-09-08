@@ -104,9 +104,11 @@ The default is the next major version (according to the pom file), in this case,
 2. Pulls from the remote 'develop' branch (we’ve already configured).
 
 3. Updates and commits the poms with the new version. This requires the following tag attribute:
+
 ````
 <autoVersionSubmodules>true</autoVersionSubmodules>
 ````
+
 4. Checks out to the new 'release' branch, called release-VERSION (e.g. release-1.2.0).
 
 5. Pushes (this would trigger a release process of a 'release candidate' for QA machines. The release processes will be described in the next section, ‘Pipeline’)
