@@ -30,7 +30,7 @@ header-img: "img/workflow-main.jpg"
 
 Git workflow is based on git-flow, with some modifications, and implemented here with Jgit-flow-jira.
 
-This section covers the green and purple steps in the workflow graph (note: add a link).
+This section covers the green and purple steps in the workflow graph ([from part-1](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1)).
 
 The basic plugin configurations needed for our story are from the 'master' branch, 'develop' branch, and the following:
 
@@ -195,4 +195,4 @@ We've reviewed the git workflow of a new feature, 'release’ and ‘hotfix’, 
 </configuration>
 ````
 
-In Part 3(note: add a link) we'll review the Jenkins Pipeline job, which compiles, runs the tests and performs the release process.
+In [Part-3](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3) we'll review the Jenkins Pipeline job, which compiles, runs the tests and performs the release process.
