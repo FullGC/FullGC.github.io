@@ -1,8 +1,8 @@
 ---
-title: Manage development and delivery workflow with jGit-flow and Jenkins-Pipeline - Part 1
+title: Manage development and delivery workflow with jGit-flow and Jenkins-Pipeline - Part 3
 layout: post
 author: Dani Shemesh
-permalink: /manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1/
+permalink: /manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3/
 tags:
 - jira
 - jenkins
@@ -17,7 +17,7 @@ published: true
 header-img: "img/workflow-main.jpg"
 ---
 
-<i>This post is the second of a three parts series of articles about manage development and CI/CD workflow with jgit-flow and Pipeline</i>
+<i>This post is the third of a three parts series of articles about manage development and CI/CD workflow with jgit-flow and Pipeline</i>
 
 * [Part-1: Tools and Planning](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1)
 * [Part-2: Git workflow with JGit-Flow](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-2)
@@ -328,3 +328,20 @@ Pipeline as a code is pretty much a game changer, in the sense that it is now in
 
 *The complete code can be found in my **[GitHu*b](https://github.com/FullGC/volcano_manage_cicd)*.*
 
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+var disqus_config = function () {
+this.page.url = "https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3/"
+this.page.identifier = workflow-3
+};
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://FullGC.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
