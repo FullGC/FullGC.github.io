@@ -49,17 +49,17 @@ The basic plugin configurations needed for our story are from the 'master' branc
 ````
 
 <br><br>
-### **A Feature Lifecycle:**
+### A Feature Lifecycle:
 
 #### Start a feature git flow process
 
-A new feature starts with the command **mvn jgitflow:feature-start. **
+A new feature starts with the command mvn jgitflow:feature-start.
 
 1. This prompts the user for a for the feature-branch name, which should carry the ticket ID (in our story, 'ST-145'):
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_2.png)
 
-**A new feature branch is then checked out from 'develop'**
+A new feature branch is then checked out from 'develop'
 
 2. The ticket status is updated to 'IN PROGRESS':
 
@@ -87,13 +87,13 @@ To achieve that, we'll add the followings configuration to jgit-flow plugin:
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_5.png)
 
 <br><br>
-### **A Release Lifecycle:**
+### A Release Lifecycle:
 
 After all the features of the next version have been completed and merged to 'develop' branch, it’s time for the git flow release process to kick in.
 
 #### Start a release git flow process
 
-A release process starts with the command **mvn jgitflow:release-start **on branch' develop’, which performs the following:
+A release process starts with the command 'mvn jgitflow:release-start' on branch 'develop’, which performs the following:
 
 1. Prompts the user for the version name.
 
@@ -103,8 +103,10 @@ The default is the next major version (according to the pom file), in this case,
 
 2. Pulls from the remote 'develop' branch (we’ve already configured).
 
-3. Updates and commits the poms with the new version. This requires the following tag attribute: <**autoVersionSubmodules**>true</**autoVersionSubmodules**>
-
+3. Updates and commits the poms with the new version. This requires the following tag attribute:
+````
+<autoVersionSubmodules>true</autoVersionSubmodules>
+````
 4. Checks out to the new 'release' branch, called release-VERSION (e.g. release-1.2.0).
 
 5. Pushes (this would trigger a release process of a 'release candidate' for QA machines. The release processes will be described in the next section, ‘Pipeline’)
@@ -126,13 +128,13 @@ Once the version is approved by QA, the git flow release can be completed. The c
 Checkout and push 'master' branch would start the release process
 
 <br><br>
-### **A Hotfix Lifecycle:**
+### A Hotfix Lifecycle
 
 When there is a need for a quick fix for a code that is already in production, the git-flow hotfix comes to the rescue.
 
 #### Start a hotfix git flow process
 
-The 'master' branch is always synced with the latest deployment code. The Feature starts with the command **mvn jgitflow:hotfix-start**, which performs the following:
+The 'master' branch is always synced with the latest deployment code. The Feature starts with the command 'mvn jgitflow:hotfix-start', which performs the following:
 
 1. Prompts the user for the version name.
 
@@ -152,7 +154,7 @@ The default is the next minor version (according to the pom file), in this case,
 
 #### Complete a release git-flow process
 
-Once the version is approved by QA, the 'hotfix' git flow can be completed. The command "mvn jgitflow:hotfix-finish" performs actions which are quite similar to the ‘release-finish’:
+Once the version is approved by QA, the 'hotfix' git flow can be completed. The command 'mvn jgitflow:hotfix-finish' performs actions which are quite similar to the ‘release-finish’:
 
 1. Merges the 'release' branch back into ‘master’
 
