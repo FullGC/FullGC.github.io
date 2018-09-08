@@ -115,7 +115,7 @@ The default is the next major version (according to the pom file), in this case,
 
 #### Complete a release git-flow process
 
-Once the version is approved by QA, the git flow release can be completed. The command "mvn jgitflow:release-finish" performs the following actions:
+Once the version is approved by QA, the git flow release can be completed. The command 'mvn jgitflow:release-finish' performs the following actions:
 
 1. Merges the 'release' branch back into ‘master’
 
@@ -144,7 +144,7 @@ The 'master' branch is always synced with the latest deployment code. The Featur
 
 The default is the next minor version (according to the pom file), in this case, 1.2.1
 
-2. Pulls from the remote "master" branch (done by adding the configuration).
+2. Pulls from the remote 'master' branch (done by adding the configuration).
 
 ````
 <pullMaster>true</pullMaster>
