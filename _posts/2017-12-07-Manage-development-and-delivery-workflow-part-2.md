@@ -48,6 +48,7 @@ The basic plugin configurations needed for our story are from the 'master' branc
 </configuration>
 ````
 
+<br><br>
 ### **A Feature Lifecycle:**
 
 #### Start a feature git flow process
