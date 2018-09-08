@@ -195,4 +195,4 @@ We've reviewed the git workflow of a new feature, 'release’ and ‘hotfix’, 
 </configuration>
 ````
 
-In [Part-3](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3) we'll review the Jenkins Pipeline job, which compiles, runs the tests and performs the release process.
+In [part-3](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3) we'll review the Jenkins Pipeline job, which compiles, runs the tests and performs the release process.
