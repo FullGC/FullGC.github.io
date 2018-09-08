@@ -25,7 +25,7 @@ header-img: "img/workflow-main.jpg"
 
 ------------------------------------------------------------------------------------------
 
-
+<br><br>
 ## Part 2: Git workflow with JGit-Flow:
 
 Git workflow is based on git-flow, with some modifications, and implemented here with Jgit-flow-jira.
@@ -34,9 +34,8 @@ This section covers the green and purple steps in the workflow graph (note: add 
 
 The basic plugin configurations needed for our story are from the 'master' branch, 'develop' branch, and the following:
 
-<table>
-  <tr>
-    <td><configuration>
+````
+<configuration>
   <flowInitContext>
      <masterBranchName>master</masterBranchName>
      <developBranchName>develop</developBranchName>
@@ -46,10 +45,8 @@ The basic plugin configurations needed for our story are from the 'master' branc
      <versionTagPrefix>volcano</versionTagPrefix>
   </flowInitContext>
   <scmCommentPrefix>JgitFLow step: </scmCommentPrefix>
-</configuration></td>
-  </tr>
-</table>
-
+</configuration>
+````
 
 ### **A Feature Lifecycle:**
 
@@ -88,6 +85,7 @@ To achieve that, we'll add the followings configuration to jgit-flow plugin:
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_5.png)
 
+<br><br>
 ### **A Release Lifecycle:**
 
 After all the features of the next version have been completed and merged to 'develop' branch, it’s time for the git flow release process to kick in.
@@ -126,6 +124,7 @@ Once the version is approved by QA, the git flow release can be completed. The c
 
 Checkout and push 'master' branch would start the release process
 
+<br><br>
 ### **A Hotfix Lifecycle:**
 
 When there is a need for a quick fix for a code that is already in production, the git-flow hotfix comes to the rescue.
@@ -166,9 +165,11 @@ Once the version is approved by QA, the 'hotfix' git flow can be completed. The 
 
 Checkout and push 'master' branch would start the release process
 
+<br><br>
 ### Summary
 
 We've reviewed the git workflow of a new feature, 'release’ and ‘hotfix’, and ended up with the following jgit-flow configuration:
+
 ````
 <configuration>
     <flowInitContext>
