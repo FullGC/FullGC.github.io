@@ -25,11 +25,11 @@ header-img: "img/workflow-main.jpg"
 
 ------------------------------------------------------------------------------------------
 
-# Part 3: Development and Release process with Jenkins Pipeline
+## Part 3: Development and Release process with Jenkins Pipeline
 
 The [Pipeline plugin](https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin), allows users to implement a project's entire build/test/deploy pipeline in a Jenkinsfile and stores that alongside their code.
 
-*A **Disclaimer before we begin writing the Jenkinsfile. There are endless ways to implement a CI/CD process. The release and deploy steps we'll discuss and implement are just one approach. Moreover, there are usually multiple ways of writing most of the commands in the Jenkinsfile: Native Groovy (Pipeline plugin DSL is groovy based), use a shell script, a Pipeline script code, external libraries (could be written in Java), etc..  *
+<i>Disclaimer before we begin writing the Jenkinsfile. There are endless ways to implement a CI/CD process. The release and deploy steps we'll discuss and implement are just one approach. Moreover, there are usually multiple ways of writing most of the commands in the Jenkinsfile: Native Groovy (Pipeline plugin DSL is groovy based), use a shell script, a Pipeline script code, external libraries (could be written in Java), etc..</i>
 
 ### Multibranch Pipeline
 
@@ -47,43 +47,34 @@ Then we'll exclude the release and 'hotfix’ branches (this will be explained l
 
 1. **Context**. The Pipeline job should be run on a dedicated Jenkins slave, 'server CICD', hence the script would be written inside a node context:
 
-<table>
-  <tr>
-    <td>node('Server CICD) {
+````
+node('Server CICD) {
 
-   }</td>
-  </tr>
-</table>
-
+   }
+````
 
 2. **Checkout**. This step checkouts code from source control. Scm is a special variable which instructs the checkout step to clone the specific revision which triggers this Pipeline run.
 
-<table>
-  <tr>
-    <td>stage('Checkout') {
+````
+stage('Checkout') {
    checkout([
            $class           : 'GitSCM',
            branches         : scm.branches,
            extensions       : scm.extensions + [[$class: 'LocalBranch', localBranch: '']],
            userRemoteConfigs: scm.userRemoteConfigs
    ])
-}</td>
-  </tr>
-</table>
-
+}
+````
 
 3. **Build**.
 
 a. **Maven build**: We are using the maven build tool. Maven was built by a shell command. We like to get a detailed report from Pipeline on a failure, including failed tests, links to them, and statistics. Moreover, we like the job status to become automatically 'unstable' if there were failed tests. These are provided by the [Pipeline Maven plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Maven+Plugin), which wraps the maven build command.
 
-<table>
-  <tr>
-    <td>withMaven(jdk: 'JDK 8 update 66', maven: 'Maven 3.0.5') {
+````
+withMaven(jdk: 'JDK 8 update 66', maven: 'Maven 3.0.5') {
            sh "mvn -Dmaven.test.failure.ignore=true clean install -Dsetup-profile=automation"
-       }</td>
-  </tr>
-</table>
-
+}
+````
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_9.png)
 
@@ -106,9 +97,8 @@ If an exception has been thrown during the build, we like to:
 
 The final script for the build looks like this:
 
-<table>
-  <tr>
-    <td>String branch = env.BRANCH_NAME.toString()
+````
+String branch = env.BRANCH_NAME.toString()
 stage('Maven build') {
 
     //returns a set of git revisions with the name of the committer
@@ -148,10 +138,8 @@ stage('Maven build') {
        handleFailures()
        throw e
    }
-}</td>
-  </tr>
-</table>
-
+}
+````
 
 4. **Release process**. In this process, we'll upload a tar (the maven build output) to s3, where the environment depends on the git branch we’re working on. The code would be placed in the 'process’ step:
 
@@ -181,9 +169,8 @@ The release candidate holds the name:
 
              We'll use a text file with the current RC number to know what the next version should be for release. We then update the file, commit changes and create a new tart with the correct name.
 
-<table>
-  <tr>
-    <td>def pom = readFile 'pom.xml'
+````
+def pom = readFile 'pom.xml'
 def project = new XmlSlurper().parseText(pom)
 String version = project.version.toString()
 String tarName = "volcano-${version}-release-pack.tar.gz"
@@ -219,13 +206,10 @@ step('Commit and push releases file') {
    sh "git add -A"
    sh "git commit -m 'update volcano version to '${tarRCVersion}"
    sh "git push"
-}</td>
-  </tr>
-</table>
+}
+````
 
-
-             Note that we did exclude the release/hotfix branches. This allows a couple of team members to work on the branch when QA has made a rejection or there is a bug to fix, without the new version being released with every push.
-
+Note that we did exclude the release/hotfix branches. This allows a couple of team members to work on the branch when QA has made a rejection or there is a bug to fix, without the new version being released with every push.
 
 
 **c. Upload tar to s3. **Chef will deploy a new volcano version, with the appropriate version in s3.
@@ -236,18 +220,15 @@ For the upload itself, there is a pipeline script. Nevertheless, we'll implement
 
 Amazon CLI commands, using the shell.
 
-<table>
-  <tr>
-    <td>step('Upload tar to s3 cli') {
+````
+step('Upload tar to s3 cli') {
    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
        sh "pip install --user awscli"
        sh "sudo apt-get -y install awscli"
        sh "aws s3 cp ./volcano/target/${tarName} s3://fullgc/tars/"
    }
-}</td>
-  </tr>
-</table>
-
+}
+````
 
 5. **Deployment process. **Here we won't deploy using Pipeline, but by the deployment tool, Chef in our case. We won’t go too deeply into how Chef performs a deployment, but suffice to say this: In order for Chef to know that there is a new 'volcano’ version it needs to deploy, the version in the [environment](https://docs.chef.io/environments.html) (qa or development or production) file needs to be updated to the new version.
 
