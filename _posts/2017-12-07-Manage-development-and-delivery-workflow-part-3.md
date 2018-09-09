@@ -306,7 +306,7 @@ Pipeline as a code is pretty much a game changer, in the sense that it is now in
 
 ------------------------------------------------------------------------------------------
 
-*The complete code can be found in my [GitHu*b](https://github.com/FullGC/volcano_manage_cicd)*.*
+*The complete code can be found in my [GitHub](https://github.com/FullGC/volcano_manage_cicd)*.
 
 <div id="disqus_thread"></div>
 <script>
