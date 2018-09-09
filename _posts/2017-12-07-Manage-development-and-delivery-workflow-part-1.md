@@ -12,7 +12,7 @@ tags:
 - ci/cd
 - release
 - deployment
-date: 2018-09-05 14:40:45
+date: 2018-09-11 14:40:45
 published: true
 header-img: "img/workflow-main.jpg"
 ---
