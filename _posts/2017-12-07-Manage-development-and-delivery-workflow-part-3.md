@@ -32,6 +32,7 @@ The [Pipeline plugin](https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugi
 
 <i>Disclaimer before we begin writing the Jenkinsfile. There are endless ways to implement a CI/CD process. The release and deploy steps we'll discuss and implement are just one approach. Moreover, there are usually multiple ways of writing most of the commands in the Jenkinsfile: Native Groovy (Pipeline plugin DSL is groovy based), use a shell script, a Pipeline script code, external libraries, etc..</i>
 
+<br><br>
 ### Multibranch Pipeline
 
 In a [Multibranch Pipeline](https://jenkins.io/doc/book/pipeline/multibranch/) project, Jenkins automatically discovers, manages and executes Pipelines for branches which contain a Jenkinsfile in source control (It is possible to write a Pipeline script directly in the job configuration though). It enables an implementation of different Jenkinsfiles for different branches. However, here we're going to implement a single Jenkinsfile for multiple branches.
@@ -44,11 +45,12 @@ Then we'll exclude the release and 'hotfix’ branches (this will be explained l
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_8.png)
 
+<br><br>
 ### Writing the Jenkinsfile, step-by-step
 
 **Context**. The Pipeline job should be run on a dedicated Jenkins slave, 'server CICD', hence the script would be written inside a node context:
 
-````
+````javascript
 node('Server CICD) {
 
    }
@@ -56,7 +58,7 @@ node('Server CICD) {
 
 **Checkout**. This step checkouts code from source control. Scm is a special variable which instructs the checkout step to clone the specific revision which triggers this Pipeline run.
 
-````
+````javascript
 stage('Checkout') {
    checkout([
            $class           : 'GitSCM',
@@ -71,7 +73,7 @@ stage('Checkout') {
 
    a. **Maven build**: We are using the maven build tool. Maven was built by a shell command. We like to get a detailed report from Pipeline on a failure, including failed tests, links to them, and statistics. Moreover, we like the job status to become automatically 'unstable' if there were failed tests. These are provided by the [Pipeline Maven plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Maven+Plugin), which wraps the maven build command.
 
-````
+````javascript
 withMaven(jdk: 'JDK 8 update 66', maven: 'Maven 3.0.5') {
            sh "mvn -Dmaven.test.failure.ignore=true clean install -Dsetup-profile=automation"
 }
@@ -151,7 +153,7 @@ On **release/hotfix** only, we like to create a release candidate for QA.
 
 The release candidate holds the name:
 
-````
+````javascript
 <volcano version>RC-<RC number>
 ````
 
@@ -267,6 +269,7 @@ In the image below an example of a Pipeline run:
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_10.png)
 
+<br><br>
 ### Tips
 
 * To save a lot of time, use the [Pipeline Syntax](https://jenkins-prod.inner-active.mobi/job/DevOps/job/Terraform/job/Clean_Validation/pipeline-syntax/) for every pipeline command
@@ -279,7 +282,7 @@ In the image below an example of a Pipeline run:
 
 * The [Pipeline Unit Testing](https://github.com/jenkinsci/JenkinsPipelineUnit/) Framework allows you to unit test Pipelines before running them in full.
 
-
+<br><br>
 ## **Wrapping up**
 
 Pipeline as a code is pretty much a game changer, in the sense that it is now in the hands of every programmer, allowing them to write a full release (and deployment) process, that can fit the development workflow easily.
