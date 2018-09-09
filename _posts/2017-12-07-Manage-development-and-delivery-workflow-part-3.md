@@ -48,6 +48,7 @@ Then we'll exclude the release and 'hotfix’ branches (this will be explained l
 <br><br>
 ### Writing the Jenkinsfile, step-by-step
 
+
 #### Context
 The Pipeline job should be run on a dedicated Jenkins slave, 'server CICD', hence the script would be written inside a node context:
 
@@ -56,6 +57,7 @@ node('Server CICD) {
 
    }
 ````
+
 
 #### Checkout
 This step checkouts code from source control. Scm is a special variable which instructs the checkout step to clone the specific revision which triggers this Pipeline run.
@@ -70,7 +72,8 @@ stage('Checkout') {
    ])
 }
 ````
-####
+
+
 #### Build
 
    a. **Maven build**: We are using the maven build tool. Maven was built by a shell command. We like to get a detailed report from Pipeline on a failure, including failed tests, links to them, and statistics. Moreover, we like the job status to become automatically 'unstable' if there were failed tests. These are provided by the [Pipeline Maven plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Maven+Plugin), which wraps the maven build command.
