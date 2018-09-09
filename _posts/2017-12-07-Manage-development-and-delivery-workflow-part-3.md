@@ -221,7 +221,7 @@ Chef will deploy a new volcano version, with the appropriate version in s3. This
 For the upload itself, there is a pipeline script. Nevertheless, we'll implement it here using
 Amazon CLI commands, using the shell.
 
-````
+````javascript
 step('Upload tar to s3 cli') {
    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
        sh "pip install --user awscli"
