@@ -48,7 +48,8 @@ Then we'll exclude the release and 'hotfix’ branches (this will be explained l
 <br><br>
 ### Writing the Jenkinsfile, step-by-step
 
-**Context**. The Pipeline job should be run on a dedicated Jenkins slave, 'server CICD', hence the script would be written inside a node context:
+**Context**.
+The Pipeline job should be run on a dedicated Jenkins slave, 'server CICD', hence the script would be written inside a node context:
 
 ````javascript
 node('Server CICD) {
@@ -56,7 +57,8 @@ node('Server CICD) {
    }
 ````
 
-**Checkout**. This step checkouts code from source control. Scm is a special variable which instructs the checkout step to clone the specific revision which triggers this Pipeline run.
+**Checkout**.
+This step checkouts code from source control. Scm is a special variable which instructs the checkout step to clone the specific revision which triggers this Pipeline run.
 
 ````javascript
 stage('Checkout') {
@@ -144,7 +146,8 @@ stage('Maven build') {
 }
 ````
 
-**Release process**. In this process, we'll upload a tar (the maven build output) to s3, where the environment depends on the git branch we’re working on. The code would be placed in the 'process’ step:
+**Release process**.
+In this process, we'll upload a tar (the maven build output) to s3, where the environment depends on the git branch we’re working on. The code would be placed in the 'process’ step:
 
    a. **Release tar name.** The release file is a tar file (the maven build output). Its name should represent the release version. The release version is found in the root pom.xml file, and we'll extract it from there
    b. **Release candidate tar name.** This is somewhat tricky.
@@ -203,7 +206,8 @@ step('Commit and push releases file') {
 
 Note that we did exclude the release/hotfix branches. This allows a couple of team members to work on the branch when QA has made a rejection or there is a bug to fix, without the new version being released with every push.
 
-**Upload tar to s3.** Chef will deploy a new volcano version, with the appropriate version in s3. This would require amazon s3 credentials.
+**Upload tar to s3.**
+Chef will deploy a new volcano version, with the appropriate version in s3. This would require amazon s3 credentials.
 For the upload itself, there is a pipeline script. Nevertheless, we'll implement it here using
 Amazon CLI commands, using the shell.
 
@@ -217,7 +221,8 @@ step('Upload tar to s3 cli') {
 }
 ````
 
-**Deployment process.** Here we won't deploy using Pipeline, but by the deployment tool, Chef in our case. We won’t go too deeply into how Chef performs a deployment, but suffice to say this: In order for Chef to know that there is a new 'volcano’ version it needs to deploy, the version in the [environment](https://docs.chef.io/environments.html) (qa or development or production) file needs to be updated to the new version.
+**Deployment process.**
+Here we won't deploy using Pipeline, but by the deployment tool, Chef in our case. We won’t go too deeply into how Chef performs a deployment, but suffice to say this: In order for Chef to know that there is a new 'volcano’ version it needs to deploy, the version in the [environment](https://docs.chef.io/environments.html) (qa or development or production) file needs to be updated to the new version.
 
    a. First, we'll check out the Chef repository and 'cd’  in the environments directory which the environment files rely on.
 
