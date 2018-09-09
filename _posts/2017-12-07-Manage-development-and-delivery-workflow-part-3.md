@@ -58,7 +58,7 @@ node('Server CICD) {
    }
 ````
 
-
+<space><space>
 #### Checkout
 This step checkouts code from source control. Scm is a special variable which instructs the checkout step to clone the specific revision which triggers this Pipeline run.
 
