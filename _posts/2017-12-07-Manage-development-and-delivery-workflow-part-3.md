@@ -48,6 +48,7 @@ Then we'll exclude the release and 'hotfix’ branches (this will be explained l
 <br><br>
 ### Writing the Jenkinsfile, step-by-step
 
+***
 
 #### Context
 The Pipeline job should be run on a dedicated Jenkins slave, 'server CICD', hence the script would be written inside a node context:
