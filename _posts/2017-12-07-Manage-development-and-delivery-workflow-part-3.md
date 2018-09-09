@@ -271,7 +271,7 @@ if (!branch.startsWith('ST-')){
   sh "git push"
 }
 
-checkout changelog: false, poll: false, scm: [$class: 'GitSCM', browser: [$class: 'BitbucketWeb', repoUrl:     'https://bitbucket.org/fullgc/chef'], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'LocalBranch', localBranch:
+checkout changelog: false, poll: false, scm: [$class: 'GitSCM', browser: [$class: 'BitbucketWeb', repoUrl: 'https://bitbucket.org/fullgc/chef'], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'LocalBranch', localBranch:
   '**']], submoduleCfg: [], userRemoteConfigs: [[url: 'git@bitbucket.org:fullgc/chef']]]
    dir('environments/') {
        incrementVersion()
