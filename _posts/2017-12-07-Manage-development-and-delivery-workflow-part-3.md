@@ -48,7 +48,7 @@ Then we'll exclude the release and 'hotfix’ branches (this will be explained l
 <br><br>
 ### Writing the Jenkinsfile, step-by-step
 
-**Context**.
+#### Context
 The Pipeline job should be run on a dedicated Jenkins slave, 'server CICD', hence the script would be written inside a node context:
 
 ````javascript
@@ -71,7 +71,7 @@ stage('Checkout') {
 }
 ````
 
-**Build**.
+#### Build
 
    a. **Maven build**: We are using the maven build tool. Maven was built by a shell command. We like to get a detailed report from Pipeline on a failure, including failed tests, links to them, and statistics. Moreover, we like the job status to become automatically 'unstable' if there were failed tests. These are provided by the [Pipeline Maven plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Maven+Plugin), which wraps the maven build command.
 
@@ -146,7 +146,7 @@ stage('Maven build') {
 }
 ````
 
-**Release process**.
+#### Release process
 In this process, we'll upload a tar (the maven build output) to s3, where the environment depends on the git branch we’re working on. The code would be placed in the 'process’ step:
 
    a. **Release tar name.** The release file is a tar file (the maven build output). Its name should represent the release version. The release version is found in the root pom.xml file, and we'll extract it from there
@@ -206,7 +206,7 @@ step('Commit and push releases file') {
 
 Note that we did exclude the release/hotfix branches. This allows a couple of team members to work on the branch when QA has made a rejection or there is a bug to fix, without the new version being released with every push.
 
-**Upload tar to s3.**
+#### Upload tar to s3
 Chef will deploy a new volcano version, with the appropriate version in s3. This would require amazon s3 credentials.
 For the upload itself, there is a pipeline script. Nevertheless, we'll implement it here using
 Amazon CLI commands, using the shell.
@@ -221,7 +221,7 @@ step('Upload tar to s3 cli') {
 }
 ````
 
-**Deployment process.**
+#### Deployment process
 Here we won't deploy using Pipeline, but by the deployment tool, Chef in our case. We won’t go too deeply into how Chef performs a deployment, but suffice to say this: In order for Chef to know that there is a new 'volcano’ version it needs to deploy, the version in the [environment](https://docs.chef.io/environments.html) (qa or development or production) file needs to be updated to the new version.
 
    a. First, we'll check out the Chef repository and 'cd’  in the environments directory which the environment files rely on.
@@ -288,7 +288,7 @@ In the image below an example of a Pipeline run:
 * The [Pipeline Unit Testing](https://github.com/jenkinsci/JenkinsPipelineUnit/) Framework allows you to unit test Pipelines before running them in full.
 
 <br><br>
-## **Wrapping up**
+### Wrapping up
 
 Pipeline as a code is pretty much a game changer, in the sense that it is now in the hands of every programmer, allowing them to write a full release (and deployment) process, that can fit the development workflow easily.
 
