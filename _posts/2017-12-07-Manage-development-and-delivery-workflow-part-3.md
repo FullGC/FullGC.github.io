@@ -30,7 +30,7 @@ header-img: "img/workflow-main.jpg"
 
 The [Pipeline plugin](https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin), allows users to implement a project's entire build/test/deploy pipeline in a Jenkinsfile and stores that alongside their code.
 
-<i>Disclaimer before we begin writing the Jenkinsfile. There are endless ways to implement a CI/CD process. The release and deploy steps we'll discuss and implement are just one approach. Moreover, there are usually multiple ways of writing most of the commands in the Jenkinsfile: Native Groovy (Pipeline plugin DSL is groovy based), use a shell script, a Pipeline script code, external libraries, etc..</i>
+A disclaimer before we begin writing the Jenkinsfile. There are many ways to implement a CI/CD process. The release and deploy steps we'll discuss and implement are just one approach. Moreover, there are usually multiple ways of writing most of the commands in the Jenkinsfile: Native Groovy (Pipeline plugin DSL is groovy based), use a shell script, a Pipeline script code, external libraries, etc..
 
 <br><br>
 ### Multibranch Pipeline
