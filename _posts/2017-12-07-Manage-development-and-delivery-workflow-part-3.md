@@ -159,6 +159,7 @@ In this process, we'll upload a tar (the maven build output) to s3, where the en
 
    a. **Release tar name.** The release file is a tar file (the maven build output). Its name should represent the release version. The release version is found in the root pom.xml file, and we'll extract it from there
 <img align="right" src="/img/releasememe.png" height="150" width="250">
+
    b. **Release candidate tar name.** This is somewhat tricky.
 
 On **release/hotfix** only, we like to create a release candidate for QA.
