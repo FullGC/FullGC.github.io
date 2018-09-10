@@ -155,7 +155,7 @@ stage('Maven build') {
 ***
 
 #### Release process
-<img align="right" src="/img/releasememe.png" height="150" width="250">
+<img align="right" src="/img/releasememe.png" height="110" width="230">
 In this process, we'll upload a tar (the maven build output) to s3, where the environment depends on the git branch we’re working on. The code would be placed in the 'process’ step:
 
 a. **Release tar name.** The release file is a tar file (the maven build output). Its name should represent the release version. The release version is found in the root pom.xml file, and we'll extract it from there
