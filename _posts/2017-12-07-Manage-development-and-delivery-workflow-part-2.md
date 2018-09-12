@@ -5,13 +5,10 @@ author: Dani Shemesh
 permalink: /manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-2/
 tags:
 - jira
-- jenkins
-- pipeline
 - git-flow
 - jgit-flow
 - ci/cd
-- release
-- deployment
+- Atlassian
 date: 2018-09-11 14:10:45
 published: true
 header-img: "img/workflow-main.jpg"
@@ -28,11 +25,12 @@ header-img: "img/workflow-main.jpg"
 
 ## Part 2: Git workflow with JGit-Flow:
 
-Git workflow is based on git-flow, with some modifications, and implemented here with Jgit-flow-jira.
+Git workflow is based on 'git-flow', with some modifications, and implemented here with 'Jgit-flow-jira'.
 
 This section covers the green and purple steps in the workflow graph ([from part-1](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1)).
 
-The basic plugin configurations needed for our story are from the 'master' branch, 'develop' branch, and the following:
+The following is the basic plugin configuration needed for our story. It gives a name to the Git branches and tags. 
+The 'scmCommentPrefix' would be the prefix for the commits performed by 'jGit-flow'('i.e. the Git squash operation')
 
 ````
 <configuration>
@@ -53,23 +51,21 @@ The basic plugin configurations needed for our story are from the 'master' branc
 
 #### Start a feature git flow process
 
-A new feature starts with the command mvn jgitflow:feature-start.
+A new feature starts with the command <i>mvn jgitflow:feature-start</i>.
 
-- This prompts the user for a for the feature-branch name, which should carry the ticket ID (in our story, 'ST-145'):
+- This prompts the user for the feature-branch name, which should carry the ticket ID (in our story, 'ST-145'):
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_2.png)
 
-A new feature branch is then checked out from 'develop'
-
-- The ticket status is updated to 'IN PROGRESS':
+A new feature branch is then checked out from 'develop' and the ticket status is updated to 'IN PROGRESS':
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_3.png)
 
 #### Complete a feature git flow process
 
-The command 'mvn jgitflow:feature-finish' ends the feature lifecycle.
+The command <i>mvn jgitflow:feature-finish</i> ends the feature lifecycle.
 
-- This prompts the user for the desired feature name to finish, where the default is the current branch.
+It prompts the user for the desired feature name to finish, where the default is the current branch.
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_4.png)
 
@@ -93,13 +89,12 @@ After all the features of the next version have been completed and merged to 'de
 
 #### Start a release git flow process
 
-A release process starts with the command 'mvn jgitflow:release-start' on branch 'develop’, which performs the following:
-
-- Prompts the user for the version name.
+A release process starts with the command <i>mvn jgitflow:release-start</i> on branch 'develop’, which prompts the user for the version name.
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_6.png)
 
-The default is the next major version (according to the pom file), in this case, 1.2.0
+The default is the next major version (according to the pom file), in this case, 1.2.0.
+Then it performs the following actions:
 
 - Pulls from the remote 'develop' branch (we’ve already configured).
 
@@ -111,11 +106,12 @@ The default is the next major version (according to the pom file), in this case,
 
 - Checks out to the new 'release' branch, called release-VERSION (e.g. release-1.2.0).
 
-- Pushes (this would trigger a release process of a 'release candidate' for QA machines. The release processes will be described in the next section, ‘Pipeline’)
+- Pushes (this would trigger a release process of a 'release candidate' for QA machines. (The release processes will be described in the next section, ‘Pipeline’)
 
 #### Complete a release git-flow process
 
-Once the version is approved by QA, the git flow release can be completed. The command 'mvn jgitflow:release-finish' performs the following actions:
+Once the version is approved by QA, the 'git-flow' release can be completed.
+The command <i>mvn jgitflow:release-finish</i> performs the following:
 
 - Merges the 'release' branch back into ‘master’
 
@@ -132,13 +128,12 @@ Checkout and push 'master' branch would start the release process
 <br><br>
 ### A Hotfix Lifecycle
 
-When there is a need for a quick fix for a code that is already in production, the git-flow hotfix comes to the rescue.
+When there is a need for a quick fix for a code that is already in production, the 'git-flow' hotfix comes to the rescue.
 
 #### Start a hotfix git flow process
 
-The 'master' branch is always synced with the latest deployment code. The Feature starts with the command 'mvn jgitflow:hotfix-start', which performs the following:
-
-- Prompts the user for the version name.
+The 'master' branch is always synced with the latest deployment code.
+The Feature starts with the command <i>mvn jgitflow:hotfix-start</i> prompts the user for the version name.
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_7.png)
 
@@ -158,7 +153,8 @@ The default is the next minor version (according to the pom file), in this case,
 
 #### Complete a release git-flow process
 
-Once the version is approved by QA, the 'hotfix' git flow can be completed. The command 'mvn jgitflow:hotfix-finish' performs actions which are quite similar to the ‘release-finish’:
+Once the version is approved by QA, the 'hotfix' git flow can be completed.
+The command <i>mvn jgitflow:hotfix-finish</i> performs actions which are quite similar to the ‘release-finish’:
 
 - Merges the 'release' branch back into ‘master’
 
@@ -175,7 +171,7 @@ Checkout and push 'master' branch would start the release process
 <br><br>
 ### Summary
 
-We've reviewed the git workflow of a new feature, 'release’ and ‘hotfix’, and ended up with the following jgit-flow configuration:
+We've reviewed the git workflow of a new feature, 'release’ and ‘hotfix’, and ended up with the following 'jgit-flow' configuration:
 
 ````
 <configuration>
@@ -195,7 +191,7 @@ We've reviewed the git workflow of a new feature, 'release’ and ‘hotfix’, 
 </configuration>
 ````
 
-In [part-3](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3) we'll review the Jenkins Pipeline job, which compiles, runs the tests and performs the release process.
+In [part-3](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3) we'll review the Jenkins Pipeline script, which compiles, runs the tests and performs the release process.
 
 <div id="disqus_thread"></div>
 <script>

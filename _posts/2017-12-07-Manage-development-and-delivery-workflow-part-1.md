@@ -12,6 +12,7 @@ tags:
 - ci/cd
 - release
 - deployment
+- maven
 date: 2018-09-11 14:05:45
 published: true
 header-img: "img/workflow-main.jpg"
@@ -26,7 +27,7 @@ header-img: "img/workflow-main.jpg"
 ------------------------------------------------------------------------------------------
 
 As the team grows bigger, and the projects become more complex, a proper development conventions, workflow and [CI/CD](https://en.wikipedia.org/wiki/CI/CD/) process become very important.
-In this series of posts I'll describe such flow and process, from a Jira ticket to a version release (and deployment) using a popular stack, including Jira, Git, Maven, and Jenkins.
+In this series of posts I'll describe such flow and process, from the Jira ticket to the version release (and deployment) using a popular stack, including Jira, Git, Maven, and Jenkins.
 
 <br><br>
 ## Part 1 - Tools and Planning
@@ -64,12 +65,12 @@ The GitFlow workflow defines a strict branching model designed around the projec
 
 * Hotfix: When a critical bug in a production version must be resolved immediately, a 'hotfix' branch may be branched off from the corresponding tag on the 'master' branch that marks the production version.
 
-If you're new to git-flow, please take some time to read about it [in Driessen's post](http://nvie.com/posts/a-successful-git-branching-model/) or in [Atlassian's Guid](https://www.atlassian.com/git/tutorials/comparing-workflows#!workflow-gitflow)e.
+If you're new to git-flow, please take some time to read about it [in Driessen's post](http://nvie.com/posts/a-successful-git-branching-model/) or in [Atlassian's Guide](https://www.atlassian.com/git/tutorials/comparing-workflows#!workflow-gitflow).
 
 <br><br>
 ### **Jgit-flow (Maven plugin)**
 
-[JGit-Flow](https://bitbucket.org/atlassian/jgit-flow/wiki/Home) [maven plugin](https://mvnrepository.com/artifact/external.atlassian.jgitflow/jgitflow-maven-plugin) is a Java implementation of GitFlow, and like Jira, it was published by Atlassian. It was designed for releasing a maven-based project and includes many other useful features.
+[JGit-Flow](https://bitbucket.org/atlassian/jgit-flow/wiki/Home) [maven plugin](https://mvnrepository.com/artifact/external.atlassian.jgitflow/jgitflow-maven-plugin) is a Java implementation of GitFlow, and like Jira, it was published by Atlassian. It designs for releasing a maven-based project and includes many other useful features.
 
 jGit-flow provides the following git-flow basic functionality:
 
@@ -90,7 +91,7 @@ Each feature contains many attributes, providing very useful functionality (desc
 <br><br>
 ### **Jgit-flow-jira**
 
-[JGit-Flow-Jira](https://github.com/FullGC/jgit-flow-jira) is a fork that I made for jgit-flow, which uses a Jira client to change the state of a Jira ticket during the lifecycle of a feature. Unfortunately, the project is not bug-free, and currently maintained mostly by the users and not by Atlassian. It is, however, published as open source and written very clearly. Jgitflow-jira contains a fix for this [open bug](https://ecosystem.atlassian.net/browse/MJF-109) as well.
+[JGit-Flow-Jira](https://github.com/FullGC/jgit-flow-jira) is a fork that I made for jgit-flow, which uses a Jira client to change the state of a Jira ticket during the lifecycle of a feature. Unfortunately, jgit-flow is not bug-free, and currently maintained mostly by the users and not by Atlassian. It is, however, published as open source and written very clearly. Jgitflow-jira contains a fix for this [open bug](https://ecosystem.atlassian.net/browse/MJF-109) as well.
 
 <br><br>
 ### **Jenkins(Pipeline)**
@@ -107,9 +108,9 @@ The Pipeline script would be written in Groovy and would use Jenkins syntax and 
 <br><br>
 ### **Complete development, release and deployment plan**
 
-The flow-chart below represents the Jira, Git, and deployment flow that we'll learn how to implement in the following sections.
+The flow-chart below describes the entire workflow, from the Jira ticket to deployment, that we'll learn how to implement in the following sections.
 
-We'll review a development flow of the server team feature, 'ST-145’, and the process of releasing and deploying the next version: 1.2.0, of an application called 'volcano’.
+We'll review a development flow of a feature that was assigned to the 'server team' called 'ST-145’, and the process of releasing and deploying the next version: v 1.2.0, of an application called 'volcano’.
 
 There are many shapes and arrows in the graph, but there's no need to make sense of them all right now, since we’re going to do exactly that in the following sections.![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_1.png)
 

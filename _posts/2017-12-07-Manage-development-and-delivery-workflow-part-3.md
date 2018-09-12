@@ -7,8 +7,6 @@ tags:
 - jira
 - jenkins
 - pipeline
-- git-flow
-- jgit-flow
 - ci/cd
 - release
 - deployment
@@ -30,7 +28,8 @@ header-img: "img/workflow-main.jpg"
 
 The [Pipeline plugin](https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin), allows users to implement a project's entire build/test/deploy pipeline in a Jenkinsfile and stores that alongside their code.
 
-A disclaimer before we begin writing the Jenkinsfile. There are many ways to implement a CI/CD process. The release and deploy steps we'll discuss and implement are just one approach. Moreover, there are usually multiple ways of writing most of the commands in the Jenkinsfile: Native Groovy (Pipeline plugin DSL is groovy based), use a shell script, a Pipeline script code, external libraries, etc..
+Before we'll begin writing the Jenkinsfile, keep in mind that there are many ways to implement a CI/CD process. The flow we'll discuss and implement is just one approach.
+Moreover, there are usually multiple ways of writing a command in the Jenkinsfile: Native Groovy (Pipeline plugin DSL is groovy based), use a shell script, a Pipeline script code, external libraries, etc..
 
 <br><br>
 ### Multibranch Pipeline
@@ -79,7 +78,8 @@ stage('Checkout') {
 
 #### Build
 
-   a. **Maven build**: We are using the maven build tool. Maven was built by a shell command. We like to get a detailed report from Pipeline on a failure, including failed tests, links to them, and statistics. Moreover, we like the job status to become automatically 'unstable' if there were failed tests. These are provided by the [Pipeline Maven plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Maven+Plugin), which wraps the maven build command.
+   a. **Maven build**: We are using the maven build tool, and trigger a maven build with a shell command.
+   We like to get a detailed report from Pipeline on a failure, including failed tests, links to them, and statistics. Moreover, we like the job status to become automatically 'unstable' if there were failed tests. These are provided by the [Pipeline Maven plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Maven+Plugin), which wraps the maven build command.
 
 ````javascript
 withMaven(jdk: 'JDK 8 update 66', maven: 'Maven 3.0.5') {
@@ -89,7 +89,8 @@ withMaven(jdk: 'JDK 8 update 66', maven: 'Maven 3.0.5') {
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_9.png)
 
-   b. **Handle build exceptions** and test failures: On maven build failure:
+ b. **Handle build exceptions** and test failures:
+ On maven build failure:
 
 If Pipeline checked out a feature branch (triggered by a push to a branch which starts with 'ST-'  ),  a notification email should be sent to the feature owner only. We’ll use the [Mailer plugin](https://wiki.jenkins.io/display/JENKINS/Mailer) for that.
 
@@ -169,7 +170,9 @@ The release candidate holds the name:
 ````
 
 In our story, the first release candidate would be: 'volcano-1.2.0-RC-1'(‘volcano-1.2.1-RC-1’ in the case of a hotfix).
+
 The RC number starts with 1. If a QA person found a bug, we'd need to fix it, and then increment the RC number, i.e. 'volcano-1.2.0-RC-2’ and so on.
+
 We'll use a text file with the current RC number to know what the next version should be for release. We then update the file, commit changes and create a new tart with the correct name.
 
 ````javascript
@@ -217,7 +220,8 @@ Note that we did exclude the release/hotfix branches. This allows a couple of te
 ***
 
 #### Upload tar to s3
-Chef will deploy a new volcano version, with the appropriate version in s3. This would require amazon s3 credentials.
+We won't implement the deployment process with the Pipeline script, and leave it for the deployment tool, 'Chef' for the sake of this illustration.
+Chef will deploy a new volcano app, with the appropriate version in s3. This would require amazon s3 credentials.
 For the upload itself, there is a pipeline script. Nevertheless, we'll implement it here using
 Amazon CLI commands, using the shell.
 
@@ -234,7 +238,7 @@ step('Upload tar to s3 cli') {
 ***
 
 #### Deployment process
-Here we won't deploy using Pipeline, but by the deployment tool, Chef in our case. We won’t go too deeply into how Chef performs a deployment, but suffice to say this: In order for Chef to know that there is a new 'volcano’ version it needs to deploy, the version in the [environment](https://docs.chef.io/environments.html) (qa or development or production) file needs to be updated to the new version.
+We won’t be diving too deeply into how Chef performs a deployment, but suffice to say this: In order for Chef to know that there is a new 'volcano’ version it needs to deploy, the version in the [environment](https://docs.chef.io/environments.html) (qa or development or production) file needs to be updated to the new version.
 
    a. First, we'll check out the Chef repository and 'cd’  in the environments directory which the environment files rely on.
 
