@@ -5,8 +5,8 @@
     <description>A blog about backend development, Scala, Java and devOps</description>
     <link>http://fullgc.github.io/</link>
     <atom:link href="http://fullgc.github.io/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Wed, 12 Sep 2018 14:24:16 +0300</pubDate>
-    <lastBuildDate>Wed, 12 Sep 2018 14:24:16 +0300</lastBuildDate>
+    <pubDate>Wed, 12 Sep 2018 14:31:20 +0300</pubDate>
+    <lastBuildDate>Wed, 12 Sep 2018 14:31:20 +0300</lastBuildDate>
     <generator>Jekyll v3.6.2</generator>
     
       <item>
@@ -16,12 +16,12 @@
 &lt;ul&gt;
   &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1&quot;&gt;Part-1: Tools and Planning&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-2&quot;&gt;Part-2: Git workflow with JGit-Flow&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3&quot;&gt;Part-3: Development and Release process with Jenkins Pipeline&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3&quot;&gt;Part-3: Development and delivery process with Jenkins Pipeline&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;hr /&gt;
 
-&lt;h2 id=&quot;part-3-development-and-release-process-with-jenkins-pipeline&quot;&gt;Part 3: Development and Release process with Jenkins Pipeline&lt;/h2&gt;
+&lt;h2 id=&quot;part-3-development-and-delivery-process-with-jenkins-pipeline&quot;&gt;Part 3: Development and delivery process with Jenkins Pipeline&lt;/h2&gt;
 
 &lt;p&gt;The &lt;a href=&quot;https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin&quot;&gt;Pipeline plugin&lt;/a&gt;, allows users to implement a project’s entire build/test/deploy pipeline in a Jenkinsfile and stores that alongside their code.&lt;/p&gt;
 
@@ -360,7 +360,7 @@ s.setAttribute('data-timestamp', +new Date());
 &lt;ul&gt;
   &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1&quot;&gt;Part-1: Tools and Planning&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-2&quot;&gt;Part-2: Git workflow with JGit-Flow&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3&quot;&gt;Part-3: Development and Release process with Jenkins Pipeline&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3&quot;&gt;Part-3: Development and delivery process with Jenkins Pipeline&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;hr /&gt;
@@ -611,7 +611,7 @@ s.setAttribute('data-timestamp', +new Date());
 &lt;ul&gt;
   &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1&quot;&gt;Part-1: Tools and Planning&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-2&quot;&gt;Part-2: Git workflow with JGit-Flow&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3&quot;&gt;Part-3: Development and Release process with Jenkins Pipeline&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3&quot;&gt;Part-3: Development and delivery process with Jenkins Pipeline&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;hr /&gt;
