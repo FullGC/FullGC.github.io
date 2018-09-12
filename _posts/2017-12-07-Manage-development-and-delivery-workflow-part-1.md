@@ -72,7 +72,7 @@ If you're new to git-flow, please take some time to read about it [in Driessen's
 
 [JGit-Flow](https://bitbucket.org/atlassian/jgit-flow/wiki/Home) [maven plugin](https://mvnrepository.com/artifact/external.atlassian.jgitflow/jgitflow-maven-plugin) is a Java implementation of GitFlow, and like Jira, it was published by Atlassian. It designs for releasing a maven-based project and includes many other useful features.
 
-jGit-flow provides the following git-flow basic functionality:
+'jGit-flow' provides the following git-flow basic functionality:
 
 * [jgitflow:feature-start](https://bitbucket.org/atlassian/jgit-flow/wiki/goals/feature-start) Starts a feature branch
 
@@ -91,7 +91,7 @@ Each feature contains many attributes, providing very useful functionality (desc
 <br><br>
 ### **Jgit-flow-jira**
 
-[JGit-Flow-Jira](https://github.com/FullGC/jgit-flow-jira) is a fork that I made for jgit-flow, which uses a Jira client to change the state of a Jira ticket during the lifecycle of a feature. Unfortunately, jgit-flow is not bug-free, and currently maintained mostly by the users and not by Atlassian. It is, however, published as open source and written very clearly. Jgitflow-jira contains a fix for this [open bug](https://ecosystem.atlassian.net/browse/MJF-109) as well.
+[JGit-Flow-Jira](https://github.com/FullGC/jgit-flow-jira) is a fork that I made for 'jgit-flow', which uses a Jira client to change the state of a Jira ticket during the lifecycle of a feature. Unfortunately, jgit-flow is not bug-free, and currently maintained mostly by the users and not by Atlassian. It is, however, published as open source and written very clearly. Jgitflow-jira contains a fix for this [open bug](https://ecosystem.atlassian.net/browse/MJF-109) as well.
 
 <br><br>
 ### **Jenkins(Pipeline)**
