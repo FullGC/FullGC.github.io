@@ -30,7 +30,7 @@ The Git workflow is based on 'git-flow', with some modifications, and implemente
 This section covers the green and purple steps in the workflow graph ([from part-1](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1)).
 
 The following is the basic plugin configuration needed for our story. It gives a name to the Git branches and tags. 
-The 'scmCommentPrefix' would be the prefix for the commits performed by 'jGit-flow'('i.e. the Git squash operation')
+The 'scmCommentPrefix' would be the prefix for the commits performed by 'jGit-flow'(i.e. the Git 'squash' operation)
 
 ````
 <configuration>
