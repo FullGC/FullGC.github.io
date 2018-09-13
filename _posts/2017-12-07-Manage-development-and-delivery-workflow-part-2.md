@@ -25,7 +25,7 @@ header-img: "img/workflow-main.jpg"
 
 ## Part 2: Git workflow with JGit-Flow:
 
-Git workflow is based on 'git-flow', with some modifications, and implemented here with 'Jgit-flow-jira'.
+The Git workflow is based on 'git-flow', with some modifications, and implemented here with 'Jgit-flow-jira'.
 
 This section covers the green and purple steps in the workflow graph ([from part-1](https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1)).
 
