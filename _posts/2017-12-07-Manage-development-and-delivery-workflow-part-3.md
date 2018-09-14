@@ -206,7 +206,7 @@ if (branch.startsWith("release") || branch.startsWith("hotfix")) {
    sh "mv ./volcano/target/${tarName} ./viper/target/${newTarName}"
    tarName = newTarName
 }
-}
+
 step('Commit and push releases file') {
    sh "git remote set-url origin git@bitbucket.org:fullgc/volcano.git"
    sh "git add -A"
