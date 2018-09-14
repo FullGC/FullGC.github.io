@@ -68,7 +68,6 @@ The command <i>mvn jgitflow:feature-finish</i> ends the feature lifecycle.
 It prompts the user for the desired feature name to finish, where the default is the current branch.
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_4.png)
-<img align="right" src="/img/squash.png" height="200" width="150">
 The feature branch is then merged into 'develop', and ‘develop’ is pushed.
 
 Before the merge, we like branch 'develop' to be pulled and the commits in the feature branch to be squashed, and so cleaner.
@@ -78,8 +77,9 @@ To achieve that, we'll add the followings configuration to jgit-flow plugin:
 <pullDevelop>true</pullDevelop>
 <squash>true</squash>
 ````
-- When the feature is done, we like to resolve it and pass to the QA guy. Hence, it's resolution should be switched to 'Done’, and it’s status ‘QA’
+![image alt text]({{ site.url }}/img/squash.png)
 
+When the feature is done, we like to resolve it and pass to the QA guy. Hence, it's resolution should be switched to 'Done’, and it’s status ‘QA’
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_5.png)
 
 <br><br>
