@@ -77,7 +77,7 @@ To achieve that, we'll add the followings configuration to jgit-flow plugin:
 <pullDevelop>true</pullDevelop>
 <squash>true</squash>
 ````
-![image alt text]({{ site.url }}/img/squash.png)
+<src="/img/squash.png" height="200" width="160">
 
 When the feature is done, we like to resolve it and pass to the QA guy. Hence, it's resolution should be switched to 'Done’, and it’s status ‘QA’
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_5.png)
