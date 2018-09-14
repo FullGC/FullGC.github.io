@@ -200,7 +200,7 @@ def newVersion = {
    readFile 'releases.txt'
 }
 
-if (branch.equals("release") || branch.equals("hotfix")) {
+if (branch.startsWith("release") || branch.startsWith("hotfix")) {
    String tarRCVersion = newVersion()
    newTarName = "volcano${version}-RC-${tarRCVersion}-release-pack.tar.gz"
    sh "mv ./volcano/target/${tarName} ./viper/target/${newTarName}"
