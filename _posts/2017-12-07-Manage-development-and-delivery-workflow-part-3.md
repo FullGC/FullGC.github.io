@@ -23,7 +23,7 @@ header-img: "img/workflow-main.jpg"
 
 ------------------------------------------------------------------------------------------
 
-
+<br><br>
 ## Part 3: Development and delivery process with Jenkins Pipeline
 
 The [Pipeline plugin](https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin), allows users to implement a project's entire build/test/deploy pipeline in a Jenkinsfile and stores that alongside their code.

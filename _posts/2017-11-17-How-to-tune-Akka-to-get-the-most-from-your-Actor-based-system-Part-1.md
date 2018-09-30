@@ -23,7 +23,7 @@ header-img: "img/tune-Akka.jpg"
 At some point, whether it is during your new actor-based system planning, or after you have a prototype working, you'll probably find yourself digging into the [Akka Docs](https://doc.akka.io/docs/akka/2.5/scala/index.html) to find the right combination of possibilities for routing, dispatcher, number of actors instances and so forth...
 Depending on the complexity of your system and performance requirements, this could get tedious.
 
-
+<br><br>
 ## Part-1: Initial Akka Configurations
 
 Let’s start with Akka configuration, specifically the configuration of [actor-instances](#heading=h.hhztx0701fu1), [routing strategy](#heading=h.cuvgdmxiz64e) and [dispatchers & executors](#heading=h.no1l9o35uyp0). Below is the relevant section of the application.conf

@@ -22,7 +22,7 @@ header-img: "img/workflow-main.jpg"
 
 ------------------------------------------------------------------------------------------
 
-
+<br><br>
 ## Part 2: Git workflow with JGit-Flow:
 
 The Git workflow is based on 'git-flow', with some modifications, and implemented here with 'Jgit-flow-jira'.

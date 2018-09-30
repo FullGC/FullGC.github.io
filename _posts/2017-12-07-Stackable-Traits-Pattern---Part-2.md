@@ -24,7 +24,7 @@ header-img: "img/burger-stack.jpg"
 Stackable traits can be applied to actors as well.
 Specifically, we can use stackable actor traits to modify the behavior of the ‘receive’ method.
 
-
+<br><br>
 ## **Part-2: Gathering Metrics**
 
 We like to gather the following metrics
