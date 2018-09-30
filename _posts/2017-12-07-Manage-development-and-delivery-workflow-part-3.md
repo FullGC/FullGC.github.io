@@ -81,7 +81,7 @@ stage('Checkout') {
 
 ````javascript
 withMaven(jdk: 'JDK 8 update 66', maven: 'Maven 3.0.5') {
-           sh "mvn -Dmaven.test.failure.ignore=true clean install -Dsetup-profile=automation"
+           sh "mvn -Dmaven.test.failure.ignore=true clean install"
 }
 ````
 
@@ -138,7 +138,7 @@ stage('Maven build') {
 
    try {
        withMaven(jdk: 'JDK 8 update 66', maven: 'Maven 3.0.5') {
-           sh "mvn -Dmaven.test.failure.ignore=true clean install -Dsetup-profile=automation"
+           sh "mvn -Dmaven.test.failure.ignore=true clean install"
        }
        if (currentBuild.result("UNSTABLE")) {
            handleFailures()
@@ -308,7 +308,7 @@ Pipeline as a code is pretty much a game changer, in the sense that it is now in
 
 ------------------------------------------------------------------------------------------
 
-*The complete code can be found in my [GitHub](https://github.com/FullGC/volcano_manage_cicd)*.
+*The complete code can be found in my [GitHub](https://github.com/FullGC/volcano)*.
 
 <div id="disqus_thread"></div>
 <script>
