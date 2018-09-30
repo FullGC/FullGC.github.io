@@ -68,6 +68,7 @@ The command <i>mvn jgitflow:feature-finish</i> ends the feature lifecycle.
 It prompts the user for the desired feature name to finish, where the default is the current branch.
 
 ![image alt text]({{ site.url }}/public/l8Up2rOYZomboTh06PZE0A_img_4.png)
+
 The feature branch is then merged into 'develop', and ‘develop’ is pushed.
 
 Before the merge, we like branch 'develop' to be pulled and the commits in the feature branch to be squashed, and so cleaner.
