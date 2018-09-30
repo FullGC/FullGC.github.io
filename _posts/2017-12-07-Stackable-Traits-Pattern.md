@@ -28,7 +28,7 @@ An interesting behavior of traits, as opposed to classes, is the call for a supe
 The term usually refers to an invocation of a method in an object, where the implementation is decided at runtime, i.e. a polymorphic call. The super call is not defined when a trait is defined, but only when it is mixed into a concrete class.
 Such behavior allows us to ‘stack’ the traits, and use the super call as a ‘pipe’, redirecting output - similar to the ‘pipe’ in Linux. This is the basis for the use-cases we’ll review.
 
-<br><br>
+
 ## Part-1: Error reporting design
 
 Consider the following:

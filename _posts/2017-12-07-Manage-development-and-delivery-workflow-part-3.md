@@ -31,7 +31,7 @@ The [Pipeline plugin](https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugi
 Before we'll begin writing the Jenkinsfile, keep in mind that there are many ways to implement a CI/CD process. The flow we'll discuss and implement is just one approach.
 Moreover, there are usually multiple ways of writing a command in the Jenkinsfile: Native Groovy (Pipeline plugin DSL is groovy based), use a shell script, a Pipeline script code, external libraries, etc..
 
-<br><br>
+
 ### Multibranch Pipeline
 
 In a [Multibranch Pipeline](https://jenkins.io/doc/book/pipeline/multibranch/) project, Jenkins automatically discovers, manages and executes Pipelines for branches which contain a Jenkinsfile in source control (It is possible to write a Pipeline script directly in the job configuration though). It enables an implementation of different Jenkinsfiles for different branches. However, here we're going to implement a single Jenkinsfile for multiple branches.
