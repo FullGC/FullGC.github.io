@@ -10,7 +10,7 @@ tags:
 source-id: 1Fx2TpNbL_lKIOBoy4Fni0NjlHa-vjb_J-r_v6gSMUck
 published: true
 date: 2018-07-23 14:20:45
-header-img: "img/burger-stack8.jpg"
+header-img: "img/burger-stack10.jpg"
 ---
 
 <i>This post is the first of a two parts series of articles on Stackable Traits</i>
