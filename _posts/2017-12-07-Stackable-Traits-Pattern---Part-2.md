@@ -11,7 +11,7 @@ tags:
 source-id: 1m6eIR7wGA1qDRmceIp1S3If9B9k-lpDksi4aRdQ_d1Y
 published: true
 date: 2018-07-23 14:30:45
-header-img: "img/burger-stack5.jpg"
+header-img: "img/burger-stack6.jpg"
 ---
 
 <i>This post is the second of a two parts series of articles on Stackable Traits</i>
