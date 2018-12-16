@@ -15,7 +15,7 @@ published: true
 header-img: "img/Oh_Behave.png"
 ---
 
-<i>This post is the first of a three parts series of articles about Developing behavior-driven tests for JEE web applications with Jbehave</i>
+<i><font color='red'>This post is the first of a three parts series of articles about Developing behavior-driven tests for JEE web applications with Jbehave</font></i>
 
 * [Part-1: Initial Akka Configurations](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-1)
 * [Part-2: Gather and analyze Akka metrics with Kamon and stackable traits](https://fullgc.github.io/how-to-tune-akka-to-get-the-most-from-your-actor-based-system-part-2)
