@@ -12,7 +12,7 @@ tags:
 - tests
 date: 2017-09-11 14:05:45
 published: true
-header-img: "img/Oh_Behave.png"
+header-img: "img/bheave-color.jpg"
 ---
 
 <i>This post is the first of a three parts series of articles about Developing behavior-driven tests for JEE web applications with Jbehave</i>
