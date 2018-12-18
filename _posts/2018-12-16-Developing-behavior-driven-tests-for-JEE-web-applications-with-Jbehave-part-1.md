@@ -30,7 +30,6 @@ Behavior-driven development, or BDD, is an agile software development process th
 In this guide, we'll learn to design, develop and automate [Black-box](https://en.wikipedia.org/wiki/Black-box_testing) tests for a JEE web application in a [BDD](https://en.wikipedia.org/wiki/Behavior-driven_development) fashion. We’ll develop on top of [Jbehave](https://jbehave.org/) framework.
 
 <br><br>
-
 ## Part 1 - Terminology, Tools and the 'Volcano' stories
 
 <br><br>
