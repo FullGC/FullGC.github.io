@@ -2,7 +2,7 @@
 title: Developing behavior-driven tests for JEE web applications with Jbehave - Part 1
 layout: post
 author: Dani Shemesh
-permalink: /developing-behavior-with-Jbehave-part-1/
+permalink: /developing-behavior-with-jbehave-part-1/
 tags:
 - jee
 - java
@@ -17,7 +17,7 @@ header-img: "img/behave-color.jpg"
 
 <i>This post is the first of a three parts series of articles about Developing behavior-driven tests for JEE web applications with Jbehave</i>
 
-* [Part-1: Terminology, Tools and the 'Volcano' stories](https://fullgc.github.io/developing-behavior-with-Jbehave-part-1)
+* [Part-1: Terminology, Tools and the 'Volcano' stories](https://fullgc.github.io/developing-behavior-with-jbehave-part-1)
 * [Part-2: Writing Stories and Java Implementation](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-2)
 * [Part-3: Automate the tests and generate reports](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-3)
 
@@ -155,7 +155,7 @@ In [Part-2](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-we
 *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
 *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
 var disqus_config = function () {
-this.page.url = "developing-behavior-with-Jbehave-part-1/"
+this.page.url = "developing-behavior-with-jbehave-part-1/"
 this.page.identifier = bdd-1
 };
 (function() { // DON'T EDIT BELOW THIS LINE
