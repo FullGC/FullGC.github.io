@@ -32,6 +32,8 @@ In this guide, we'll learn to design, develop and automate [Black-box](https://e
 <br><br>
 ## Part 1 - Terminology, Tools and the 'Volcano' stories
 ---
+Let’s start with some terminology
+
 
 ### **Black-box testing**
 
