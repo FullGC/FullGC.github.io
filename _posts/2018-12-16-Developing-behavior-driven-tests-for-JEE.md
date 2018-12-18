@@ -33,16 +33,15 @@ In this guide, we'll learn to design, develop and automate [Black-box](https://e
 ## Part 1 - Terminology, Tools and the 'Volcano' stories
 ---
 
-Let’s start with some terminology
+### Glossary
 
-
-### **Black-box testing**
+<br><br>
+#### **Black-box testing**
 
 According to Wikipedia, "Black-box testing is a method of software testing that examines the functionality of an application without peering into its internal structures or workings". As such, Black-box testing focuses entirely on the inputs and outputs of the software system – the “black box”.
 
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-### **Behavior-driven development(BDD)**
+<br><br>
+#### **Behavior-driven development(BDD)**
 
 Behavior-driven development is an extension of [test-driven development](https://en.wikipedia.org/wiki/Test-driven_development) that makes use of a simple, domain-specific scripting language.
 
@@ -63,8 +62,9 @@ Structure:
 ![image alt text]({{ site.url }}/public/dB6XOsGGWuUM1t1RHDV3g_img_0.jpg)
 
 <br><br>
-Now lets review the frameworks we’ll use along the tutorial
+## Frameworks and Tools
 
+<br><br>
 ### **Jbehave in a nutshell**
 
 [JBehave](https://jbehave.org/) is an open-source framework for Behavior-Driven Development.
@@ -81,7 +81,6 @@ In addition, Jbehave provides an easy way to create more intelligent data types 
 
 There are many (many!) advanced features that are worth checking out (see advanced topics in the [Jbehave site](https://jbehave.org/reference/stable/reporting-stories.html)); we'll only be using a few of them. We’ll explain how Jbehave works at a lower level later.
 
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ### **Thucydides**
 
 Thucydides is a tool designed to make writing automated acceptance tests easier.
