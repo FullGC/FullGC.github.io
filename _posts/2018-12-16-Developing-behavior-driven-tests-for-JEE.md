@@ -61,9 +61,10 @@ Structure:
 * A scenario consists of **steps**, in the format of **'Given-When-Then'**. ‘Given’ and ‘When’ trigger actions, and ‘Then’ is the verification:
 
 ![image alt text]({{ site.url }}/public/dB6XOsGGWuUM1t1RHDV3g_img_0.jpg)
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 <br><br>
-And a quick review of the tools we’ll use along the tutorial
+Now lets review the tools we’ll use along the tutorial
 
 ### **Jbehave in a nutshell**
 
