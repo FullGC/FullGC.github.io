@@ -81,6 +81,7 @@ In addition, Jbehave provides an easy way to create more intelligent data types 
 
 There are many (many!) advanced features that are worth checking out (see advanced topics in the [Jbehave site](https://jbehave.org/reference/stable/reporting-stories.html)); we'll only be using a few of them. We’ll explain how Jbehave works at a lower level later.
 
+<br><br>
 ### **Thucydides**
 
 Thucydides is a tool designed to make writing automated acceptance tests easier.
@@ -100,10 +101,10 @@ Thucydides and JBehave work well together. Thucydides uses simple conventions to
 
 <br><br>
 ### **Jbehave Plugin and the 'Volcano' Stories**
+------------------------------------------------------------------------------------------
 
 We use Idea IntelliJ-IDE with 'Jbehave support' plugin for writing the stories and the code behind.
 
-<br><br>
 #### Volcano
 
 'Volcano' is intended to be a social network for Volcano enthusiasts.
