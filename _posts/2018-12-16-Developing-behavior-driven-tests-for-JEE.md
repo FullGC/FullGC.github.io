@@ -61,7 +61,6 @@ Structure:
 * A scenario consists of **steps**, in the format of **'Given-When-Then'**. ‘Given’ and ‘When’ trigger actions, and ‘Then’ is the verification:
 
 ![image alt text]({{ site.url }}/public/dB6XOsGGWuUM1t1RHDV3g_img_0.jpg)
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 <br><br>
 Now lets review the frameworks we’ll use along the tutorial
@@ -89,7 +88,8 @@ Thucydides is a tool designed to make writing automated acceptance tests easier.
 
 Thucydides and JBehave work well together. Thucydides uses simple conventions to make it easier to get started in writing and implementing JBehave stories. It reports on both JBehave and Thucydides steps, which can be seamlessly combined in the same class.
 
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+<br><br>
 ### **Requirements and tools**
 
 * There are JBehave plugins for IntelliJ-Idea and Eclipse. Both come with a custom JBehave Story Editor which provides a syntax highlighting, step hyperlink detection and link to corresponding Java method, step autocompletion, detecting both unimplemented steps and more. Hence, one of these IDE is required.
@@ -98,7 +98,8 @@ Thucydides and JBehave work well together. Thucydides uses simple conventions to
 
 * You can download and follow the source code through the guide. The dispatcher of the 'tests' module is written in Scala. To run it you’ll need a Scala SDK.
 
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+<br><br>
 ### **Jbehave Plugin and the 'Volcano' Stories**
 
 We use Idea IntelliJ-IDE with 'Jbehave support' plugin for writing the stories and the code behind.
