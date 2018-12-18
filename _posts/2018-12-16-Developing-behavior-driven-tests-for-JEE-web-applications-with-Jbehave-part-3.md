@@ -1,8 +1,8 @@
 ---
-title: Developing behavior-driven tests for JEE web applications with Jbehave - Part 1
+title: Developing behavior-driven tests for JEE web applications with Jbehave - Part 3
 layout: post
 author: Dani Shemesh
-permalink: /developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-1/
+permalink: /developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-3/
 tags:
 - jee
 - java
@@ -10,7 +10,7 @@ tags:
 - bdd
 - automation
 - tests
-date: 2017-09-11 14:05:45
+date: 2017-09-11 14:10:45
 published: true
 header-img: "img/behave-color.jpg"
 ---
@@ -19,7 +19,7 @@ header-img: "img/behave-color.jpg"
 
 * [Part-1: Terminology, Tools and the 'Volcano' stories](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-1)
 * [Part-2: Writing Stories and Java Implementation](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-2)
-* [Part-3: Automate the tests and generate reports](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-2)
+* [Part-3: Automate the tests and generate reports](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-3)
 
 ------------------------------------------------------------------------------------------
 
