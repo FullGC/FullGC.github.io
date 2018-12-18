@@ -35,7 +35,7 @@ In this guide, we'll learn to design, develop and automate [Black-box](https://e
 
 ### Glossary
 
-<br><br>
+------------------------------------------------------------------------------------------
 #### **Black-box testing**
 
 According to Wikipedia, "Black-box testing is a method of software testing that examines the functionality of an application without peering into its internal structures or workings". As such, Black-box testing focuses entirely on the inputs and outputs of the software system – the “black box”.
@@ -64,7 +64,7 @@ Structure:
 <br><br>
 ## Frameworks and Tools
 
-<br><br>
+------------------------------------------------------------------------------------------
 ### **Jbehave in a nutshell**
 
 [JBehave](https://jbehave.org/) is an open-source framework for Behavior-Driven Development.
