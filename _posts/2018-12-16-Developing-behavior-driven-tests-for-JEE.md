@@ -155,7 +155,7 @@ In [Part-2](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-we
 *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
 *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
 var disqus_config = function () {
-this.page.url = "developing-behavior-with-jbehave-part-1/"
+this.page.url = "https://fullgc.github.io/developing-behavior-with-jbehave-part-1/"
 this.page.identifier = bdd-1
 };
 (function() { // DON'T EDIT BELOW THIS LINE
