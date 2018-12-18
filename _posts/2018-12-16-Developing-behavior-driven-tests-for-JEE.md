@@ -32,6 +32,7 @@ In this guide, we'll learn to design, develop and automate [Black-box](https://e
 <br><br>
 ## Part 1 - Terminology, Tools and the 'Volcano' stories
 ---
+
 Let’s start with some terminology
 
 
@@ -39,7 +40,8 @@ Let’s start with some terminology
 
 According to Wikipedia, "Black-box testing is a method of software testing that examines the functionality of an application without peering into its internal structures or workings". As such, Black-box testing focuses entirely on the inputs and outputs of the software system – the “black box”.
 
-<br><br>
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 ### **Behavior-driven development(BDD)**
 
 Behavior-driven development is an extension of [test-driven development](https://en.wikipedia.org/wiki/Test-driven_development) that makes use of a simple, domain-specific scripting language.
@@ -61,6 +63,8 @@ Structure:
 ![image alt text]({{ site.url }}/public/dB6XOsGGWuUM1t1RHDV3g_img_0.jpg)
 
 <br><br>
+And a quick review of the tools we’ll use along the tutorial
+
 ### **Jbehave in a nutshell**
 
 [JBehave](https://jbehave.org/) is an open-source framework for Behavior-Driven Development.
@@ -76,15 +80,15 @@ JBehave supports multiple mechanisms for parameter injection. In the above examp
 In addition, Jbehave provides an easy way to create more intelligent data types than these strings. There are multiple plugins for generating comprehensive and interactive reports.
 
 There are many (many!) advanced features that are worth checking out (see advanced topics in the [Jbehave site](https://jbehave.org/reference/stable/reporting-stories.html)); we'll only be using a few of them. We’ll explain how Jbehave works at a lower level later.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<br><br>
 ### **Thucydides**
 
 Thucydides is a tool designed to make writing automated acceptance tests easier.
 
 Thucydides and JBehave work well together. Thucydides uses simple conventions to make it easier to get started in writing and implementing JBehave stories. It reports on both JBehave and Thucydides steps, which can be seamlessly combined in the same class.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<br><br>
 ### **Requirements and tools**
 
 * There are JBehave plugins for IntelliJ-Idea and Eclipse. Both come with a custom JBehave Story Editor which provides a syntax highlighting, step hyperlink detection and link to corresponding Java method, step autocompletion, detecting both unimplemented steps and more. Hence, one of these IDE is required.
@@ -92,12 +96,14 @@ Thucydides and JBehave work well together. Thucydides uses simple conventions to
 * We use maven for import libraries, build, run and automated tests
 
 * You can download and follow the source code through the guide. The dispatcher of the 'tests' module is written in Scala. To run it you’ll need a Scala SDK.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<br><br>
+
 ### **Jbehave Plugin and the 'Volcano' Stories**
 
 We use Idea IntelliJ-IDE with 'Jbehave support' plugin for writing the stories and the code behind.
 
+<br><br>
 #### Volcano
 
 'Volcano' is intended to be a social network for Volcano enthusiasts.
