@@ -153,7 +153,7 @@ The 'index.html' file that has been created is the most comprehensive, interacti
 
 A click on the 'change password' test (story) for example, would provide some additional data on each step result.
 
-	![image alt text]({{ site.url }}/public/dB6XOsGGWuUM1t1RHDV3g_img_9.png)
+![image alt text]({{ site.url }}/public/dB6XOsGGWuUM1t1RHDV3g_img_9.png)
 
 You can zoom in with a click on the various test components to get results and statistics.
 
