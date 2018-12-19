@@ -23,8 +23,6 @@ header-img: "img/behave-color.jpg"
 
 ------------------------------------------------------------------------------------------
 
-Developing behavior-driven tests for JEE web applications with Jbehave
-
 Behavior-driven development, or BDD, is an agile software development process that provides the developers, QA, project managers and business team with a shared tool-set and process for software development collaboration.
 
 In this guide, we'll learn to design, develop and automate [Black-box](https://en.wikipedia.org/wiki/Black-box_testing) tests for a JEE web application in a [BDD](https://en.wikipedia.org/wiki/Behavior-driven_development) fashion. We’ll develop on top of [Jbehave](https://jbehave.org/) framework.
@@ -141,7 +139,7 @@ The following Jbehave plugin artifact:
 
 ````
 <groupId>net.thucydides</groupId>
- <artifactId>thucydides-jbehave-plugin</artifactId></td>
+<artifactId>thucydides-jbehave-plugin</artifactId></td>
 ````
 
 

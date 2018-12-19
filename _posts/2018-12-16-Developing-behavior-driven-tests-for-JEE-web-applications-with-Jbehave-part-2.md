@@ -31,18 +31,15 @@ Following is a discussion of some Volcano test cases and their Java implementati
 
 Let's zoom in on the first story, which is the Volcano registration story file:
 
-<table>
-  <tr>
-    <td>Narrative:
+````
+Narrative:
 As a Volcano enthusiast Dani would like to register to Volcano social network
 
 Scenario: A new user is signing up for the Volcano system
 Given dani shemesh is a Volcano enthusiast
 When dani is signing up for Volcano with the user-name: dani and the password: 123456
-Then dani is able to log in with the user-name: dani and the password: 123456</td>
-  </tr>
-</table>
-
+Then dani is able to log in with the user-name: dani and the password: 123456
+````
 
 Note that the story is written in the third person. This will let us capture the subject (i.e. the user) later.
 
@@ -56,38 +53,30 @@ The 'Given' is linked with a Java method. The method should:
 
 The @Given implementation of this scenario is a dummy for obvious reasons.
 
-<table>
-  <tr>
-    <td>public class UserAccount
+````javascript
+public class UserAccount {
+    Cache cache;
 ...
-Cache cache;
-...
-@Given("$user is a Volcano enthusiast")
-   public String user(@Named("user")String user) {
-     return "let " + user + "be a volcano enthusiast";
-}</td>
-  </tr>
-</table>
-
+    @Given("$user is a Volcano enthusiast")
+        public String user(@Named("user")String user) {
+        return "let " + user + "be a volcano enthusiast";
+}
+````
 
 Next is the implementation of the registration step where we cache the user details:
 
-<table>
-  <tr>
-    <td>@When("$user is signing up for Volcano with the user-name: $user and the password: $password")
+````javascript
+@When("$user is signing up for Volcano with the user-name: $user and the password: $password")
 public void  newUser(@Named("user")String user, @Named("password") String password) {
    RequestDispatcher.createUser(user, password);
    cache.getUsers().put(user, password);
-}</td>
-  </tr>
-</table>
-
+}
+````
 
 And the verification step, where the user should be able to log in and have a live token.
 
-<table>
-  <tr>
-    <td>@Then("$user is $ableorNot to log in with the user-name: $user and the password: $password")
+````javascript
+@Then("$user is $ableorNot to log in with the user-name: $user and the password: $password")
 public void logIn(@Named("user")String user, @Named("ableorNotAble")String ableOrNot, @Named("password") String password) throws IOException {
    String token = RequestDispatcher.logIn(user, password).getResponseBody();
    if (Objects.equals(ableOrNot, "able")){
@@ -95,10 +84,8 @@ public void logIn(@Named("user")String user, @Named("ableorNotAble")String ableO
        cache.getToken().put(user, token);
    }
    else assert token.isEmpty();
-}</td>
-  </tr>
-</table>
-
+}
+````
 
 ## **Implementation challenges**
 
@@ -126,9 +113,8 @@ When JBehave starts up, it registers all the implemented methods and their param
 
 This one is easy. Instead of inheritance/composition, we can place the @Given methods wherever we like, and Jbehave will identify it. So, we'll create a dedicated class for given methods, dealing with user scenarios:
 
-<table>
-  <tr>
-    <td>public class GivenUserSteps {
+````javascript
+public class GivenUserSteps {
 Cache cache;
 ...
 @Given("$user is a Volcano enthusiast")
@@ -140,19 +126,16 @@ public String user(@Named("user") String user) {
 public void logIn(@Named("user") String user) throws IOException {
    String session = RequestDispatcher.logIn(user, cache.getUsers().get(user)).getResponseBody();
    cache.getToken().put(user, session);
-}</td>
-  </tr>
-</table>
-
+}
+````
 
 #### Implement tests for similar entities in the same class
 
 We can once again take advantage of the Jbehave environment to place test implementations with similar characters together, even if they implement steps of different stories, for example:
 
-<table>
-  <tr>
-    <td>public class UserAccount {
-...
+````javascript
+public class UserAccount {
+
    Cache cache;
 
    @When("$user is signing up for Volcano with the user-name: $user and the password: $password")
@@ -167,10 +150,9 @@ We can once again take advantage of the Jbehave environment to place test implem
        if (response.equals("OK"))
            cache.getUsers().put(user, newPassword);
    }
-….</td>
-  </tr>
-</table>
-
+….
+}
+````
 
 #### Re-use actions with Dependency Injection using Spring
 
@@ -184,31 +166,40 @@ Luckily, [Jbehave supports some of the most popular, Java based, dependency inje
 
 We'll use 'org.springframework’ artifacts for the Spring integration:
 
-* <**artifactId**>spring-context</**artifactId**>
+````xml
+<**artifactId**>spring-context</**artifactId**>
+````
 
 To make our test classes to be singleton spring beans, using the @Service annotation
 
-* <**artifactId**>spring-test</**artifactId**>
+````xml
+<**artifactId**>spring-test</**artifactId**>
+````
 
 to identify the test classes beans under  com.fullgc.jbehave namespace, using @ContextConfiguration annotation and a spring-context xml file.
 
+````xml
 * <**artifactId**>spring-beans</**artifactId**>
+````
 
 To inject the resources to the test classes, using the @Autowired annotation
 
 And the following Thucydides artifact
 
-* <**groupId**>net.thucydides</**groupId**>
+````xml
+<**groupId**>net.thucydides</**groupId**>
+````
 
+````xml
 <**artifactId**>thucydides-junit</**artifactId**>
+````
 
                For the integration of the bean classes and with Jbehave, using SpringIntegration class.
 
 The UserAccount test class now looks like this:
 
-<table>
-  <tr>
-    <td>@ContextConfiguration(locations = "/spring-context.xml")
+````javascript
+@ContextConfiguration(locations = "/spring-context.xml")
 @Service
 public class UserAccount {
 
@@ -232,10 +223,8 @@ public class UserAccount {
    }
 ...
 }
-</td>
-  </tr>
-</table>
 
+````
 
 Note that the new user is cached and reused for a "change password" action.
 
@@ -245,9 +234,8 @@ The other test classes should be modified in a similar fashion.
 
 The spring context:
 
-<table>
-  <tr>
-    <td><?xml version="1.0" encoding="UTF-8"?>
+````xml
+<?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
       xmlns:context="http://www.springframework.org/schema/context"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -258,6 +246,8 @@ The spring context:
 
    <context:component-scan base-package="com.fullgc.jbehave"/>
    <task:annotation-driven />
-</beans></td>
-  </tr>
-</table>
+</beans>
+````
+
+### **Next**
+In [Part-3](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-3) we'll learn how to launch the web app in compile time, run the tests and generate summary reports.
