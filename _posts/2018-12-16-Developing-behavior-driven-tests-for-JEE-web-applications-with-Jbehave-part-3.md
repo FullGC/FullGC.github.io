@@ -51,7 +51,7 @@ public class ApiBDDTestSuite extends ThucydidesJUnitStories {}
 At this point, we can run the tests as Junit.
 
 -----------------------------------------------------------------------------------------------------
-### Running the tests manually
+#### Running the tests manually
 
 In order for the black-box tests to pass, we need to have a server up and running. To run the tests with the IDE, right click on the 'jbehave' package,
 
@@ -60,7 +60,7 @@ In order for the black-box tests to pass, we need to have a server up and runnin
 In this fashion, we can run the tests quickly, debugging them and the server.
 
 <br><br>
-### Automate the tests with Jetty(Maven plugin)
+#### Automate the tests with Jetty(Maven plugin)
 
 What we really want is to test the Volcano server as part of the maven build, the 'maven compile' task.
 In this case, we need maven to start a Volcano HTTP server, run the tests, and get Volcano down.
