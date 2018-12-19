@@ -18,8 +18,8 @@ header-img: "img/behave-color.jpg"
 <i>This post is the first of a three parts series of articles about Developing behavior-driven tests for JEE web applications with Jbehave</i>
 
 * [Part-1: Terminology, Tools and the 'Volcano' stories](https://fullgc.github.io/developing-behavior-with-jbehave-part-1)
-* [Part-2: Writing Stories and Java Implementation](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-2)
-* [Part-3: Automate the tests and generate reports](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-3)
+* [Part-2: Writing Stories and Java Implementation](https://fullgc.github.io/developing-behavior-with-jbehave-part-2)
+* [Part-3: Automate the tests and generate reports](https://fullgc.github.io/developing-behavior-with-jbehave-part-3)
 
 ------------------------------------------------------------------------------------------
 
@@ -154,7 +154,7 @@ Later on, we'll use it to identify the stories and run the test.
 <br><br>
 ### **Next**
 
-In [Part-2](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-2) we'll implement the 'Registration’ story, and review solutions to the implementation challenges.
+In [Part-2](https://fullgc.github.io/developing-behavior-with-jbehave-part-2) we'll implement the 'Registration’ story, and review solutions to the implementation challenges.
 
 <div id="disqus_thread"></div>
 <script>

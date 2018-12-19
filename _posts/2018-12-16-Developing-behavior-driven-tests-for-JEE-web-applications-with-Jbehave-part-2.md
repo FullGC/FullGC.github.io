@@ -2,7 +2,7 @@
 title: Developing behavior-driven tests for JEE web applications with Jbehave - Part 2
 layout: post
 author: Dani Shemesh
-permalink: /developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-2/
+permalink: /developing-behavior-with-jbehave-part-2/
 tags:
 - jee
 - java
@@ -18,8 +18,8 @@ header-img: "img/behave-color.jpg"
 <i>This post is the first of a three parts series of articles about Developing behavior-driven tests for JEE web applications with Jbehave</i>
 
 * [Part-1: Terminology, Tools and the 'Volcano' stories](https://fullgc.github.io/developing-behavior-with-jbehave-part-1)
-* [Part-2: Writing Stories and Java Implementation](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-2)
-* [Part-3: Automate the tests and generate reports](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-3)
+* [Part-2: Writing Stories and Java Implementation](https://fullgc.github.io/developing-behavior-with-jbehave-part-2)
+* [Part-3: Automate the tests and generate reports](https://fullgc.github.io/developing-behavior-with-jbehave-part-3)
 
 ------------------------------------------------------------------------------------------
 
@@ -257,4 +257,4 @@ The spring context:
 
 <br><br>
 ### **Next**
-In [Part-3](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-3) we'll learn how to launch the web app in compile time, run the tests and generate summary reports.
+In [Part-3](https://fullgc.github.io/developing-behavior-with-jbehave-part-3) we'll learn how to launch the web app in compile time, run the tests and generate summary reports.
