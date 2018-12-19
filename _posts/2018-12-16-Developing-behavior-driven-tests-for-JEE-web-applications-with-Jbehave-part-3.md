@@ -29,8 +29,8 @@ header-img: "img/behave-color.jpg"
 Previously, we implemented the step cases in a Java code.
 
 In this part we'll learn how to automate them and generate informative reports at the end of the run.
------------------------------------------------------------------------------------
 
+-----------------------------------------------------------------------------------------------------
 ### Identify implementation methods
 
 You may recall we mentioned that Jbehave registered the Java implementation methods on start up. But how does it identify an implementation step?
