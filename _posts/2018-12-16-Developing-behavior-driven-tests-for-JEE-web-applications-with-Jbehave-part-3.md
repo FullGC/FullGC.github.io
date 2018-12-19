@@ -50,7 +50,7 @@ public class ApiBDDTestSuite extends ThucydidesJUnitStories {}
 
 At this point, we can run the tests as Junit.
 
-<br><br>
+-----------------------------------------------------------------------------------------------------
 ### Running the tests manually
 
 In order for the black-box tests to pass, we need to have a server up and running. To run the tests with the IDE, right click on the 'jbehave' package,
