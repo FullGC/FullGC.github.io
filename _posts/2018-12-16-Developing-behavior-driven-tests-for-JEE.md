@@ -137,7 +137,7 @@ We'll use '*net.thucydides’* libraries for the implementation.
 
 The following Jbehave plugin artifact:
 
-````
+````xml
 <groupId>net.thucydides</groupId>
 <artifactId>thucydides-jbehave-plugin</artifactId></td>
 ````
