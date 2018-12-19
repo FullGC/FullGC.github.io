@@ -15,7 +15,7 @@ published: true
 header-img: "img/behave-color.jpg"
 ---
 
-<i>This post is the first of a three parts series of articles about Developing behavior-driven tests for JEE web applications with Jbehave</i>
+<i>This post is the second of a three parts series of articles about Developing behavior-driven tests for JEE web applications with Jbehave</i>
 
 * [Part-1: Terminology, Tools and the 'Volcano' stories](https://fullgc.github.io/developing-behavior-with-jbehave-part-1)
 * [Part-2: Writing Stories and Java Implementation](https://fullgc.github.io/developing-behavior-with-jbehave-part-2)
