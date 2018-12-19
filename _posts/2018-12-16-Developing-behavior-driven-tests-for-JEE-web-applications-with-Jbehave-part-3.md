@@ -17,7 +17,7 @@ header-img: "img/behave-color.jpg"
 
 <i>This post is the first of a three parts series of articles about Developing behavior-driven tests for JEE web applications with Jbehave</i>
 
-* [Part-1: Terminology, Tools and the 'Volcano' stories](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-1)
+* [Part-1: Terminology, Tools and the 'Volcano' stories](https://fullgc.github.io/developing-behavior-with-jbehave-part-1)
 * [Part-2: Writing Stories and Java Implementation](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-2)
 * [Part-3: Automate the tests and generate reports](https://fullgc.github.io/developing-behavior-driven-tests-for-JEE-web-applications-with-Jbehave-part-3)
 
@@ -53,9 +53,9 @@ At this point, we can run the tests as Junit.
 -----------------------------------------------------------------------------------------------------
 #### Running the tests manually
 
-In order for the black-box tests to pass, we need to have a server up and running. To run the tests with the IDE, right click on the 'jbehave' package,
+In order for the black-box tests to pass, we need to have a server up and running. To run the tests with the IDE, right click on the 'jbehave' package.
 
-  ![image alt text]({{ site.url }}/public/dB6XOsGGWuUM1t1RHDV3g_img_7.png)
+![image alt text]({{ site.url }}/public/dB6XOsGGWuUM1t1RHDV3g_img_7.png)
 
 In this fashion, we can run the tests quickly, debugging them and the server.
 
