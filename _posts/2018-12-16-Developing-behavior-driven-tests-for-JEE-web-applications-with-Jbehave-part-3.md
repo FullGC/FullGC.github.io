@@ -27,7 +27,6 @@ header-img: "img/behave-color.jpg"
 ## Part 3 - Automate the tests and generate reports
 
 Previously, we implemented the step cases in a Java code.
-
 In this part we'll learn how to automate them and generate informative reports at the end of the run.
 
 -----------------------------------------------------------------------------------------------------
@@ -64,18 +63,15 @@ In this fashion, we can run the tests quickly, debugging them and the server.
 ### Automate the tests with Jetty(Maven plugin)
 
 What we really want is to test the Volcano server as part of the maven build, the 'maven compile' task.
-
 In this case, we need maven to start a Volcano HTTP server, run the tests, and get Volcano down.
 
 [Eclipse Jetty](https://www.eclipse.org/jetty/) is an open-source project providing an HTTP server and javax.servlet container
-
 We'll use a Jetty maven-plugin, to start a Volcano server on which the tests will be running.
 
 The maven plugin should be configured as follows:
 
-<table>
-  <tr>
-    <td><plugin>
+````xml
+<plugin>
    <groupId>org.eclipse.jetty</groupId>
    <artifactId>jetty-maven-plugin</artifactId>
    <version>${jetty.version}</version>
@@ -111,10 +107,7 @@ The maven plugin should be configured as follows:
        </execution>
    </executions>
 </plugin>
-</td>
-  </tr>
-</table>
-
+````
 
 Note that:
 
@@ -122,7 +115,7 @@ Note that:
 
 2. The memory you declare allocated with the jvmargs needs to be enough to get the server up
 
-3. In **contextHandlers **we provide the web application archive to be used. If you have multiple web modules in your project that need to be tested, provide them all.
+3. In 'contextHandlers' we provide the web application archive to be used. If you have multiple web modules in your project that need to be tested, provide them all.
 
 4. In the executions section we tell jetty to start before the tests are executed and stop afterwards. If we don't explicitly ask that, then the jetty would stay up.
 
