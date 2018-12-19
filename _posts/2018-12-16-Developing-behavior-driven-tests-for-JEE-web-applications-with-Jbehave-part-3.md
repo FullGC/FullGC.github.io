@@ -23,35 +23,36 @@ header-img: "img/behave-color.jpg"
 
 ------------------------------------------------------------------------------------------
 
-# Part 3 - Automate the tests and generate reports
+<br><br>
+## Part 3 - Automate the tests and generate reports
 
 Previously, we implemented the step cases in a Java code.
 
 In this part we'll learn how to automate them and generate informative reports at the end of the run.
+-----------------------------------------------------------------------------------
 
-## **Identify implementation methods**
+### Identify implementation methods
 
 You may recall we mentioned that Jbehave registered the Java implementation methods on start up. But how does it identify an implementation step?
 
 Basically, these methods would have to override the configuration() method, which is part of the jbehave library. We have however, let 'thucydides' work for us. The ‘thucydides-core’ library (that comes with the ‘jbehave-plugin’), provides the ‘ThucydidesJUnitStories’ class. This identifies the ‘.story’ files and the links for the Java implementations. All we need is to have a Java class that inherits from it in the Java implementation root package:
 
-<table>
-  <tr>
-    <td>import net.thucydides.jbehave.ThucydidesJUnitStories;
-public class ApiBDDTestSuite extends ThucydidesJUnitStories {}</td>
-  </tr>
-</table>
-
+````java
+import net.thucydides.jbehave.ThucydidesJUnitStories;
+public class ApiBDDTestSuite extends ThucydidesJUnitStories {}
+````
 
 #### Final project structure:
 
 ![image alt text]({{ site.url }}/public/dB6XOsGGWuUM1t1RHDV3g_img_6.png)
 
-## **Running the tests**
+<br><br>
+### Running the tests
 
 At this point, we can run the tests as Junit.
 
-## Running the tests manually
+<br><br>
+### Running the tests manually
 
 In order for the black-box tests to pass, we need to have a server up and running. To run the tests with the IDE, right click on the 'jbehave' package,
 
@@ -59,7 +60,8 @@ In order for the black-box tests to pass, we need to have a server up and runnin
 
 In this fashion, we can run the tests quickly, debugging them and the server.
 
-## Automate the tests with Jetty(Maven plugin)
+<br><br>
+### Automate the tests with Jetty(Maven plugin)
 
 What we really want is to test the Volcano server as part of the maven build, the 'maven compile' task.
 
@@ -124,7 +126,8 @@ Note that:
 
 4. In the executions section we tell jetty to start before the tests are executed and stop afterwards. If we don't explicitly ask that, then the jetty would stay up.
 
-## **Test Summary Reports**
+<br><br>
+### Test Summary Reports
 
 Test Summary Reports are an important deliverable. They are needed to reflect test results in a clear way, allowing them to be analyzed quickly.
 
@@ -132,9 +135,8 @@ Jbehave [storyReporter](https://jbehave.org/reference/stable/reporting-stories.h
 
 We'll use another Thucydides maven plugin to generate some better-looking reports:
 
-<table>
-  <tr>
-    <td><plugin>
+````xml
+<plugin>
    <groupId>org.apache.maven.plugins</groupId>
    <artifactId>maven-site-plugin</artifactId>
    <version>3.2</version>
@@ -148,10 +150,7 @@ We'll use another Thucydides maven plugin to generate some better-looking report
        </reportPlugins>
    </configuration>
 </plugin>
-</td>
-  </tr>
-</table>
-
+````
 
 This will generate various reports automatically at the end of the Maven run, in /target/site.
 
@@ -165,7 +164,8 @@ A click on the 'change password' test (story) for example, would provide some ad
 
 You can zoom in with a click on the various test components to get results and statistics.
 
-## **Wrapping up**
+<br><br>
+### Wrapping up
 
 Behavior Driven Development is a methodology for developing software through example-based communication among developers, QAs, and project managers.
 
@@ -175,4 +175,4 @@ As part of our mission to create Blackbox tests in a BDD fashion for the Volcano
 
 ------------------------------------------------------------------------------------------
 
-*The complete code can be found in my **[GitHu*b](https://github.com/FullGC/volcano)*.*
+*The complete code can be found in my [GitHub](https://github.com/FullGC/volcano)*.

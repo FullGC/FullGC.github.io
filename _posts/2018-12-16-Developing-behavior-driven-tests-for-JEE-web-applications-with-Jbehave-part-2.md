@@ -66,7 +66,7 @@ public class UserAccount {
 
 Next is the implementation of the registration step where we cache the user details:
 
-````javascript
+````java
 @When("$user is signing up for Volcano with the user-name: $user and the password: $password")
 public void  newUser(@Named("user")String user, @Named("password") String password) {
    RequestDispatcher.createUser(user, password);
@@ -76,7 +76,7 @@ public void  newUser(@Named("user")String user, @Named("password") String passwo
 
 And the verification step, where the user should be able to log in and have a live token.
 
-````javascript
+````java
 @Then("$user is $ableorNot to log in with the user-name: $user and the password: $password")
 public void logIn(@Named("user")String user, @Named("ableorNotAble")String ableOrNot, @Named("password") String password) throws IOException {
    String token = RequestDispatcher.logIn(user, password).getResponseBody();
@@ -117,7 +117,7 @@ When JBehave starts up, it registers all the implemented methods and their param
 
 This one is easy. Instead of inheritance/composition, we can place the @Given methods wherever we like, and Jbehave will identify it. So, we'll create a dedicated class for given methods, dealing with user scenarios:
 
-````javascript
+````java
 public class GivenUserSteps {
 Cache cache;
 ...
@@ -133,11 +133,12 @@ public void logIn(@Named("user") String user) throws IOException {
 }
 ````
 
+<br><br>
 ##### Implement tests for similar entities in the same class
 
 We can once again take advantage of the Jbehave environment to place test implementations with similar characters together, even if they implement steps of different stories, for example:
 
-````javascript
+````java
 public class UserAccount {
 
    Cache cache;
@@ -158,6 +159,7 @@ public class UserAccount {
 }
 ````
 
+<br><br>
 ##### Re-use actions with Dependency Injection using Spring
 
 In order to reuse actions, in our case the user that we have created and logged in with, in the "registration" step, we need to cache. We cannot put the cache in a global variable or static at some place, since we are working with different classes and the memory cleans up after each story.
@@ -198,11 +200,11 @@ And the following Thucydides artifact
 <artifactId>thucydides-junit</artifactId>
 ````
 
-               For the integration of the bean classes and with Jbehave, using SpringIntegration class.
+For the integration of the bean classes and with Jbehave, using SpringIntegration class.
 
 The UserAccount test class now looks like this:
 
-````javascript
+````java
 @ContextConfiguration(locations = "/spring-context.xml")
 @Service
 public class UserAccount {

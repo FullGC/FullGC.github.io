@@ -139,7 +139,7 @@ The following Jbehave plugin artifact:
 
 ````xml
 <groupId>net.thucydides</groupId>
-<artifactId>thucydides-jbehave-plugin</artifactId></td>
+<artifactId>thucydides-jbehave-plugin</artifactId>
 ````
 
 
