@@ -167,7 +167,7 @@ In order to reuse actions, in our case the user that we have created and logged 
 
 Luckily, [Jbehave supports some of the most popular, Java based, dependency injection plugins](https://jbehave.org/reference/latest/dependency-injection.html). The most popular is probably Spring, and we'll use it to inject the resources (i.e. the cache) we need for reusing actions.
 
-![image alt text]({{ site.url }}/public/dB6XOsGGWuUM1t1RHDV3g_img_5.png)
+<img src="/public/dB6XOsGGWuUM1t1RHDV3g_img_5.png" height="190" width="250">
 
 ###### Configure Spring
 
