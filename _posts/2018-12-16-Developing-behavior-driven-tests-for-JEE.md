@@ -59,6 +59,8 @@ Structure:
 
 ![image alt text]({{ site.url }}/public/dB6XOsGGWuUM1t1RHDV3g_img_0.jpg)
 
+<img src="/public/dB6XOsGGWuUM1t1RHDV3g_img_0.jpg" height="190" width="200">
+
 <br><br>
 ## Frameworks and Tools
 

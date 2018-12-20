@@ -107,6 +107,7 @@ This brings up unexpected challenges from an OOP point of view. Before discussin
 
 <br><br>
 #### The Jbehave environment
+<img src="/img/oop_meme.png" height="190" width="250">
 
 Though we are writing in Java, we are not in an OOP scope, but in Jbehave's.
 
