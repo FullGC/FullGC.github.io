@@ -25,9 +25,10 @@ There are decisions to be made regarding the nature of the syncing, but the firs
 
 Before installing the Helm Chart, let's review some of the essential configurations that are found in the standard helm values file, "values.yaml".
 
-## Configure consul-helm
+<br><br>
+### Configure consul-helm
 
-By default, the chart resolution installs everything: a Consul server cluster, client agents on all nodes, and feature components.
+By default, the Chart resolution installs everything: a Consul server cluster, client agents on all nodes, and feature components.
 
 If you already maintain a Consul cluster and are interested in joining the Kubernetes services to your existing cluster, then in the "server" section, the “enable” property in the “server” section should be set to “false”:
 
@@ -59,7 +60,7 @@ Now for the installation itself:
 
 Clone the repository from[ here](https://github.com/hashicorp/consul-helm) and perform "helm install".
 
-## Configure Consul domain with the CoreDNS
+### Configure Consul domain with the CoreDNS
 
 Configure the Consul domain with the CoreDNS.
 
@@ -125,7 +126,7 @@ kubectl get pods -n kube-system -oname |grep coredns |xargs kubectl apply -f kub
 
 ````
 
-## Accessing the Consul HTTP API
+### Accessing the Consul HTTP API
 
 Access to the Consul HTTP API is through the consul-agent, Pod, we've created.
 
