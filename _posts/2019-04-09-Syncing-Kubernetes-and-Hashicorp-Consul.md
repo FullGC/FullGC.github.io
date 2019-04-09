@@ -60,6 +60,7 @@ Now for the installation itself:
 
 Clone the repository from[ here](https://github.com/hashicorp/consul-helm) and perform "helm install".
 
+<br><br>
 ### Configure Consul domain with the CoreDNS
 
 Configure the Consul domain with the CoreDNS.
@@ -126,6 +127,7 @@ kubectl get pods -n kube-system -oname |grep coredns |xargs kubectl apply -f kub
 
 ````
 
+<br><br>
 ### Accessing the Consul HTTP API
 
 Access to the Consul HTTP API is through the consul-agent, Pod, we've created.
