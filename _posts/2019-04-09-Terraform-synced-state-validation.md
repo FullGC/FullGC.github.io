@@ -9,16 +9,19 @@ tags:
 - devops
 source-id: 1O5aZbgZjmGAP1q-HsVoIREe62jcBqlT6iM5S_k5nhMw
 published: true
+date: 2019-04-10 14:15:45
 ---
 Terraform synced-state validation
 
 Working with Terraform brings up some challenges. We are to focus on two of them:
 
-1. Keeping Terraform's state consistent with the actual provider (i.e, a cloud provider) resources can be quite a challenge. Such inconsistencies are usually a result of changes performed directly in the cloud environment. 	
+1. Keeping Terraform's state consistent with the actual provider (i.e, a cloud provider) resources can be quite a challenge. Such inconsistencies are usually a result of changes performed directly in the cloud environment.
+
 
 2. Keep the Terraform code synced with the Terraform state. When we like to apply changes in 	Terraform, we can:	
 
-    1. Start by pushing the changes to the Terraform repository and then apply them. The Terraform state will be behind until the changes are affected. 		
+    1. Start by pushing the changes to the Terraform repository and then apply them. The Terraform state will be behind until the changes are affected.
+ 		
 
     2. Start by applying the changes locally, then push them. The Terraform state will be ahead until the code is pushed.	
 
@@ -37,4 +40,3 @@ We do it with a little help of a Jenkins pipeline[ library](https://jenkins.io/d
 *The script can be found on my**[ GitHu*b](https://github.com/FullGC/Terraform-Empty-Plan-Validator)*.*
 
 **It's important to note that the script is useful when you're working with the Terraform Recommended Workflow, specifically when having an environment file for each environment that defines the Terraform modules, while the resources lie in their own repository.*
-
