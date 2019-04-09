@@ -61,9 +61,44 @@ Now for the installation itself:
 Clone the repository from[ here](https://github.com/hashicorp/consul-helm) and perform "helm install".
 
 <br><br>
-### Configure Consul domain with the CoreDNS
+### Accessing the Consul HTTP API
 
-Configure the Consul domain with the CoreDNS.
+Access to the Consul HTTP API is through the consul-agent, Pod, we've created.
+
+Every Node has a Consul agent, and there are a couple of ways to expose access to them.
+
+One way is to create a Nodeport service. A Nodeport defines a static port, meaning that it opens a specific port on all nodes so any traffic from the outside to this port would get to this service.
+
+The service, in turn, would forward traffic to an application labeled "consul", which is a Consul agent.
+
+Below is an example of such Consul Service.
+'Kubectl apply' it to spin the service.
+
+
+````yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: consul
+  name: consul-http-api
+  namespace: <namespace>
+spec:
+  selector:
+    app: consul
+    hasDNS: "true"
+    release: consul
+  ports:
+  - name: http-api
+    protocol: TCP
+    port: 8500
+    targetPort: 8500
+  type: NodePort
+
+````
+
+<br><br>
+### Configure the Consul domain with the CoreDNS
 
 CoreDNS is a DNS server that commonly serves as the Kubernetes cluster DNS.
 
@@ -124,39 +159,6 @@ To reconfigure CoreDNS with the additionals to the ConfigMap, perform:
 
 ````
 kubectl get pods -n kube-system -oname |grep coredns |xargs kubectl apply -f kube-system
-
-````
-
-<br><br>
-### Accessing the Consul HTTP API
-
-Access to the Consul HTTP API is through the consul-agent, Pod, we've created.
-
-Every Node has a Consul agent, and there are a couple of ways to expose access to them.
-
-One way is to create a Nodeport service. A Nodeport defines a static port, meaning that it opens a specific port on all nodes so any traffic from the outside to this port would get to this service.
-
-The service, in turn, would forward traffic to an application labeled "consul", which is a Consul agent.
-
-````yaml
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: consul
-  name: consul-http-api
-  namespace: <namespace>
-spec:
-  selector:
-    app: consul
-    hasDNS: "true"
-    release: consul
-  ports:
-  - name: http-api
-    protocol: TCP
-    port: 8500
-    targetPort: 8500
-  type: NodePort
 
 ````
 
