@@ -40,4 +40,4 @@ We do it with a little help of a Jenkins pipeline[ library](https://jenkins.io/d
 
 *The script can be found on my [GitHub](https://github.com/FullGC/Terraform-Empty-Plan-Validator).
 
-**It's important to note that the script is useful when you're working with the Terraform Recommended Workflow, specifically when having an environment file for each environment that defines the Terraform modules, while the resources lie in their own repository.*
+*It's important to note that the script is useful when you're working with the Terraform Recommended Workflow, specifically when having an environment file for each environment that defines the Terraform modules, while the resources lie in their own repository.*
