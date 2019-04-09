@@ -17,7 +17,7 @@ If you're using Consul for service discovery/DNS and using or planning to use Ku
 
 ![image alt text]({{ site.url }}/public/xXR5gri6PhaGM4U2OMurfQ_img_0.png)
 
-The syncing can be done by running a process that is not part of the Kubernetes cluster itself; in Hashicorp's[ consul-k8s project](https://github.com/hashicorp/consul-k8s), or preferably by installing the[ Consul-Helm](https://www.consul.io/docs/platform/k8s/run.html) Chart.
+The syncing can be done by running a process that is not part of the Kubernetes cluster itself; in Hashicorp's[ consul-k8s project](https://github.com/hashicorp/consul-k8s), or, preferably, by installing the[ Consul-Helm](https://www.consul.io/docs/platform/k8s/run.html) Chart.
 
 Hashicorp released a Consul-Helm Chart for installing, configuring, and upgrading Consul on Kubernetes.
 
