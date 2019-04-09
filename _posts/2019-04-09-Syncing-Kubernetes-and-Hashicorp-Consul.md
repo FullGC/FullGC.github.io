@@ -101,22 +101,19 @@ spec:
 ### Configure the Consul domain with the CoreDNS
 
 CoreDNS is a DNS server that commonly serves as the Kubernetes cluster DNS.
-
 It can be configured via its "Corefile", which is defined in the “coredns” ConfigMap.
-
 If we like to use the Consul-DNS to call our external Consul services from a Kubernetes component (instead of or along the CoreDNS addresses for Kubernetes services), we'll need to configure Consul in the "Corefile" section.
-
-Below you can see an example.
 
 In the CoreDNS .yaml file below, the "consul:53" section is what we are interested in.
 
-To force all non-cluster DNS lookups to go through our consul-sync Kubernete service so we will be able to use the Consul names.
-
+To force all non-cluster DNS lookups to go through our consul-sync Kubernetes service so we will be able to use the Consul names.
 The key "consul:53" means that names that end with the string “consul” will go through the consul-sync service.
+Since the address of the Consul services is of this template:
+````
+<service name>.service.<datacenter name>.consul
+````
 
-Since the address of the Consul services is of this template,
-
-"<service name>.service.<datacenter name>.consul" is exactly what we want.
+This is exactly what we want.
 
 ````yaml
 apiVersion: v1
