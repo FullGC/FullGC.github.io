@@ -10,7 +10,7 @@ tags:
 source-id: 1O5aZbgZjmGAP1q-HsVoIREe62jcBqlT6iM5S_k5nhMw
 published: true
 date: 2019-04-10 14:15:45
-header-img: "img/water-balance.jpg"
+header-img: "img/water-balance-black.jpg"
 ---
 Terraform synced-state validation
 
