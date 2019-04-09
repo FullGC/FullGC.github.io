@@ -20,10 +20,10 @@ Working with Terraform brings up some challenges. We are to focus on two of them
 
 2. Keep the Terraform code synced with the Terraform state. When we like to apply changes in 	Terraform, we can:	
 
-    1. Start by pushing the changes to the Terraform repository and then apply them. The Terraform state will be behind until the changes are affected.
+    a. Start by pushing the changes to the Terraform repository and then apply them. The Terraform state will be behind until the changes are affected.
  		
 
-    2. Start by applying the changes locally, then push them. The Terraform state will be ahead until the code is pushed.	
+    b. Start by applying the changes locally, then push them. The Terraform state will be ahead until the code is pushed.
 
 The first can be mostly avoided if we forbid manual actions that could have been done by Terraform, but not entirely.
 
