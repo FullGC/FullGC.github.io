@@ -168,4 +168,3 @@ spec:
 
 
 *Configurations of the Consul-K8s sync components are implemented as Jenkins-Pipeline methods on my[GitHub](https://github.com/FullGC/consul-kubernetes-sync-Pipeline)*.
-
