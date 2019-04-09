@@ -12,7 +12,7 @@ tags:
 - tests
 date: 2018-12-19 14:15:45
 published: true
-header-img: "img/behave-color.jpg"
+header-img: "img/water-balance.jpg"
 ---
 
 <i>This post is the third of a three parts series of articles about Developing behavior-driven tests for JEE web applications with Jbehave</i>
