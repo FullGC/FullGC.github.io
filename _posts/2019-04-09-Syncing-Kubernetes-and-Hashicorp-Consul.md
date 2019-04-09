@@ -9,6 +9,7 @@ tags:
 - hashicorp
 source-id: 1ohylElOVSjYMeOwHIvte3ECYTIdys03t9Bb803639RY
 published: true
+date: 2019-04-10 14:30:45
 header-img: "img/sync.jpg"
 ---
 Syncing Kubernetes and Hashicorp Consul
