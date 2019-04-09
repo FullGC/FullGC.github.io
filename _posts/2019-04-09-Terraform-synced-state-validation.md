@@ -33,7 +33,7 @@ To ensure eventual consistency here, you can automate the workflow with an autom
 
 However, we, the Fyber DevOps team, wanted to avoid such an automation process because we thought it would become a delaying factor, and we still manage to keep Terraform state synced with the code and the actual resources.
 
-We do it with a little help of a Jenkins pipeline[ library](https://jenkins.io/doc/book/pipeline/shared-libraries/) script. The script initials, updates, and executes a 'terraform plan' command. If Terraform isn’t synced, it reports the unsynced components to the dedicated Slack channel. The Jenkins job is scheduled to run in the first and before the last working hour, on each of the Terraform environments, so we’ll be able to fix any inconsistency by the end of the day.
+We do it with a little help of a Jenkins [pipeline library](https://jenkins.io/doc/book/pipeline/shared-libraries/) script. The script initials, updates, and executes a 'terraform plan' command. If Terraform isn’t synced, it reports the unsynced components to the dedicated Slack channel. The Jenkins job is scheduled to run in the first and before the last working hour, on each of the Terraform environments, so we’ll be able to fix any inconsistency by the end of the day.
 
 ![image alt text]({{ site.url }}/public/F57qdjJQzC92gHvkkvffA_img_0.png)
 
