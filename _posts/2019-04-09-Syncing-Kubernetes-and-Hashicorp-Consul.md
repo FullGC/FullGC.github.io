@@ -10,9 +10,8 @@ tags:
 source-id: 1ohylElOVSjYMeOwHIvte3ECYTIdys03t9Bb803639RY
 published: true
 date: 2019-04-10 14:30:45
-header-img: "img/sync.jpg"
+header-img: "img/sync.png"
 ---
-Syncing Kubernetes and Hashicorp Consul
 
 If you're using Consul for service discovery/DNS and using or planning to use Kubernetes, then the recently announced integration between Hashicorp Consul and Kubernetes will come as welcome news!
 
