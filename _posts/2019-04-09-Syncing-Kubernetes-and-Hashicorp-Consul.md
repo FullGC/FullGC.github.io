@@ -81,9 +81,8 @@ Since the address of the Consul services is of this template,
 
 "<service name>.service.<datacenter name>.consul" is exactly what we want.
 
-<table>
-  <tr>
-    <td>apiVersion: v1
+````yaml
+apiVersion: v1
 kind: ConfigMap
 metadata:
  name: coredns
@@ -108,30 +107,23 @@ data:
         # policy round_robin
         # health_check /health:8080
        }
-   }</td>
-  </tr>
-</table>
+   }
 
-
+````
 Note that we configured "proxy". Any queries that are not within the cluster domain of Kubernetes will be forwarded to predefined resolvers, in our case the Consul service.
 
 The address of the Consul service can be invoked with this script:
 
-<table>
-  <tr>
-    <td>    CONSUL_DNS_SERVER_ADDR=kubectl get svc consul-sync-dns -o jsonpath='{.spec.clusterIP}' -n <namespace></td>
-  </tr>
-</table>
-
+````
+CONSUL_DNS_SERVER_ADDR=kubectl get svc consul-sync-dns -o jsonpath='{.spec.clusterIP}' -n <namespace>
+````
 
 To reconfigure CoreDNS with the additionals to the ConfigMap, perform:
 
-<table>
-  <tr>
-    <td>kubectl get pods -n kube-system -oname |grep coredns |xargs kubectl apply -f kube-system</td>
-  </tr>
-</table>
+````
+kubectl get pods -n kube-system -oname |grep coredns |xargs kubectl apply -f kube-system
 
+````
 
 ## Accessing the Consul HTTP API
 
@@ -143,9 +135,8 @@ One way is to create a Nodeport service. A Nodeport defines a static port, meani
 
 The service, in turn, would forward traffic to an application labeled "consul", which is a Consul agent.
 
-<table>
-  <tr>
-    <td>apiVersion: v1
+````yaml
+apiVersion: v1
 kind: Service
 metadata:
   labels:
@@ -162,9 +153,8 @@ spec:
     protocol: TCP
     port: 8500
     targetPort: 8500
-  type: NodePort</td>
-  </tr>
-</table>
+  type: NodePort
 
+````
 
-*Configurations of the Consul-K8s sync components are implemented as Jenkins-Pipeline methods on my[GitHub](https://github.com/FullGC/consul-kubernetes-sync-Pipeline)*.
+*Configurations of the Consul-K8s sync components are implemented as Jenkins-Pipeline methods on my [GitHub](https://github.com/FullGC/consul-kubernetes-sync-Pipeline)*.
