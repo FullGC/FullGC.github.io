@@ -34,12 +34,12 @@ In this guide, we'll learn to design, develop and automate [Black-box](https://e
 ### Glossary
 
 ------------------------------------------------------------------------------------------
-#### **Black-box testing**
+#### Black-box testing
 
 According to Wikipedia, "Black-box testing is a method of software testing that examines the functionality of an application without peering into its internal structures or workings". As such, Black-box testing focuses entirely on the inputs and outputs of the software system – the “black box”.
 
 <br><br>
-#### **Behavior-driven development(BDD)**
+#### Behavior-driven development(BDD)
 
 Behavior-driven development is an extension of [test-driven development](https://en.wikipedia.org/wiki/Test-driven_development) that makes use of a simple, domain-specific scripting language.
 
@@ -63,7 +63,7 @@ Structure:
 ## Frameworks and Tools
 
 ------------------------------------------------------------------------------------------
-### **Jbehave in a nutshell**
+### Jbehave in a nutshell
 
 [JBehave](https://jbehave.org/) is an open-source framework for Behavior-Driven Development.
 
@@ -80,7 +80,7 @@ In addition, Jbehave provides an easy way to create more intelligent data types 
 There are many (many!) advanced features that are worth checking out (see advanced topics in the [Jbehave site](https://jbehave.org/reference/stable/reporting-stories.html)); we'll only be using a few of them. We’ll explain how Jbehave works at a lower level later.
 
 <br><br>
-### **Thucydides**
+### Thucydides
 
 Thucydides is a tool designed to make writing automated acceptance tests easier.
 
@@ -98,7 +98,7 @@ Thucydides and JBehave work well together. Thucydides uses simple conventions to
 
 
 <br><br>
-### **Jbehave Plugin and the 'Volcano' Stories**
+### Jbehave Plugin and the 'Volcano' Stories
 ------------------------------------------------------------------------------------------
 
 We use Idea IntelliJ-IDE with 'Jbehave support' plugin for writing the stories and the code behind.
@@ -152,7 +152,7 @@ This includes the Jbehave libraries that are required for the Java implementatio
 Later on, we'll use it to identify the stories and run the test.
 
 <br><br>
-### **Next**
+### Next
 
 In [Part-2](https://fullgc.github.io/developing-behavior-with-jbehave-part-2) we'll implement the 'Registration’ story, and review solutions to the implementation challenges.
 

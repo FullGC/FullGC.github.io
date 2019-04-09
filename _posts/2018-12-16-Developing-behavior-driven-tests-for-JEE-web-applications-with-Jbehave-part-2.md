@@ -28,7 +28,7 @@ header-img: "img/behave-color.jpg"
 Following is a discussion of some Volcano test cases and their Java implementation.
 
 -----------------------------------------------------------------------------------
-### **Registration story**
+### Registration story
 
 Let's zoom in on the first story, which is the Volcano registration story file:
 
@@ -89,7 +89,7 @@ public void logIn(@Named("user")String user, @Named("ableorNotAble")String ableO
 ````
 
 <br><br>
-#### **Implementation challenges**
+#### Implementation challenges
 
 Note that, we have used a cache to store the new user's details in the registration step.
 
@@ -257,5 +257,5 @@ The spring context:
 ````
 
 <br><br>
-### **Next**
+### Next
 In [Part-3](https://fullgc.github.io/developing-behavior-with-jbehave-part-3) we'll learn how to launch the web app in compile time, run the tests and generate summary reports.

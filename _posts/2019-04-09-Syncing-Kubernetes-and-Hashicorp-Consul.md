@@ -9,6 +9,7 @@ tags:
 - hashicorp
 source-id: 1ohylElOVSjYMeOwHIvte3ECYTIdys03t9Bb803639RY
 published: true
+header-img: "img/sync.jpg"
 ---
 Syncing Kubernetes and Hashicorp Consul
 
@@ -24,7 +25,7 @@ There are decisions to be made regarding the nature of the syncing, but the firs
 
 Before installing the Helm Chart, let's review some of the essential configurations that are found in the standard helm values file, "values.yaml".
 
-## **Configure consul-helm**
+## Configure consul-helm
 
 By default, the chart resolution installs everything: a Consul server cluster, client agents on all nodes, and feature components.
 
@@ -58,7 +59,7 @@ Now for the installation itself:
 
 Clone the repository from[ here](https://github.com/hashicorp/consul-helm) and perform "helm install".
 
-## **Configure Consul domain with the CoreDNS**
+## Configure Consul domain with the CoreDNS
 
 Configure the Consul domain with the CoreDNS.
 
@@ -132,7 +133,7 @@ To reconfigure CoreDNS with the additionals to the ConfigMap, perform:
 </table>
 
 
-## **Accessing the Consul HTTP API**
+## Accessing the Consul HTTP API
 
 Access to the Consul HTTP API is through the consul-agent, Pod, we've created.
 
@@ -166,5 +167,5 @@ spec:
 </table>
 
 
-*Configurations of the Consul-K8s sync components are implemented as Jenkins-Pipeline methods on my**[ GitHu*b](https://github.com/FullGC/consul-kubernetes-sync-Pipeline).
+*Configurations of the Consul-K8s sync components are implemented as Jenkins-Pipeline methods on my[GitHub](https://github.com/FullGC/consul-kubernetes-sync-Pipeline)*.
 
