@@ -12,7 +12,6 @@ published: true
 date: 2019-04-10 14:15:45
 header-img: "img/water-balance-black.jpg"
 ---
-Terraform synced-state validation
 
 Working with Terraform brings up some challenges. We are to focus on two of them:
 
