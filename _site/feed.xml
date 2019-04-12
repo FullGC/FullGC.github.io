@@ -2,12 +2,867 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>FullGC</title>
-    <description>A blog about backend development, Scala, Java and devOps</description>
+    <description>Practical guides for the Backend guy. We speak Scala, Java and DevOps</description>
     <link>http://fullgc.github.io/</link>
     <atom:link href="http://fullgc.github.io/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Wed, 12 Sep 2018 14:31:20 +0300</pubDate>
-    <lastBuildDate>Wed, 12 Sep 2018 14:31:20 +0300</lastBuildDate>
-    <generator>Jekyll v3.6.2</generator>
+    <pubDate>Fri, 12 Apr 2019 23:09:51 +0300</pubDate>
+    <lastBuildDate>Fri, 12 Apr 2019 23:09:51 +0300</lastBuildDate>
+    <generator>Jekyll v3.7.4</generator>
+    
+      <item>
+        <title>Syncing Kubernetes and Hashicorp Consul</title>
+        <description>&lt;p&gt;If you’re using Consul for service discovery/DNS and using or planning to use Kubernetes, then the recently announced integration between Hashicorp Consul and Kubernetes will come as welcome news!&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/xXR5gri6PhaGM4U2OMurfQ_img_0.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The syncing can be done by running a process that is not part of the Kubernetes cluster itself; in Hashicorp’s&lt;a href=&quot;https://github.com/hashicorp/consul-k8s&quot;&gt; consul-k8s project&lt;/a&gt;, or, preferably, by installing the&lt;a href=&quot;https://www.consul.io/docs/platform/k8s/run.html&quot;&gt; Consul-Helm&lt;/a&gt; Chart.&lt;/p&gt;
+
+&lt;p&gt;Hashicorp released a Consul-Helm Chart for installing, configuring, and upgrading Consul on Kubernetes.&lt;/p&gt;
+
+&lt;p&gt;There are decisions to be made regarding the nature of the syncing, but the first step would always be to clone the&lt;a href=&quot;https://github.com/hashicorp/consul-helm.git&quot;&gt; Consul-Helm project&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Before installing the Helm Chart, let’s review some of the essential configurations that are found in the standard helm values file, “values.yaml”.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;configure-consul-helm&quot;&gt;Configure consul-helm&lt;/h3&gt;
+
+&lt;p&gt;By default, the Chart resolution installs everything: a Consul server cluster, client agents on all nodes, and feature components.&lt;/p&gt;
+
+&lt;p&gt;If you already maintain a Consul cluster and are interested in joining the Kubernetes services to your existing cluster, then in the “server” section, the “enable” property in the “server” section should be set to “false”:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/xXR5gri6PhaGM4U2OMurfQ_img_1.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;We’ll also need to enable the Consul client and tell it what the Consul-server address is, so it can join the cluster:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/xXR5gri6PhaGM4U2OMurfQ_img_2.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;We’ll also need to specify the datacenter:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/xXR5gri6PhaGM4U2OMurfQ_img_3.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Now we have to choose whether to sync to Kubernetes or Consul (or both!).&lt;/p&gt;
+
+&lt;p&gt;Sync to Consul means that the Kubernetes services will appear in the Consul catalog, and they could be available via HTTP or Consul-DNS. Later on, we’ll describe how to configure that.&lt;/p&gt;
+
+&lt;p&gt;If you already maintain a Consul cluster, you probably want to sync to Consul.&lt;/p&gt;
+
+&lt;p&gt;Sync to Kubernetes means that services in Consul can be made available as first-class Kubernetes services, and thus able to access them through Kubernetes Core-DNS or with any Kubernetes way. If you are not planning on using it, you might want to set the sync to Kubernetes to “false”, since you might get lost with all the Consul services that would suddenly appear as Kubernetes’ components. If you enable it for every namespace, well, it can really get messy.&lt;/p&gt;
+
+&lt;p&gt;For example, in the image below we’ll define a syncing to Consul and not to Kubernetes.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/xXR5gri6PhaGM4U2OMurfQ_img_4.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;I recommend going over the entire “values.yaml” file and set the relevant values.&lt;/p&gt;
+
+&lt;p&gt;Now for the installation itself:&lt;/p&gt;
+
+&lt;p&gt;Clone the repository from&lt;a href=&quot;https://github.com/hashicorp/consul-helm&quot;&gt; here&lt;/a&gt; and perform “helm install”.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;accessing-the-consul-http-api&quot;&gt;Accessing the Consul HTTP API&lt;/h3&gt;
+
+&lt;p&gt;Access to the Consul HTTP API is through the consul-agent, Pod, we’ve created.&lt;/p&gt;
+
+&lt;p&gt;Every Node has a Consul agent, and there are a couple of ways to expose access to them.&lt;/p&gt;
+
+&lt;p&gt;One way is to create a Nodeport service. A Nodeport defines a static port, meaning that it opens a specific port on all nodes so any traffic from the outside to this port would get to this service.&lt;/p&gt;
+
+&lt;p&gt;The service, in turn, would forward traffic to an application labeled “consul”, which is a Consul agent.&lt;/p&gt;
+
+&lt;p&gt;Below is an example of such Consul Service.
+‘Kubectl apply’ it to spin the service.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;v1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Service&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;metadata&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;labels&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;app&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;consul&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;consul-http-api&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;namespace&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;lt;namespace&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;selector&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;app&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;consul&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;hasDNS&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;true&quot;&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;release&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;consul&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;ports&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;http-api&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;protocol&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;TCP&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;port&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;8500&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;targetPort&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;8500&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;NodePort&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;configure-the-consul-domain-with-the-coredns&quot;&gt;Configure the Consul domain with the CoreDNS&lt;/h3&gt;
+
+&lt;p&gt;CoreDNS is a DNS server that commonly serves as the Kubernetes cluster DNS.
+It can be configured via its “Corefile”, which is defined in the “coredns” ConfigMap.
+If we like to use the Consul-DNS to call our external Consul services from a Kubernetes component (instead of or along the CoreDNS addresses for Kubernetes services), we’ll need to configure Consul in the “Corefile” section.&lt;/p&gt;
+
+&lt;p&gt;In the CoreDNS .yaml file below, the “consul:53” section is what we are interested in.&lt;/p&gt;
+
+&lt;p&gt;To force all non-cluster DNS lookups to go through our consul-sync Kubernetes service so we will be able to use the Consul names.
+The key “consul:53” means that names that end with the string “consul” will go through the consul-sync service.
+Since the address of the Consul services is of this template:&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&amp;lt;service name&amp;gt;.service.&amp;lt;datacenter name&amp;gt;.consul
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This is exactly what we want.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;v1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ConfigMap&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;metadata&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+ &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;coredns&lt;/span&gt;
+ &lt;span class=&quot;na&quot;&gt;namespace&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;kube-system&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+ &lt;span class=&quot;na&quot;&gt;Corefile&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;|&lt;/span&gt;
+   &lt;span class=&quot;no&quot;&gt;.:53 {&lt;/span&gt;
+       &lt;span class=&quot;no&quot;&gt;errors&lt;/span&gt;
+       &lt;span class=&quot;no&quot;&gt;log&lt;/span&gt;
+       &lt;span class=&quot;no&quot;&gt;health&lt;/span&gt;
+       &lt;span class=&quot;no&quot;&gt;kubernetes cluster.local 10.0.0.0/24&lt;/span&gt;
+       &lt;span class=&quot;no&quot;&gt;prometheus :9153&lt;/span&gt;
+       &lt;span class=&quot;no&quot;&gt;proxy . /etc/resolv.conf&lt;/span&gt;
+       &lt;span class=&quot;no&quot;&gt;cache 30&lt;/span&gt;
+       &lt;span class=&quot;no&quot;&gt;reload&lt;/span&gt;
+   &lt;span class=&quot;no&quot;&gt;}&lt;/span&gt;
+   &lt;span class=&quot;no&quot;&gt;consul:53 {&lt;/span&gt;
+       &lt;span class=&quot;no&quot;&gt;log&lt;/span&gt;
+       &lt;span class=&quot;no&quot;&gt;errors&lt;/span&gt;
+       &lt;span class=&quot;no&quot;&gt;cache 30&lt;/span&gt;
+       &lt;span class=&quot;no&quot;&gt;proxy . ${CONSUL_DNS_SERVER_ADDR} {&lt;/span&gt;
+        &lt;span class=&quot;no&quot;&gt;# policy round_robin&lt;/span&gt;
+        &lt;span class=&quot;no&quot;&gt;# health_check /health:8080&lt;/span&gt;
+       &lt;span class=&quot;no&quot;&gt;}&lt;/span&gt;
+   &lt;span class=&quot;no&quot;&gt;}&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Note that we configured “proxy”. Any queries that are not within the cluster domain of Kubernetes will be forwarded to predefined resolvers, in our case the Consul service.&lt;/p&gt;
+
+&lt;p&gt;The address of the Consul service can be invoked with this script:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;CONSUL_DNS_SERVER_ADDR=kubectl get svc consul-sync-dns -o jsonpath='{.spec.clusterIP}' -n &amp;lt;namespace&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;To reconfigure CoreDNS with the additionals to the ConfigMap, perform:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;kubectl get pods -n kube-system -oname |grep coredns |xargs kubectl apply -f kube-system
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;em&gt;Configurations of the Consul-K8s sync components are implemented as Jenkins-Pipeline methods on my &lt;a href=&quot;https://github.com/FullGC/consul-kubernetes-sync-Pipeline&quot;&gt;GitHub&lt;/a&gt;&lt;/em&gt;.&lt;/p&gt;
+</description>
+        <pubDate>Wed, 10 Apr 2019 17:30:45 +0300</pubDate>
+        <link>http://fullgc.github.io/syncing-kubernetes-and-hashicorp-consul/</link>
+        <guid isPermaLink="true">http://fullgc.github.io/syncing-kubernetes-and-hashicorp-consul/</guid>
+        
+        <category>kubernetes</category>
+        
+        <category>consul</category>
+        
+        <category>hashicorp</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Terraform synced-state validation</title>
+        <description>&lt;p&gt;Working with Terraform brings up some challenges. We are to focus on two of them:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;Keeping Terraform’s state consistent with the actual provider (i.e, a cloud provider) resources can be quite a challenge. Such inconsistencies are usually a result of changes performed directly in the cloud environment.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Keep the Terraform code synced with the Terraform state. When we like to apply changes in 	Terraform, we can:&lt;/p&gt;
+
+    &lt;p&gt;a. Start by pushing the changes to the Terraform repository and then apply them. The Terraform state will be behind until the changes are affected.&lt;/p&gt;
+
+    &lt;p&gt;b. Start by applying the changes locally, then push them. The Terraform state will be ahead until the code is pushed.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The first can be mostly avoided if we forbid manual actions that could have been done by Terraform, but not entirely.&lt;/p&gt;
+
+&lt;p&gt;The real issue with the second is that after the first action (apply/push), Terraform will be out of sync. If the second action is delayed or not happening, the undesired inconsistent state will be kept.&lt;/p&gt;
+
+&lt;p&gt;To ensure eventual consistency here, you can automate the workflow with an automation framework (i.e. Jenkins).&lt;/p&gt;
+
+&lt;p&gt;However, we, the Fyber DevOps team, wanted to avoid such an automation process because we thought it would become a delaying factor, and we still manage to keep Terraform state synced with the code and the actual resources.&lt;/p&gt;
+
+&lt;p&gt;We do it with a little help of a Jenkins &lt;a href=&quot;https://jenkins.io/doc/book/pipeline/shared-libraries/&quot;&gt;pipeline library&lt;/a&gt; script. The script initials, updates, and executes a ‘terraform plan’ command. If Terraform isn’t synced, it reports the unsynced components to the dedicated Slack channel. The Jenkins job is scheduled to run in the first and before the last working hour, on each of the Terraform environments, so we’ll be able to fix any inconsistency by the end of the day.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/F57qdjJQzC92gHvkkvffA_img_0.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;The script can be found on my &lt;a href=&quot;https://github.com/FullGC/Terraform-Empty-Plan-Validator&quot;&gt;GitHub&lt;/a&gt;&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;It’s important to note that the script is useful when you’re working with the Terraform Recommended Workflow, specifically when having an environment file for each environment that defines the Terraform modules, while the resources lie in their own repository.&lt;/em&gt;&lt;/p&gt;
+</description>
+        <pubDate>Wed, 10 Apr 2019 17:15:45 +0300</pubDate>
+        <link>http://fullgc.github.io/terraform-synced-state-validation/</link>
+        <guid isPermaLink="true">http://fullgc.github.io/terraform-synced-state-validation/</guid>
+        
+        <category>terraform</category>
+        
+        <category>hashicorp</category>
+        
+        <category>devops</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Developing behavior-driven tests for JEE web applications with Jbehave - Part 3</title>
+        <description>&lt;p&gt;&lt;i&gt;This post is the third of a three parts series of articles about Developing behavior-driven tests for JEE web applications with Jbehave&lt;/i&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/developing-behavior-with-jbehave-part-1&quot;&gt;Part-1: Terminology, Tools and the ‘Volcano’ stories&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/developing-behavior-with-jbehave-part-2&quot;&gt;Part-2: Writing Stories and Java Implementation&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/developing-behavior-with-jbehave-part-3&quot;&gt;Part-3: Automate the tests and generate reports&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h2 id=&quot;part-3---automate-the-tests-and-generate-reports&quot;&gt;Part 3 - Automate the tests and generate reports&lt;/h2&gt;
+
+&lt;p&gt;Previously, we implemented the step cases in a Java code.
+In this part we’ll learn how to automate them and generate informative reports at the end of the run.&lt;/p&gt;
+
+&lt;hr /&gt;
+&lt;h3 id=&quot;identify-implementation-methods&quot;&gt;Identify implementation methods&lt;/h3&gt;
+
+&lt;p&gt;You may recall we mentioned that Jbehave registered the Java implementation methods on start up. But how does it identify an implementation step?&lt;/p&gt;
+
+&lt;p&gt;Basically, these methods would have to override the configuration() method, which is part of the jbehave library. We have however, let ‘thucydides’ work for us. The ‘thucydides-core’ library (that comes with the ‘jbehave-plugin’), provides the ‘ThucydidesJUnitStories’ class. This identifies the ‘.story’ files and the links for the Java implementations. All we need is to have a Java class that inherits from it in the Java implementation root package:&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;net.thucydides.jbehave.ThucydidesJUnitStories&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ApiBDDTestSuite&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ThucydidesJUnitStories&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;final-project-structure&quot;&gt;Final project structure:&lt;/h4&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/dB6XOsGGWuUM1t1RHDV3g_img_6.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;running-the-tests&quot;&gt;Running the tests&lt;/h3&gt;
+
+&lt;p&gt;At this point, we can run the tests as Junit.&lt;/p&gt;
+
+&lt;hr /&gt;
+&lt;h4 id=&quot;running-the-tests-manually&quot;&gt;Running the tests manually&lt;/h4&gt;
+
+&lt;p&gt;In order for the black-box tests to pass, we need to have a server up and running. To run the tests with the IDE, right click on the ‘jbehave’ package.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/dB6XOsGGWuUM1t1RHDV3g_img_7.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In this fashion, we can run the tests quickly, debugging them and the server.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h4 id=&quot;automate-the-tests-with-jettymaven-plugin&quot;&gt;Automate the tests with Jetty(Maven plugin)&lt;/h4&gt;
+
+&lt;p&gt;What we really want is to test the Volcano server as part of the maven build, the ‘maven compile’ task.
+In this case, we need maven to start a Volcano HTTP server, run the tests, and get Volcano down.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://www.eclipse.org/jetty/&quot;&gt;Eclipse Jetty&lt;/a&gt; is an open-source project providing an HTTP server and javax.servlet container
+We’ll use a Jetty maven-plugin, to start a Volcano server on which the tests will be running.&lt;/p&gt;
+
+&lt;p&gt;The maven plugin should be configured as follows:&lt;/p&gt;
+
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;plugin&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;org.eclipse.jetty&lt;span class=&quot;nt&quot;&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;jetty-maven-plugin&lt;span class=&quot;nt&quot;&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;version&amp;gt;&lt;/span&gt;${jetty.version}&lt;span class=&quot;nt&quot;&gt;&amp;lt;/version&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;configuration&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;httpConnector&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;port&amp;gt;&lt;/span&gt;8083&lt;span class=&quot;nt&quot;&gt;&amp;lt;/port&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;/httpConnector&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;scanIntervalSeconds&amp;gt;&lt;/span&gt;0&lt;span class=&quot;nt&quot;&gt;&amp;lt;/scanIntervalSeconds&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;stopKey&amp;gt;&lt;/span&gt;stopApiTestEnv&lt;span class=&quot;nt&quot;&gt;&amp;lt;/stopKey&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;stopPort&amp;gt;&lt;/span&gt;9999&lt;span class=&quot;nt&quot;&gt;&amp;lt;/stopPort&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;jvmArgs&amp;gt;&lt;/span&gt;-Xms1024m -Xmx2048m -XX:PermSize=256M -XX:MaxPermSize=512M&lt;span class=&quot;nt&quot;&gt;&amp;lt;/jvmArgs&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;contextHandlers&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;contextHandler&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;implementation=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;org.eclipse.jetty.maven.plugin.JettyWebAppContext&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+               &lt;span class=&quot;nt&quot;&gt;&amp;lt;war&amp;gt;&lt;/span&gt;${project.basedir}/../volcano_core/target/volcano_core-1.2-SNAPSHOT.war&lt;span class=&quot;nt&quot;&gt;&amp;lt;/war&amp;gt;&lt;/span&gt;
+               &lt;span class=&quot;nt&quot;&gt;&amp;lt;contextPath&amp;gt;&lt;/span&gt;/volcano&lt;span class=&quot;nt&quot;&gt;&amp;lt;/contextPath&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;/contextHandler&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;/contextHandlers&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;/configuration&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;executions&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;execution&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;id&amp;gt;&lt;/span&gt;start-jetty&lt;span class=&quot;nt&quot;&gt;&amp;lt;/id&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;phase&amp;gt;&lt;/span&gt;pre-integration-test&lt;span class=&quot;nt&quot;&gt;&amp;lt;/phase&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;goals&amp;gt;&lt;/span&gt;
+               &lt;span class=&quot;nt&quot;&gt;&amp;lt;goal&amp;gt;&lt;/span&gt;start&lt;span class=&quot;nt&quot;&gt;&amp;lt;/goal&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;/goals&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;/execution&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;execution&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;id&amp;gt;&lt;/span&gt;stop-jetty&lt;span class=&quot;nt&quot;&gt;&amp;lt;/id&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;phase&amp;gt;&lt;/span&gt;post-integration-test&lt;span class=&quot;nt&quot;&gt;&amp;lt;/phase&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;goals&amp;gt;&lt;/span&gt;
+               &lt;span class=&quot;nt&quot;&gt;&amp;lt;goal&amp;gt;&lt;/span&gt;stop&lt;span class=&quot;nt&quot;&gt;&amp;lt;/goal&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;/goals&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;/execution&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;/executions&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/plugin&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Note that:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;The server’s port needs to be available, you may want to declare a different port from the default that your server is using.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The memory you declare allocated with the jvmargs needs to be enough to get the server up&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;In ‘contextHandlers’ we provide the web application archive to be used. If you have multiple web modules in your project that need to be tested, provide them all.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;In the executions section we tell jetty to start before the tests are executed and stop afterwards. If we don’t explicitly ask that, then the jetty would stay up.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;test-summary-reports&quot;&gt;Test Summary Reports&lt;/h3&gt;
+
+&lt;p&gt;Test Summary Reports are an important deliverable. They are needed to reflect test results in a clear way, allowing them to be analyzed quickly.&lt;/p&gt;
+
+&lt;p&gt;Jbehave &lt;a href=&quot;https://jbehave.org/reference/stable/reporting-stories.html&quot;&gt;storyReporter&lt;/a&gt; supports many report formats and will generate the reports for each step and story automatically after the tests have been completed in the /target/jbehave folder.&lt;/p&gt;
+
+&lt;p&gt;We’ll use another Thucydides maven plugin to generate some better-looking reports:&lt;/p&gt;
+
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;plugin&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;org.apache.maven.plugins&lt;span class=&quot;nt&quot;&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;maven-site-plugin&lt;span class=&quot;nt&quot;&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;version&amp;gt;&lt;/span&gt;3.2&lt;span class=&quot;nt&quot;&gt;&amp;lt;/version&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;configuration&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;reportPlugins&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;plugin&amp;gt;&lt;/span&gt;
+               &lt;span class=&quot;nt&quot;&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;net.thucydides.maven.plugins&lt;span class=&quot;nt&quot;&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;
+               &lt;span class=&quot;nt&quot;&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;maven-thucydides-plugin&lt;span class=&quot;nt&quot;&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
+               &lt;span class=&quot;nt&quot;&gt;&amp;lt;version&amp;gt;&lt;/span&gt;${thucydides.version}&lt;span class=&quot;nt&quot;&gt;&amp;lt;/version&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;/plugin&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;/reportPlugins&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;/configuration&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/plugin&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This will generate various reports automatically at the end of the Maven run, in /target/site.&lt;/p&gt;
+
+&lt;p&gt;The ‘index.html’ file that has been created is the most comprehensive, interactive report:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/dB6XOsGGWuUM1t1RHDV3g_img_8.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;A click on the ‘change password’ test (story) for example, would provide some additional data on each step result.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/dB6XOsGGWuUM1t1RHDV3g_img_9.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;You can zoom in with a click on the various test components to get results and statistics.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;wrapping-up&quot;&gt;Wrapping up&lt;/h3&gt;
+
+&lt;p&gt;Behavior Driven Development is a methodology for developing software through example-based communication among developers, QAs, and project managers.&lt;/p&gt;
+
+&lt;p&gt;With Jbehave, this means writing Given-When-Then scenarios to illustrate examples in a plain text, which links to Java implementation methods.&lt;/p&gt;
+
+&lt;p&gt;As part of our mission to create Blackbox tests in a BDD fashion for the Volcano application, we’ve covered some test cases, discussed design and challenges, and reviewed some post-compilation reports.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;&lt;em&gt;The complete code can be found in my &lt;a href=&quot;https://github.com/FullGC/volcano&quot;&gt;GitHub&lt;/a&gt;&lt;/em&gt;.&lt;/p&gt;
+</description>
+        <pubDate>Wed, 19 Dec 2018 16:15:45 +0200</pubDate>
+        <link>http://fullgc.github.io/developing-behavior-with-jbehave-part-3/</link>
+        <guid isPermaLink="true">http://fullgc.github.io/developing-behavior-with-jbehave-part-3/</guid>
+        
+        <category>jee</category>
+        
+        <category>java</category>
+        
+        <category>jbehave</category>
+        
+        <category>bdd</category>
+        
+        <category>automation</category>
+        
+        <category>tests</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Developing behavior-driven tests for JEE web applications with Jbehave - Part 2</title>
+        <description>&lt;p&gt;&lt;i&gt;This post is the second of a three parts series of articles about Developing behavior-driven tests for JEE web applications with Jbehave&lt;/i&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/developing-behavior-with-jbehave-part-1&quot;&gt;Part-1: Terminology, Tools and the ‘Volcano’ stories&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/developing-behavior-with-jbehave-part-2&quot;&gt;Part-2: Writing Stories and Java Implementation&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/developing-behavior-with-jbehave-part-3&quot;&gt;Part-3: Automate the tests and generate reports&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h2 id=&quot;part-2---writing-stories-and-java-implementation&quot;&gt;Part 2 - Writing Stories and Java Implementation&lt;/h2&gt;
+&lt;p&gt;Following is a discussion of some Volcano test cases and their Java implementation.&lt;/p&gt;
+
+&lt;hr /&gt;
+&lt;h3 id=&quot;registration-story&quot;&gt;Registration story&lt;/h3&gt;
+
+&lt;p&gt;Let’s zoom in on the first story, which is the Volcano registration story file:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Narrative:
+As a Volcano enthusiast Dani would like to register to Volcano social network
+
+Scenario: A new user is signing up for the Volcano system
+Given dani shemesh is a Volcano enthusiast
+When dani is signing up for Volcano with the user-name: dani and the password: 123456
+Then dani is able to log in with the user-name: dani and the password: 123456
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Note that the story is written in the third person. This will let us capture the subject (i.e. the user) later.&lt;/p&gt;
+
+&lt;p&gt;The ‘Given’ is linked with a Java method. The method should:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;Carry the Jbehave @Given annotation&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The String parameter of the annotation should match the text described in the step, while the user name (i.e.)  ‘dani shemesh’ is replaced with a variable $user&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;In order to capture the user parameter, the function receives a String parameter, following the @Named annotation&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The @Given implementation of this scenario is a dummy for obvious reasons.&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;UserAccount&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Cache&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;nd&quot;&gt;@Given&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;$user is a Volcano enthusiast&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;let &quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;be a volcano enthusiast&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Next is the implementation of the registration step where we cache the user details:&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@When&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;$user is signing up for Volcano with the user-name: $user and the password: $password&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt;  &lt;span class=&quot;nf&quot;&gt;newUser&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;password&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+   &lt;span class=&quot;n&quot;&gt;RequestDispatcher&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;createUser&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+   &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getUsers&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;put&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;And the verification step, where the user should be able to log in and have a live token.&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@Then&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;$user is $ableorNot to log in with the user-name: $user and the password: $password&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;logIn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;ableorNotAble&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ableOrNot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;password&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IOException&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+   &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;token&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RequestDispatcher&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;logIn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getResponseBody&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+   &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Objects&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;equals&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ableOrNot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;able&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)){&lt;/span&gt;
+       &lt;span class=&quot;k&quot;&gt;assert&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;token&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;isEmpty&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getToken&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;put&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;token&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+   &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+   &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;assert&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;token&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;isEmpty&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h4 id=&quot;implementation-challenges&quot;&gt;Implementation challenges&lt;/h4&gt;
+
+&lt;p&gt;Note that, we have used a cache to store the new user’s details in the registration step.&lt;/p&gt;
+
+&lt;p&gt;Considering other future user actions, like “change password” and “add a friend”, the user will be required to be logged-in, means that this would be a given step:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Given&lt;/strong&gt; dani is logged in&lt;/p&gt;
+
+&lt;p&gt;Now, we like to:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;Re-use the java implementation of the log-in method (reuse @Given methods)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Avoid creating a new user and log-in before each scenario  (reuse @When actions)&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;This brings up unexpected challenges from an OOP point of view. Before discussing them, let’s explain why&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h4 id=&quot;the-jbehave-environment&quot;&gt;The Jbehave environment&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&quot;/img/oop_meme.png&quot; height=&quot;190&quot; width=&quot;250&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Though we are writing in Java, we are not in an OOP scope, but in Jbehave’s.&lt;/p&gt;
+
+&lt;p&gt;When JBehave starts up, it registers all the implemented methods and their parameters, then reads the steps in each scenario for each story and maps them to the appropriate method in the code behind. Here all their values are in memory and are executed one by one. The memory is cleaned after each story.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h4 id=&quot;re-use-the-given-methods&quot;&gt;Re-use the @Given methods&lt;/h4&gt;
+
+&lt;p&gt;This one is easy. Instead of inheritance/composition, we can place the @Given methods wherever we like, and Jbehave will identify it. So, we’ll create a dedicated class for given methods, dealing with user scenarios:&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;GivenUserSteps&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;Cache&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;nd&quot;&gt;@Given&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;$user is a Volcano enthusiast&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+   &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;let &quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;be a volcano enthusiast&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;nd&quot;&gt;@Given&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;$user is logged in&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;logIn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IOException&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+   &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;session&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RequestDispatcher&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;logIn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getUsers&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getResponseBody&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+   &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getToken&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;put&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;session&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h5 id=&quot;implement-tests-for-similar-entities-in-the-same-class&quot;&gt;Implement tests for similar entities in the same class&lt;/h5&gt;
+
+&lt;p&gt;We can once again take advantage of the Jbehave environment to place test implementations with similar characters together, even if they implement steps of different stories, for example:&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;UserAccount&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+   &lt;span class=&quot;n&quot;&gt;Cache&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+
+   &lt;span class=&quot;nd&quot;&gt;@When&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;$user is signing up for Volcano with the user-name: $user and the password: $password&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+   &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt;  &lt;span class=&quot;nf&quot;&gt;newUser&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;password&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;RequestDispatcher&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;createUser&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getUsers&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;put&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+   &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+   &lt;span class=&quot;nd&quot;&gt;@When&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;$user is changing his password to $newPassword&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+   &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt;  &lt;span class=&quot;nf&quot;&gt;changePassword&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;newPassword&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;newPassword&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IOException&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RequestDispatcher&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;changePassword&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getToken&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getUsers&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;newPassword&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getResponseBody&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+       &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;equals&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;OK&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;))&lt;/span&gt;
+           &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getUsers&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;put&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;newPassword&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+   &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;…&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h5 id=&quot;re-use-actions-with-dependency-injection-using-spring&quot;&gt;Re-use actions with Dependency Injection using Spring&lt;/h5&gt;
+
+&lt;p&gt;In order to reuse actions, in our case the user that we have created and logged in with, in the “registration” step, we need to cache. We cannot put the cache in a global variable or static at some place, since we are working with different classes and the memory cleans up after each story.&lt;/p&gt;
+
+&lt;p&gt;Luckily, &lt;a href=&quot;https://jbehave.org/reference/latest/dependency-injection.html&quot;&gt;Jbehave supports some of the most popular, Java based, dependency injection plugins&lt;/a&gt;. The most popular is probably Spring, and we’ll use it to inject the resources (i.e. the cache) we need for reusing actions.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/public/dB6XOsGGWuUM1t1RHDV3g_img_5.png&quot; height=&quot;190&quot; width=&quot;250&quot; /&gt;&lt;/p&gt;
+
+&lt;h6 id=&quot;configure-spring&quot;&gt;Configure Spring&lt;/h6&gt;
+
+&lt;p&gt;We’ll use ‘org.springframework’ artifacts for the Spring integration:&lt;/p&gt;
+
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;spring-context&lt;span class=&quot;nt&quot;&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;To make our test classes to be singleton spring beans, using the @Service annotation&lt;/p&gt;
+
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;spring-test&lt;span class=&quot;nt&quot;&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;to identify the test classes beans under  com.fullgc.jbehave namespace, using @ContextConfiguration annotation and a spring-context xml file.&lt;/p&gt;
+
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;* &lt;span class=&quot;nt&quot;&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;spring-beans&lt;span class=&quot;nt&quot;&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;To inject the resources to the test classes, using the @Autowired annotation&lt;/p&gt;
+
+&lt;p&gt;And the following Thucydides artifact&lt;/p&gt;
+
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;net.thucydides&lt;span class=&quot;nt&quot;&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;thucydides-junit&lt;span class=&quot;nt&quot;&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;For the integration of the bean classes and with Jbehave, using SpringIntegration class.&lt;/p&gt;
+
+&lt;p&gt;The UserAccount test class now looks like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@ContextConfiguration&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;locations&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;/spring-context.xml&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nd&quot;&gt;@Service&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;UserAccount&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+   &lt;span class=&quot;nd&quot;&gt;@Rule&lt;/span&gt;
+   &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SpringIntegration&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;springIntegration&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SpringIntegration&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+
+   &lt;span class=&quot;nd&quot;&gt;@Autowired&lt;/span&gt;
+   &lt;span class=&quot;n&quot;&gt;CacheBean&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+
+   &lt;span class=&quot;nd&quot;&gt;@When&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;$user is signing up for Volcano with the user-name: $user and the password: $password&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+   &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt;  &lt;span class=&quot;nf&quot;&gt;newUser&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;password&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;RequestDispatcher&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;createUser&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getUsers&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;put&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+   &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+   &lt;span class=&quot;nd&quot;&gt;@When&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;$user is changing his password to $newPassword&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+   &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt;  &lt;span class=&quot;nf&quot;&gt;changePassword&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;user&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nd&quot;&gt;@Named&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;newPassword&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;newPassword&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IOException&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;RequestDispatcher&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;changePassword&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getToken&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getUsers&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;newPassword&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getResponseBody&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+       &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;equals&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;OK&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;))&lt;/span&gt;
+           &lt;span class=&quot;n&quot;&gt;cache&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getUsers&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;put&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;newPassword&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+   &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Note that the new user is cached and reused for a “change password” action.&lt;/p&gt;
+
+&lt;p&gt;(We use the cache in the same fashion as the ‘add friend’ story, which we won’t cover here, but can be found in the ‘Volcano’ repository)&lt;/p&gt;
+
+&lt;p&gt;The other test classes should be modified in a similar fashion.&lt;/p&gt;
+
+&lt;p&gt;The spring context:&lt;/p&gt;
+
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;beans&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;xmlns=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;http://www.springframework.org/schema/beans&quot;&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;xmlns:context=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;http://www.springframework.org/schema/context&quot;&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;xmlns:xsi=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;xmlns:task=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;http://www.springframework.org/schema/task&quot;&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;xsi:schemaLocation=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;context:component-scan&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;base-package=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;com.fullgc.jbehave&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;task:annotation-driven&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/beans&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;next&quot;&gt;Next&lt;/h3&gt;
+&lt;p&gt;In &lt;a href=&quot;https://fullgc.github.io/developing-behavior-with-jbehave-part-3&quot;&gt;Part-3&lt;/a&gt; we’ll learn how to launch the web app in compile time, run the tests and generate summary reports.&lt;/p&gt;
+</description>
+        <pubDate>Wed, 19 Dec 2018 16:10:45 +0200</pubDate>
+        <link>http://fullgc.github.io/developing-behavior-with-jbehave-part-2/</link>
+        <guid isPermaLink="true">http://fullgc.github.io/developing-behavior-with-jbehave-part-2/</guid>
+        
+        <category>jee</category>
+        
+        <category>java</category>
+        
+        <category>jbehave</category>
+        
+        <category>bdd</category>
+        
+        <category>automation</category>
+        
+        <category>tests</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Developing behavior-driven tests for JEE web applications with Jbehave - Part 1</title>
+        <description>&lt;p&gt;&lt;i&gt;This post is the first of a three parts series of articles about Developing behavior-driven tests for JEE web applications with Jbehave&lt;/i&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/developing-behavior-with-jbehave-part-1&quot;&gt;Part-1: Terminology, Tools and the ‘Volcano’ stories&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/developing-behavior-with-jbehave-part-2&quot;&gt;Part-2: Writing Stories and Java Implementation&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/developing-behavior-with-jbehave-part-3&quot;&gt;Part-3: Automate the tests and generate reports&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;Behavior-driven development, or BDD, is an agile software development process that provides the developers, QA, project managers and business team with a shared tool-set and process for software development collaboration.&lt;/p&gt;
+
+&lt;p&gt;In this guide, we’ll learn to design, develop and automate &lt;a href=&quot;https://en.wikipedia.org/wiki/Black-box_testing&quot;&gt;Black-box&lt;/a&gt; tests for a JEE web application in a &lt;a href=&quot;https://en.wikipedia.org/wiki/Behavior-driven_development&quot;&gt;BDD&lt;/a&gt; fashion. We’ll develop on top of &lt;a href=&quot;https://jbehave.org/&quot;&gt;Jbehave&lt;/a&gt; framework.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h2 id=&quot;part-1---terminology-tools-and-the-volcano-stories&quot;&gt;Part 1 - Terminology, Tools and the ‘Volcano’ stories&lt;/h2&gt;
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;glossary&quot;&gt;Glossary&lt;/h3&gt;
+
+&lt;hr /&gt;
+&lt;h4 id=&quot;black-box-testing&quot;&gt;Black-box testing&lt;/h4&gt;
+
+&lt;p&gt;According to Wikipedia, “Black-box testing is a method of software testing that examines the functionality of an application without peering into its internal structures or workings”. As such, Black-box testing focuses entirely on the inputs and outputs of the software system – the “black box”.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h4 id=&quot;behavior-driven-developmentbdd&quot;&gt;Behavior-driven development(BDD)&lt;/h4&gt;
+
+&lt;p&gt;Behavior-driven development is an extension of &lt;a href=&quot;https://en.wikipedia.org/wiki/Test-driven_development&quot;&gt;test-driven development&lt;/a&gt; that makes use of a simple, domain-specific scripting language.&lt;/p&gt;
+
+&lt;p&gt;In BDD, you describe what you want the system to do by talking through example behavior. Work from the outside-in to implement those behaviors using examples to validate you’re what you’re building.&lt;/p&gt;
+
+&lt;p&gt;The customer (who may be a Scrum Product Owner) describes what they want, and the developers ask questions to flesh out enough detail about the behavior to be able to implement it”. (&lt;a href=&quot;http://agilecoach.typepad.com/agile-coaching/2012/03/bdd-in-a-nutshell.html&quot;&gt;BDD in a nutshell&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;Structure:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;A BDD &lt;strong&gt;story&lt;/strong&gt; is a description of a requirement and its business benefit, and a set of criteria by which we all agree that it is “done”. There should be a story for each feature.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;A Story consists of a &lt;strong&gt;narrative&lt;/strong&gt; and one or more &lt;strong&gt;scenarios&lt;/strong&gt;.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;A narrative is a short, simple description of a feature told from &lt;em&gt;the perspective of a person or role that requires the new functionality&lt;/em&gt;. The narrative shifts the focus from writing features to discussing them (&lt;a href=&quot;https://technologyconversations.com/2013/11/17/behavior-driven-development-bdd-value-through-collaboration-part-2-narrative/&quot;&gt;technologyconversations.com&lt;/a&gt;).&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;A scenario consists of &lt;strong&gt;steps&lt;/strong&gt;, in the format of &lt;strong&gt;‘Given-When-Then’&lt;/strong&gt;. ‘Given’ and ‘When’ trigger actions, and ‘Then’ is the verification:&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/dB6XOsGGWuUM1t1RHDV3g_img_0.jpg&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h2 id=&quot;frameworks-and-tools&quot;&gt;Frameworks and Tools&lt;/h2&gt;
+
+&lt;hr /&gt;
+&lt;h3 id=&quot;jbehave-in-a-nutshell&quot;&gt;Jbehave in a nutshell&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://jbehave.org/&quot;&gt;JBehave&lt;/a&gt; is an open-source framework for Behavior-Driven Development.&lt;/p&gt;
+
+&lt;p&gt;It supports Java-based development, and plain English is used to form the story.&lt;/p&gt;
+
+&lt;p&gt;The steps in the story are visually linked to a corresponding Java method:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/dB6XOsGGWuUM1t1RHDV3g_img_1.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;JBehave supports multiple mechanisms for parameter injection. In the above example, the ‘user’ and ‘password’ as arguments extracted from the @When step, with the @named annotation, following a natural order to the parameters in the annotated Java method.&lt;/p&gt;
+
+&lt;p&gt;In addition, Jbehave provides an easy way to create more intelligent data types than these strings. There are multiple plugins for generating comprehensive and interactive reports.&lt;/p&gt;
+
+&lt;p&gt;There are many (many!) advanced features that are worth checking out (see advanced topics in the &lt;a href=&quot;https://jbehave.org/reference/stable/reporting-stories.html&quot;&gt;Jbehave site&lt;/a&gt;); we’ll only be using a few of them. We’ll explain how Jbehave works at a lower level later.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;thucydides&quot;&gt;Thucydides&lt;/h3&gt;
+
+&lt;p&gt;Thucydides is a tool designed to make writing automated acceptance tests easier.&lt;/p&gt;
+
+&lt;p&gt;Thucydides and JBehave work well together. Thucydides uses simple conventions to make it easier to get started in writing and implementing JBehave stories. It reports on both JBehave and Thucydides steps, which can be seamlessly combined in the same class.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;requirements-and-tools&quot;&gt;&lt;strong&gt;Requirements and tools&lt;/strong&gt;&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;There are JBehave plugins for IntelliJ-Idea and Eclipse. Both come with a custom JBehave Story Editor which provides a syntax highlighting, step hyperlink detection and link to corresponding Java method, step autocompletion, detecting both unimplemented steps and more. Hence, one of these IDE is required.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;We use maven for import libraries, build, run and automated tests&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;You can download and follow the source code through the guide. The dispatcher of the ‘tests’ module is written in Scala. To run it you’ll need a Scala SDK.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;jbehave-plugin-and-the-volcano-stories&quot;&gt;Jbehave Plugin and the ‘Volcano’ Stories&lt;/h3&gt;
+&lt;hr /&gt;
+
+&lt;p&gt;We use Idea IntelliJ-IDE with ‘Jbehave support’ plugin for writing the stories and the code behind.&lt;/p&gt;
+
+&lt;h4 id=&quot;volcano&quot;&gt;Volcano&lt;/h4&gt;
+
+&lt;p&gt;‘Volcano’ is intended to be a social network for Volcano enthusiasts.&lt;/p&gt;
+
+&lt;p&gt;The project manager of ‘Volcano’ would like to add some basic features and behaviors:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;User account&lt;/p&gt;
+
+    &lt;ol&gt;
+      &lt;li&gt;
+        &lt;p&gt;Registration to ‘Volcano’.&lt;/p&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;Change password.&lt;/p&gt;
+      &lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;User network&lt;/p&gt;
+
+    &lt;ol&gt;
+      &lt;li&gt;Add a new friend.&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Each feature will be described in it’s own Jbehave story file. Here is how the “Registration” story looks like before applying the ‘‘Jbehave support’’ plugin:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/dB6XOsGGWuUM1t1RHDV3g_img_2.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;And after:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/dB6XOsGGWuUM1t1RHDV3g_img_3.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;At this stage the steps are marked in red, and we get a message when the mouse hovers that there is no Java method that linked with the steps.&lt;/p&gt;
+
+&lt;h4 id=&quot;initial-dependencies&quot;&gt;Initial Dependencies&lt;/h4&gt;
+
+&lt;p&gt;Here Thucydides kicks in.&lt;/p&gt;
+
+&lt;p&gt;We’ll use ‘&lt;em&gt;net.thucydides’&lt;/em&gt; libraries for the implementation.&lt;/p&gt;
+
+&lt;p&gt;The following Jbehave plugin artifact:&lt;/p&gt;
+
+&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;net.thucydides&lt;span class=&quot;nt&quot;&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;thucydides-jbehave-plugin&lt;span class=&quot;nt&quot;&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This includes the Jbehave libraries that are required for the Java implementation code behind:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/dB6XOsGGWuUM1t1RHDV3g_img_4.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;‘Jbehave-core’ provides the basic Jbehave BDD building blocks: The @Given @When @Then Annotations, and the annotations responsible for the parameter injection (i.e. @Named) ‘Jbehave-junit-runner’ provides functionality for the story and scenarios lifecycle and reporting.&lt;/p&gt;
+
+&lt;p&gt;Later on, we’ll use it to identify the stories and run the test.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h3 id=&quot;next&quot;&gt;Next&lt;/h3&gt;
+
+&lt;p&gt;In &lt;a href=&quot;https://fullgc.github.io/developing-behavior-with-jbehave-part-2&quot;&gt;Part-2&lt;/a&gt; we’ll implement the ‘Registration’ story, and review solutions to the implementation challenges.&lt;/p&gt;
+
+&lt;div id=&quot;disqus_thread&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+var disqus_config = function () {
+this.page.url = &quot;https://fullgc.github.io/developing-behavior-with-jbehave-part-1/&quot;
+this.page.identifier = bdd-1
+};
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://FullGC.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+&lt;/script&gt;
+
+&lt;noscript&gt;Please enable JavaScript to view the &lt;a href=&quot;https://disqus.com/?ref_noscript&quot;&gt;comments powered by Disqus.&lt;/a&gt;&lt;/noscript&gt;
+</description>
+        <pubDate>Wed, 19 Dec 2018 16:05:45 +0200</pubDate>
+        <link>http://fullgc.github.io/developing-behavior-with-jbehave-part-1/</link>
+        <guid isPermaLink="true">http://fullgc.github.io/developing-behavior-with-jbehave-part-1/</guid>
+        
+        <category>jee</category>
+        
+        <category>java</category>
+        
+        <category>jbehave</category>
+        
+        <category>bdd</category>
+        
+        <category>automation</category>
+        
+        <category>tests</category>
+        
+        
+      </item>
     
       <item>
         <title>Manage development and delivery workflow with jGit-flow and Jenkins-Pipeline - Part 3</title>
@@ -28,7 +883,6 @@
 &lt;p&gt;Before we’ll begin writing the Jenkinsfile, keep in mind that there are many ways to implement a CI/CD process. The flow we’ll discuss and implement is just one approach.
 Moreover, there are usually multiple ways of writing a command in the Jenkinsfile: Native Groovy (Pipeline plugin DSL is groovy based), use a shell script, a Pipeline script code, external libraries, etc..&lt;/p&gt;
 
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;h3 id=&quot;multibranch-pipeline&quot;&gt;Multibranch Pipeline&lt;/h3&gt;
 
 &lt;p&gt;In a &lt;a href=&quot;https://jenkins.io/doc/book/pipeline/multibranch/&quot;&gt;Multibranch Pipeline&lt;/a&gt; project, Jenkins automatically discovers, manages and executes Pipelines for branches which contain a Jenkinsfile in source control (It is possible to write a Pipeline script directly in the job configuration though). It enables an implementation of different Jenkinsfiles for different branches. However, here we’re going to implement a single Jenkinsfile for multiple branches.&lt;/p&gt;
@@ -49,10 +903,8 @@ Moreover, there are usually multiple ways of writing a command in the Jenkinsfil
 &lt;h4 id=&quot;context&quot;&gt;Context&lt;/h4&gt;
 &lt;p&gt;The Pipeline job should be run on a dedicated Jenkins slave, ‘server CICD’, hence the script would be written inside a node context:&lt;/p&gt;
 
-&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;node&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'Server CICD) {
-
-   }
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;node&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'Server CICD'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;hr /&gt;
 
@@ -77,7 +929,7 @@ Moreover, there are usually multiple ways of writing a command in the Jenkinsfil
    We like to get a detailed report from Pipeline on a failure, including failed tests, links to them, and statistics. Moreover, we like the job status to become automatically ‘unstable’ if there were failed tests. These are provided by the &lt;a href=&quot;https://wiki.jenkins.io/display/JENKINS/Pipeline+Maven+Plugin&quot;&gt;Pipeline Maven plugin&lt;/a&gt;, which wraps the maven build command.&lt;/p&gt;
 
 &lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;withMaven&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;jdk&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'JDK 8 update 66'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;maven&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Maven 3.0.5'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-           &lt;span class=&quot;nx&quot;&gt;sh&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;mvn -Dmaven.test.failure.ignore=true clean install -Dsetup-profile=automation&quot;&lt;/span&gt;
+           &lt;span class=&quot;nx&quot;&gt;sh&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;mvn -Dmaven.test.failure.ignore=true clean install&quot;&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
@@ -139,7 +991,7 @@ Moreover, there are usually multiple ways of writing a command in the Jenkinsfil
 
    &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
        &lt;span class=&quot;nx&quot;&gt;withMaven&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;jdk&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'JDK 8 update 66'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;maven&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Maven 3.0.5'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-           &lt;span class=&quot;nx&quot;&gt;sh&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;mvn -Dmaven.test.failure.ignore=true clean install -Dsetup-profile=automation&quot;&lt;/span&gt;
+           &lt;span class=&quot;nx&quot;&gt;sh&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;mvn -Dmaven.test.failure.ignore=true clean install&quot;&lt;/span&gt;
        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;currentBuild&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;UNSTABLE&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
            &lt;span class=&quot;nx&quot;&gt;handleFailures&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
@@ -197,13 +1049,13 @@ The release candidate holds the name:&lt;/p&gt;
    &lt;span class=&quot;nx&quot;&gt;readFile&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'releases.txt'&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
 
-&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;branch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;equals&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;release&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;branch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;equals&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;hotfix&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;branch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;startsWith&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;release&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;branch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;startsWith&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;hotfix&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
    &lt;span class=&quot;nb&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;tarRCVersion&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;newVersion&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
    &lt;span class=&quot;nx&quot;&gt;newTarName&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;volcano${version}-RC-${tarRCVersion}-release-pack.tar.gz&quot;&lt;/span&gt;
    &lt;span class=&quot;nx&quot;&gt;sh&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;mv ./volcano/target/${tarName} ./viper/target/${newTarName}&quot;&lt;/span&gt;
    &lt;span class=&quot;nx&quot;&gt;tarName&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;newTarName&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
 &lt;span class=&quot;nx&quot;&gt;step&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'Commit and push releases file'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
    &lt;span class=&quot;nx&quot;&gt;sh&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;git remote set-url origin git@bitbucket.org:fullgc/volcano.git&quot;&lt;/span&gt;
    &lt;span class=&quot;nx&quot;&gt;sh&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;git add -A&quot;&lt;/span&gt;
@@ -313,7 +1165,7 @@ Amazon CLI commands, using the shell.&lt;/p&gt;
 
 &lt;hr /&gt;
 
-&lt;p&gt;&lt;em&gt;The complete code can be found in my &lt;a href=&quot;https://github.com/FullGC/volcano_manage_cicd&quot;&gt;GitHub&lt;/a&gt;&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;The complete code can be found in my &lt;a href=&quot;https://github.com/FullGC/volcano&quot;&gt;GitHub&lt;/a&gt;&lt;/em&gt;.&lt;/p&gt;
 
 &lt;div id=&quot;disqus_thread&quot;&gt;&lt;/div&gt;
 &lt;script&gt;
@@ -367,12 +1219,12 @@ s.setAttribute('data-timestamp', +new Date());
 
 &lt;h2 id=&quot;part-2-git-workflow-with-jgit-flow&quot;&gt;Part 2: Git workflow with JGit-Flow:&lt;/h2&gt;
 
-&lt;p&gt;Git workflow is based on ‘git-flow’, with some modifications, and implemented here with ‘Jgit-flow-jira’.&lt;/p&gt;
+&lt;p&gt;The Git workflow is based on ‘git-flow’, with some modifications, and implemented here with ‘Jgit-flow-jira’.&lt;/p&gt;
 
 &lt;p&gt;This section covers the green and purple steps in the workflow graph (&lt;a href=&quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-1&quot;&gt;from part-1&lt;/a&gt;).&lt;/p&gt;
 
 &lt;p&gt;The following is the basic plugin configuration needed for our story. It gives a name to the Git branches and tags. 
-The ‘scmCommentPrefix’ would be the prefix for the commits performed by ‘jGit-flow’(‘i.e. the Git squash operation’)&lt;/p&gt;
+The ‘scmCommentPrefix’ would be the prefix for the commits performed by ‘jGit-flow’(i.e. the Git ‘squash’ operation)&lt;/p&gt;
 
 &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&amp;lt;configuration&amp;gt;
   &amp;lt;flowInitContext&amp;gt;
@@ -420,11 +1272,10 @@ The ‘scmCommentPrefix’ would be the prefix for the commits performed by ‘j
 &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&amp;lt;pullDevelop&amp;gt;true&amp;lt;/pullDevelop&amp;gt;
 &amp;lt;squash&amp;gt;true&amp;lt;/squash&amp;gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;ul&gt;
-  &lt;li&gt;When the feature is done, we like to resolve it and pass to the QA guy. Hence, it’s resolution should be switched to ‘Done’, and it’s status ‘QA’&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&quot;/img/squash.png&quot; height=&quot;200&quot; width=&quot;160&quot; /&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;http://fullgc.github.io/public/l8Up2rOYZomboTh06PZE0A_img_5.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;When the feature is done, we like to resolve it and pass to the QA guy. Hence, it’s resolution should be switched to ‘Done’, and it’s status ‘QA’
+&lt;img src=&quot;http://fullgc.github.io/public/l8Up2rOYZomboTh06PZE0A_img_5.png&quot; alt=&quot;image alt text&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;h3 id=&quot;a-release-lifecycle&quot;&gt;A Release Lifecycle:&lt;/h3&gt;
@@ -574,7 +1425,7 @@ The command &lt;i&gt;mvn jgitflow:hotfix-finish&lt;/i&gt; performs actions which
 *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
 *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
 var disqus_config = function () {
-this.page.url = &quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-2/&quot;
+this.page.url = &quot;https://fullgc.github.io/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-3/&quot;
 this.page.identifier = workflow-2
 };
 (function() { // DON'T EDIT BELOW THIS LINE
@@ -616,8 +1467,8 @@ s.setAttribute('data-timestamp', +new Date());
 
 &lt;hr /&gt;
 
-&lt;p&gt;As the team grows bigger, and the projects become more complex, a proper development conventions, workflow and &lt;a href=&quot;https://en.wikipedia.org/wiki/CI/CD/&quot;&gt;CI/CD&lt;/a&gt; process become very important.
-In this series of posts I’ll describe such flow and process, from the Jira ticket to the version release (and deployment) using a popular stack, including Jira, Git, Maven, and Jenkins.&lt;/p&gt;
+&lt;p&gt;As the team grows bigger, and the projects become more complex, proper development conventions, workflow and &lt;a href=&quot;https://en.wikipedia.org/wiki/CI/CD/&quot;&gt;CI/CD&lt;/a&gt; process become very important.
+In this series of posts I’ll describe such flow and process, from the Jira ticket to the delivery (and deployment), using a popular stack, including Jira, Git, Maven, and Jenkins.&lt;/p&gt;
 
 &lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;h2 id=&quot;part-1---tools-and-planning&quot;&gt;Part 1 - Tools and Planning&lt;/h2&gt;
@@ -1442,560 +2293,6 @@ s.setAttribute('data-timestamp', +new Date());
         <category>scala</category>
         
         <category>akka</category>
-        
-        
-      </item>
-    
-      <item>
-        <title>Stackable Traits pattern - Part 2</title>
-        <description>&lt;p&gt;&lt;i&gt;This post is the second of a two parts series of articles on Stackable Traits&lt;/i&gt;&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern/&quot;&gt;Part-1: Error reporting design with Stackable Traits&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern---part-2/&quot;&gt;Part-2: Gathering Metrics with Stackable Actors&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;Stackable traits can be applied to actors as well.
-Specifically, we can use stackable actor traits to modify the behavior of the ‘receive’ method.&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;h2 id=&quot;part-2-gathering-metrics&quot;&gt;&lt;strong&gt;Part-2: Gathering Metrics&lt;/strong&gt;&lt;/h2&gt;
-
-&lt;p&gt;We like to gather the following metrics&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;time-in-mailbox: The time from the moment a message was enqueued into an actor’s mailbox until the moment it was dequeued for processing.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;processing-time:How long did it take for the actor to process a message.&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;And to log when an actor starts handling a message and before it finishes.&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;h3 id=&quot;stackable-actors-based-implementation&quot;&gt;&lt;strong&gt;Stackable Actors-based implementation&lt;/strong&gt;&lt;/h3&gt;
-
-&lt;p&gt;Say we have the following actor that we like to monitor:&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;abstract&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyActor&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Actor&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;StrictLogging&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;receive&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Receive&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;message&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;info&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;performing some work...&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
- &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Let’s start with the ‘time-in-mailbox’ metric. The simplest way to implement it is to take the time before the message was sent and calculate the time in the mailbox when the actor starting processing it. For the sake of example, we’ll assume that a message was created just before it was sent.&lt;/p&gt;
-
-&lt;p&gt;The message class that should be monitored is:&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;RecordableMessage&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;RichMessage&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dispatchTime&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Long&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;
-  &lt;span class=&quot;nc&quot;&gt;System&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;currentTimeMillis&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;RichMessage&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;messageName&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;We initialized the time before the message was sent, and gave it a name, to be used as a tag for the metric.&lt;/p&gt;
-
-&lt;p&gt;Next, create the stackable trait for monitoring the actor on RecordableMessage&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;LatencyRecorderActor&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Actor&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;StrictLogging&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;actorName&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getClass&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getSimpleName&lt;/span&gt;
-
- &lt;span class=&quot;k&quot;&gt;abstract&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;receive&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Receive&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;recordableMessage&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;RecordableMessage&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt;
-     &lt;span class=&quot;nc&quot;&gt;Monitor&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;record&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;time-in-mailbox&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;actorName&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;recordableMessage&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;messageName&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-        &lt;span class=&quot;n&quot;&gt;recordableMessage&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dispatchTime&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-     &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;start&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;System&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;currentTimeMillis&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
-     &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;receive&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;recordableMessage&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-     &lt;span class=&quot;nc&quot;&gt;Monitor&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;record&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;processing-time&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;actorName&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;recordableMessage&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;messageName&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-   &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;message&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;receive&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;message&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
- &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;You might notice that&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;
-    &lt;p&gt;As discussed in &lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern/&quot;&gt;Part-1&lt;/a&gt;, the modifier of the ‘receive’ method should be “abstract override”&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;We gather the metrics only on the ‘RecordableMessage’ message&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;For calculating ‘time-in-mailbox’, ‘dispatchTime’ is used&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;For calculating ‘processing-time’, we take time before invoking the action, then invoking the action, and record the ‘processing-time’ when it finished.&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;The LoggerActor is the following&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;LoggerActor&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Actor&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;StrictLogging&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;abstract&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;receive&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Receive&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;recordableMessage&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;RecordableMessage&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt;
-     &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;info&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;handling message: ${recordableMessage.messageName}&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-     &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;receive&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;recordableMessage&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-     &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;info&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;done handling message: ${recordableMessage.messageName}&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-   &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;message&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;receive&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;message&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
- &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Lastly, mix these traits to a concrete MyActor class&lt;/p&gt;
-
-&lt;p&gt;class MyMonitoredActor extends MyActor with LatencyRecorderActor with LoggerActor&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;h3 id=&quot;try-it-out&quot;&gt;&lt;strong&gt;Try it out&lt;/strong&gt;&lt;/h3&gt;
-
-&lt;p&gt;Create a concrete RecordableMessage:&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;SomeRecordableMessage&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;RecordableMessage&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;messageName&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;
-   &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getClass&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getSimpleName&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;And send it to a MonitoredActor instance&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;actorSystem&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ActorSystem&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;system&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;myMonitoredActor&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;actorSystem&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;actorOf&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Props&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;MyMonitoredActor&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;])&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;myMonitoredActor&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;SomeRecordableMessage&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Results with the following printed to the log:&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;handling message: SomeTriggerMessage
-time-in-mailbox latency for message SomeTriggerMessage in actor MyMonitoredActor is 102
-performing some work...
-processing-time latency for message SomeTriggerMessage in actor MyMonitoredActor is 212
-done handling message: SomeTriggerMessage
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;h3 id=&quot;wrapping-up&quot;&gt;&lt;strong&gt;Wrapping up&lt;/strong&gt;&lt;/h3&gt;
-
-&lt;p&gt;Stackable traits pattern is a good choice when you need to ‘pipe’ actions or modify and redirect data for an action. Mix and stack traits to describe the state of the class and execute the actions are clean and flexible, and generally the Scala-functional way to do it.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/img/scala_devs.png&quot; /&gt;&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;&lt;em&gt;The complete source code can be found in my &lt;a href=&quot;https://github.com/FullGC/stackable-traits&quot;&gt;github&lt;/a&gt;&lt;/em&gt;.&lt;/p&gt;
-
-&lt;div id=&quot;disqus_thread&quot;&gt;&lt;/div&gt;
-&lt;script&gt;
-
-/**
-*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
-*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
-var disqus_config = function () {
-this.page.url = &quot;https://fullgc.github.io/stackable-traits-pattern---part-2/&quot;
-this.page.identifier = stackable-1
-};
-(function() { // DON'T EDIT BELOW THIS LINE
-var d = document, s = d.createElement('script');
-s.src = 'https://FullGC.disqus.com/embed.js';
-s.setAttribute('data-timestamp', +new Date());
-(d.head || d.body).appendChild(s);
-})();
-&lt;/script&gt;
-
-&lt;noscript&gt;Please enable JavaScript to view the &lt;a href=&quot;https://disqus.com/?ref_noscript&quot;&gt;comments powered by Disqus.&lt;/a&gt;&lt;/noscript&gt;
-</description>
-        <pubDate>Mon, 23 Jul 2018 17:30:45 +0300</pubDate>
-        <link>http://fullgc.github.io/stackable-traits-pattern---part-2/</link>
-        <guid isPermaLink="true">http://fullgc.github.io/stackable-traits-pattern---part-2/</guid>
-        
-        <category>scala</category>
-        
-        <category>stackable</category>
-        
-        <category>traits</category>
-        
-        <category>akka</category>
-        
-        
-      </item>
-    
-      <item>
-        <title>Stackable Traits pattern - Part 1</title>
-        <description>&lt;p&gt;&lt;i&gt;This post is the first of a two parts series of articles on Stackable Traits&lt;/i&gt;&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern/&quot;&gt;Part-1: Error reporting design with Stackable Traits&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern---part-2/&quot;&gt;Part-2: Gathering Metrics with Stackable Actors&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;&lt;em&gt;“Traits let you modify the methods of a class, and they do so in a way that allows you to stack those modifications with each other” (Programming in Scala by Martin Odersky)&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;One of the reasons that Scala still feels to me like ‘a better Java’, is the power of its traits. A trait can be used for multiple inheritances, a Java interface, a rich interface with fields and a state, and a mix into a class.&lt;/p&gt;
-
-&lt;p&gt;An interesting behavior of traits, as opposed to classes, is the call for a super method. In classes this is statically bound, meaning that the exact implementation to be invoked is known upfront. In traits however, this is dynamically bound.
-The term usually refers to an invocation of a method in an object, where the implementation is decided at runtime, i.e. a polymorphic call. The super call is not defined when a trait is defined, but only when it is mixed into a concrete class.
-Such behavior allows us to ‘stack’ the traits, and use the super call as a ‘pipe’, redirecting output - similar to the ‘pipe’ in Linux. This is the basis for the use-cases we’ll review.&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;h2 id=&quot;part-1-error-reporting-design&quot;&gt;Part-1: Error reporting design&lt;/h2&gt;
-
-&lt;p&gt;Consider the following:&lt;/p&gt;
-
-&lt;p&gt;An Ad-Server gets a request for an advertisement from a mobile phone.&lt;/p&gt;
-
-&lt;p&gt;We’ll discuss a solution for executing the actions that need to be taken when the Ad-Server encounters errors. There are two types of error which should be handled appropriately as follows:&lt;/p&gt;
-
-&lt;p&gt;On &lt;strong&gt;FatalError&lt;/strong&gt;:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;
-    &lt;p&gt;The Logger &lt;em&gt;prints&lt;/em&gt; to the Log&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;The Monitor &lt;em&gt;increments&lt;/em&gt; the counter Metric.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;Kafka-Producer &lt;em&gt;sends&lt;/em&gt; a Json Event with a timestamp  to Kafka.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;em&gt;when step 3 failed&lt;/em&gt;, S3-Client &lt;em&gt;uploads&lt;/em&gt; the Event as CSV with a timestamp to to S3 (backup)&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;On &lt;strong&gt;InvalidRequestError&lt;/strong&gt;&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;
-    &lt;p&gt;The Logger &lt;em&gt;prints&lt;/em&gt; to the Log&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;The Monitor &lt;em&gt;increments&lt;/em&gt; the counter Metric.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;Kafka-Producer &lt;em&gt;sends&lt;/em&gt; a Json Event to Kafka.&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;&lt;img src=&quot;/img/stackable_narrative.png&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;An Error has a code, a description, and unique properties&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;FatalError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exceptionCause&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingError&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;  &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Fatal Error code $code accrued&quot;&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;InvalidRequestError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;paramName&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;paramValue&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Invalid Request. Bad  parameter: $paramName&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot; &quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;with value: $paramValue&quot;&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;And these are mocks for the Scala Clients&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;KafkaProducer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;eventContent&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;sending to Kafka: $eventContent&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Monitor&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;incrementCounter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;counterName&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tags&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;))&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;incrementing counter $counterName&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Logger&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;error: $event&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;S3_Client&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;upload&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;eventContent&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;uploading event $eventContent to S3&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;h3 id=&quot;step-by-step-implementation-using-stackable-traits&quot;&gt;&lt;strong&gt;Step-by-step implementation, using stackable-traits&lt;/strong&gt;&lt;/h3&gt;
-
-&lt;h5 id=&quot;create-traits-that-represent-the-subscribers-and-mix-them&quot;&gt;Create traits that represent the subscribers and mix them.&lt;/h5&gt;
-
-&lt;p&gt;We’ll create the following traits, each represents a subscriber for an error event&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Log&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Metric&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;S3_Backup&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Kafka&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;And mix them with the ‘Error’ classes. Here, we use a Scala-type system to describe the ‘Error’ classes and the actions that need to be taken&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h5 id=&quot;turn-the-traits-into-services-that-activates-the-clients&quot;&gt;Turn the traits into services that activates the Clients&lt;/h5&gt;
-
-&lt;p&gt;Now it is clear which subscribers should receive a notification on error. We will enrich the traits, so they can activate the clients as well:&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;abstract&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Sender&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Log&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Sender&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;nc&quot;&gt;Logger&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
- &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Metric&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Sender&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;nc&quot;&gt;Monitor&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;incrementCounter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getClass&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getSimpleName&lt;/span&gt;&lt;span class=&quot;cm&quot;&gt;/*this is not recommended...*/&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;errorCode&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;
-   &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;toString&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
- &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;S3_Backup&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Sender&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;n&quot;&gt;S3_Client&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;upload&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
- &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Kafka&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Sender&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;nc&quot;&gt;KafkaProducer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Alright, so now each trait has a “send” method that handles the event using the appropriate client.
-But we still need to trigger it on the occurrence of an error, and call them in the order described above&lt;/p&gt;
-
-&lt;h5 id=&quot;stack-the-services-traits-with-each-other&quot;&gt;‘Stack’ the services traits with each other&lt;/h5&gt;
-
-&lt;p&gt;In other words, a pipe of calls for the ‘send’ method in the services. As discussed, we’ll need to use super method calls for that.
-Note that in this step we won’t be stacking modifications, but the side-effects that triggered an error.&lt;/p&gt;
-
-&lt;p&gt;Now we need to stack the traits according to the order and logic defined in the narrative described above. The order of the invocation of the traits will be right to left.&lt;/p&gt;
-
-&lt;p&gt;Hence the order for FatalError: S3_Backup ← Kafka ← Monitor ← Log
-Where S3_Backup should be invoked only when the Kafka-Producer failed to send the event to Kafka.&lt;/p&gt;
-
-&lt;p&gt;And for InvalidRequestError: Kafka ← Monitor ← Log&lt;/p&gt;
-
-&lt;p&gt;Let’s re-arranged the mix of the ‘Error’ classes:&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;FatalError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exceptionCause&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingError&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;S3_Backup&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Kafka&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Monitor&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Log&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Fatal Error code $code accrued&quot;&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;InvalidRequestError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;paramName&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;paramValue&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingError&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Kafka&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Monitoring&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Log&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Invalid Request. Bad  parameter: $paramName&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot; &quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;with value: $paramValue&quot;&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;FatalError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exceptionCause&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingError&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;S3_Backup&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Kafka&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Monitor&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Log&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Fatal Error code $code accrued&quot;&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;InvalidRequestError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;paramName&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;paramValue&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingError&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Kafka&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Monitoring&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Log&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Invalid Request. Bad  parameter: $paramName&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot; &quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;with value: $paramValue&quot;&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;And stack the traits:&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Log&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Sender&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;abstract&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;nc&quot;&gt;Logger&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-   &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
- &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Metric&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Sender&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;abstract&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;nc&quot;&gt;Monitor&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;incrementCounter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getClass&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getSimpleName&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;errorCode&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;toString&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-   &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
- &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;S3_Backup&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Sender&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;abstract&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;n&quot;&gt;S3_Client&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;upload&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-   &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
- &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Kafka&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Sender&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;abstract&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;nc&quot;&gt;Try&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;KafkaProducer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getOrElse&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;))&lt;/span&gt;
- &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;You might notice that&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;
-    &lt;p&gt;The call ‘super.send(event)’ was added to ‘send’ method.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;The ‘override’ modifier changed to ‘abstract override’, because the send method now overrides the behavior, but also calls for an abstract method with super.send. The modifier indicates that this trait must be mixed with a concrete class(later…).&lt;/p&gt;
-
-    &lt;p&gt;By the way, if we omit the ‘abstract’ from the modifier, we’ll get the following error:
-&lt;em&gt;“method send in class Sender is accessed from super. It may not be abstract unless it is overridden by a member declared ‘abstract’ and ‘override’ super.send(event)”&lt;/em&gt;&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;Kafka would call super, i.e. S3-Backup would be invoked only when KafkaProducer fails to deliver.&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h5 id=&quot;create-and-stack-modification-traits&quot;&gt;Create and ‘Stack’ modification traits:&lt;/h5&gt;
-
-&lt;p&gt;&lt;img src=&quot;/img/stack-traits.jpg&quot; height=&quot;300&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;The event content needs modification to be in the right format (json, csv) before being sent as an input to KafkaProducer and S3. A fatal error needs to be sent with a timestamp.&lt;/p&gt;
-
-&lt;p&gt;Let’s write the modification method and the stackable modification traits:&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;// we are adding a method modification content method, to be used by the modification traits
-&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;modifyContent&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;error&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;n&quot;&gt;error&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;match&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-     &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;FatalError&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;FatalError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exceptionCause&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exceptionCause&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;content&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-     &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;InvalidRequestError&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;InvalidRequestError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;paramName&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;paramValue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;content&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-   &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
- &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;JsonTransformer&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Sender&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;ServingError._&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;abstract&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;modifyContent&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-     &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;date&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;match&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-       &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;DateTimestampedMessage&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;\&quot;date\&quot;:&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;date&lt;/span&gt;
-       &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;
-     &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-     &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cause&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;match&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-       &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;FatalError&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;\&quot;cause\&quot;:&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exceptionCause&lt;/span&gt;
-       &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;InvalidRequestError&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;\&quot;cause\&quot;:&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;paramName&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;:&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;paramValue&lt;/span&gt;
-     &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-     &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&quot;&quot;
-             {
-                &quot;code:&quot;${event.code},
-                $date
-                $cause
-             }
-      &quot;&quot;&quot;&lt;/span&gt;
-   &lt;span class=&quot;o&quot;&gt;}))&lt;/span&gt;
- &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;CsVTransformer&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Sender&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;ServingError._&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;abstract&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-   &lt;span class=&quot;k&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;modifyContent&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-     &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;date&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;match&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-       &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;DateTimestampedMessage&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;date&lt;/span&gt;
-       &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;
-     &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-     &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cause&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;match&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-       &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;FatalError&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exceptionCause&lt;/span&gt;
-       &lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;InvalidRequestError&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;paramName&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;,&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;paramValue&lt;/span&gt;
-     &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-     &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&quot;&quot;${event.code},$date$cause&quot;&quot;&quot;&lt;/span&gt;
-   &lt;span class=&quot;o&quot;&gt;}))&lt;/span&gt;
- &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Timestamp&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;date&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Date&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Date&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;And mix the modification traits to the ‘Error’ classes&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;FatalError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;exceptionCause&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingError&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;S3_Backup&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;CsVTransformer&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Kafka&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;JsonTransformer&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Timestamp&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Metric&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Log&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Fatal Error code $code accrued&quot;&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;InvalidRequestError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;paramName&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;paramValue&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingError&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Kafka&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;JsonTransformer&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Log&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Invalid Request. Bad  parameter: $paramName&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot; &quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;with value: $paramValue&quot;&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h5 id=&quot;create-and-mix-servingerrorsender-&quot;&gt;Create and mix ‘ServingErrorSender’ :&lt;/h5&gt;
-
-&lt;p&gt;Last, to trigger error reports once an error object is created, we’ll mix them with a sending trait.&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingErrorSender&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Sender&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;this:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt;   &lt;span class=&quot;c1&quot;&gt;// force to be mixed with a ServingError class, (look for 'see cake-pattern')
-&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;ServingError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Unit&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;trait&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingError&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServingErrorSender&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;code&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Int&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;
- &lt;span class=&quot;k&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;String&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;h3 id=&quot;try-it-out&quot;&gt;&lt;strong&gt;Try it out&lt;/strong&gt;&lt;/h3&gt;
-
-&lt;p&gt;We have completed the task!&lt;/p&gt;
-
-&lt;p&gt;Now, when invoking a ‘send’’ for an error, like the following:&lt;/p&gt;
-
-&lt;div class=&quot;language-scala highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nc&quot;&gt;FatalError&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exceptionCause&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;IllegalArgumentException&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getClass&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getSimpleName&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Results are with the following printed to the log:&lt;/p&gt;
-
-&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;error: Fatal Error code 1 accrued //Log
-incrementing counter FatalError // Metric
-sending to Kafka:  // Kafka
-{
-  &quot;code:&quot;1,
-  &quot;date&quot;:Thu Nov 30 16:56:33 IST 2017
-  &quot;cause&quot;:IllegalArgumentException
-}
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;h3 id=&quot;next&quot;&gt;&lt;strong&gt;Next&lt;/strong&gt;&lt;/h3&gt;
-
-&lt;p&gt;In &lt;a href=&quot;https://fullgc.github.io/stackable-traits-pattern---part-2/&quot;&gt;part-2&lt;/a&gt; we’ll use stackable-actor traits for gathering actor’s metrics.&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;h3 id=&quot;references&quot;&gt;&lt;strong&gt;References&lt;/strong&gt;&lt;/h3&gt;
-
-&lt;p&gt;&lt;em&gt;&lt;a href=&quot;https://www.artima.com/shop/programming_in_scala_3ed&quot;&gt;Programming in Scala(chapter 12.5) / Martin Odersky and co&lt;/a&gt;&lt;/em&gt;&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;&lt;em&gt;The complete source code and more running examples can be found in my &lt;a href=&quot;https://github.com/FullGC/stackable-traits&quot;&gt;github&lt;/a&gt;&lt;/em&gt;.&lt;/p&gt;
-
-&lt;div id=&quot;disqus_thread&quot;&gt;&lt;/div&gt;
-&lt;script&gt;
-
-/**
-*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
-*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
-var disqus_config = function () {
-this.page.url = &quot;https://fullgc.github.io/stackable-traits-pattern/&quot;
-this.page.identifier = stackable-1
-};
-(function() { // DON'T EDIT BELOW THIS LINE
-var d = document, s = d.createElement('script');
-s.src = 'https://FullGC.disqus.com/embed.js';
-s.setAttribute('data-timestamp', +new Date());
-(d.head || d.body).appendChild(s);
-})();
-&lt;/script&gt;
-
-&lt;noscript&gt;Please enable JavaScript to view the &lt;a href=&quot;https://disqus.com/?ref_noscript&quot;&gt;comments powered by Disqus.&lt;/a&gt;&lt;/noscript&gt;
-</description>
-        <pubDate>Mon, 23 Jul 2018 17:20:45 +0300</pubDate>
-        <link>http://fullgc.github.io/stackable-traits-pattern/</link>
-        <guid isPermaLink="true">http://fullgc.github.io/stackable-traits-pattern/</guid>
-        
-        <category>scala</category>
-        
-        <category>stackable</category>
-        
-        <category>traits</category>
         
         
       </item>
