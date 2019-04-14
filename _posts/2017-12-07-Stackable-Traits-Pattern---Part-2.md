@@ -107,7 +107,13 @@ trait LoggerActor extends Actor with StrictLogging {
 ````
 Lastly, mix these traits to a concrete MyActor class
 
+````scala
 class MyMonitoredActor extends MyActor with LatencyRecorderActor with LoggerActor
+````
+
+And we ended up with:
+
+<script src="https://gist.github.com/FullGC/c5b032b495b71aa9f80daced5618bf02.js"></script>
 
 
 <br><br>
