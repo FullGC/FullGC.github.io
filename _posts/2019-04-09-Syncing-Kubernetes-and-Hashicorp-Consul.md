@@ -160,3 +160,22 @@ kubectl get pods -n kube-system -oname |grep coredns |xargs kubectl apply -f kub
 ````
 
 *Configurations of the Consul-K8s sync components are implemented as Jenkins-Pipeline methods on my [GitHub](https://github.com/FullGC/consul-kubernetes-sync-Pipeline)*.
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+var disqus_config = function () {
+this.page.url = "https://fullgc.github.io/syncing-kubernetes-and-hashicorp-consul/"
+this.page.identifier = consul-kubernetes
+};
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://FullGC.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
