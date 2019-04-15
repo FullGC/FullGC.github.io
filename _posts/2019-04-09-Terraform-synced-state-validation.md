@@ -35,9 +35,9 @@ However, we, the Fyber DevOps team, wanted to avoid such an automation process b
 
 We do it with a little help of a Jenkins [pipeline library](https://jenkins.io/doc/book/pipeline/shared-libraries/) script. The script initials, updates, and executes a 'terraform plan' command. If Terraform isn’t synced, it reports the unsynced components to the dedicated Slack channel. The Jenkins job is scheduled to run in the first and before the last working hour, on each of the Terraform environments, so we’ll be able to fix any inconsistency by the end of the day.
 
-![image alt text]({{ site.url }}/public/F57qdjJQzC92gHvkkvffA_img_0.png)
+<script src="https://gist.github.com/FullGC/b406ba8e3b5e1ae1149bfea8658b847c.js"></script>
 
-*The script can be found on my [GitHub](https://github.com/FullGC/Terraform-Empty-Plan-Validator)*.
+![image alt text]({{ site.url }}/public/F57qdjJQzC92gHvkkvffA_img_0.png)
 
 *It's important to note that the script is useful when you're working with the Terraform Recommended Workflow, specifically when having an environment file for each environment that defines the Terraform modules, while the resources lie in their own repository.*
 
