@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
+
+<url>
+  <loc>https://fullgc.github.io/</loc>
+  <lastmod>2019-05-03T06:53:34+00:00</lastmod>
+  <priority>1.00</priority>
+</url>
+<url>
+  <loc>https://fullgc.github.io/about/</loc>
+  <lastmod>2019-05-03T06:53:34+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://fullgc.github.io/contact/</loc>
+  <lastmod>2019-05-03T06:53:34+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://fullgc.github.io/syncing-kubernetes-and-hashicorp-consul/</loc>
+  <lastmod>2019-05-03T06:53:34+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://fullgc.github.io/terraform-synced-state-validation/</loc>
+  <lastmod>2019-05-03T06:53:34+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://fullgc.github.io/developing-behavior-with-jbehave-part-3/</loc>
+  <lastmod>2019-05-03T06:53:34+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://fullgc.github.io/developing-behavior-with-jbehave-part-2/</loc>
+  <lastmod>2019-05-03T06:53:34+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://fullgc.github.io/developing-behavior-with-jbehave-part-1/</loc>
+  <lastmod>2019-05-03T06:53:34+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+
+
+</urlset>
