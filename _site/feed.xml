@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>FullGC</title>
-    <description>Practical guides for the Backend guy. We speak Scala, Java and DevOps</description>
+    <description>The FullGC blog. Practical guides for the Backend guy. We speak Scala, Java and DevOps</description>
     <link>http://fullgc.github.io/</link>
     <atom:link href="http://fullgc.github.io/feed.xml" rel="self" type="application/rss+xml" />
     <pubDate>Fri, 12 Apr 2019 23:09:51 +0300</pubDate>
