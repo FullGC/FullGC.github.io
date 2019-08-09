@@ -30,7 +30,7 @@ Before installing the Helm Chart, let's review some of the essential configurati
 
 By default, the Chart resolution installs everything: a Consul server cluster, client agents on all nodes, and feature components.
 
-If you already maintain a Consul cluster and are interested in joining the Kubernetes services to your existing cluster, then in the "server" section, the “enable” property in the “server” section should be set to “false”:
+If you already maintain a Consul cluster and are interested in joining the Kubernetes services to your existing cluster, then the “enable” property in the “server” section should be set to “false”:
 
 ![image alt text]({{ site.url }}/public/xXR5gri6PhaGM4U2OMurfQ_img_1.png)
 
