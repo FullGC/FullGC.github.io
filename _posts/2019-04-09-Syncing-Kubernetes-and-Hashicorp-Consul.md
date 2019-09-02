@@ -13,7 +13,7 @@ date: 2019-04-10 14:30:45
 header-img: "img/sync.png"
 ---
 
-If you use Hashicorp's Consul for service discovery/DNS and use or plan to use Kubernetes, then the recently announced integration between Consul and Kubernetes will come as welcome news!
+If you use Hashicorp's Consul for service discovery/DNS and use (or plan to use )Kubernetes, then the recently announced integration between Consul and Kubernetes will come as welcome news!
 
 ![image alt text]({{ site.url }}/public/xXR5gri6PhaGM4U2OMurfQ_img_0.png)
 
