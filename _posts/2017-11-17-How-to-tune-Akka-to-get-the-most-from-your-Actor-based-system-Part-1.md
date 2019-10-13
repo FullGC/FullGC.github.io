@@ -253,15 +253,11 @@ A common case is to use Fork-Join executor for future tasks inside an actor. Her
 
 The old Java 5 executor for asynchronous task execution can still fit in some cases and without the Fork-Join overhead.
 
-While Fork-Join breaks the task for you, if you know how to break the task yourself, then your code should be already built as a minimal task, executed by a single thread, which fits a thread-pool-executor.
+While Fork-Join breaks the task for you, if you know how to break the task yourself then your code should be already built as a minimal task, executed by a single thread, which fits a thread-pool-executor.
 
 The thread-pool executor is used by Akka Dispatcher and PinnedDispatcher.
 
-Dispatcher allows you to define ‘min’, ‘max’ and increase ‘factor’ / ‘fixed’ size for your thread pool.
-
-Thread-pool executor is used by akka Dispatcher and PinnedDispatcher.
-
-**Dispatcher** let you define min, max and increase factor / fixed size for your threadpool.
+**Dispatcher** allows you to define ‘min’, ‘max’ and increase ‘factor’ / ‘fixed’ size for your thread pool.
 
 ````
 my-dispatcher {
