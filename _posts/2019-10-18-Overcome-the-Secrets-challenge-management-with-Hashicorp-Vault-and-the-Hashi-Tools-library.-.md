@@ -13,6 +13,7 @@ tags:
 source-id: 1lXfCSHSE5biyuR0JdN5Ox8Sult-yWBz6vZl_IO7XHsw
 date: 2019-10-18 14:15:45
 published: true
+header-img: "img/water-balance-black.jpg"
 ---
 Overcome the Secrets management challenge with Hashicorp Vault and the 'hashi-tools' library. 
 
@@ -109,9 +110,9 @@ The full documentation can be found in the [project's repository](https://github
 
 ### Usage examples
 
-<script src="https://gist.github.com/FullGC/8e268f8e9f82a6e415113de5b5681bd5.js"></script>
-
 ![image alt text]({{ site.url }}/public/vault-client-worksheet.png)
+
+<script src="https://gist.github.com/FullGC/8e268f8e9f82a6e415113de5b5681bd5.js"></script>
 
 ### You can contribute!
 
