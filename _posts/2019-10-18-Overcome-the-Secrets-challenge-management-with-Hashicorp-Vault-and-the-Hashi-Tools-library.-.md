@@ -65,12 +65,17 @@ The flow should then be something like this:
 ## **The implementation challenge**
 
 So we constructed a Vault cluster. The remaining implementation of the above workflow is on the developer's side.
-
 I feel safe in claiming that for most developers, dealing with secrets is no brainer. Credentials with more than enough permissions either find their way somehow to a configuration file inside the node, or they just all have access to them and they can put them wherever they like in the Git repo.
+With Vault, to be able to comunnicate with the Vault server, the developer will have to implement an authentication mechanism in each project.
+The way to do it is to:
 
-The developer will have to implement an authentication mechanism with the Vault server in each project, where it's app would get a temporary Vault token and have to be periodically renewed. After the authentication, in order to obtain credentials from the Vault server, an HTTP call with the appropriate properties is needed; and then parse the response and periodically renew the lease, along with the regulars, such as handle failures, monitoring, etc.
+1. Store a pre-defined Vault token.
+Most of our services are dynamic in the sense that they scale up and down, so creating a mechanism where we generate and place a Vault token in the service config file is not ideal, and anyway we prefer not to keep any secret physically inside a node.
 
-authenticate with Vault using whatever form works best for you. For example,  you can authenticate using your personal GitHub access token. However, as in this example, there is a need to store a secret physically. The implementation is not always trivial, and the temporary token would have to be periodically renewed here too.
+2. Use a Vault authentication method. Vault has pluggable authentication methods, making it easy to authenticate with Vault using whatever form works best for you. For example,  you can authenticate using your personal GitHub access token. However, as in this example, there is a need to store a secret physically, and the implementation is not always trivial.
+In both cases, the temporary token needs to be periodically renewed by the application.
+
+After the authentication, in order to obtain credentials from the Vault server, an HTTP call with the appropriate properties is needed; and then parse the response and periodically renew the lease, along with the regulars, such as handle failures, monitoring, etc.
 
 ## **The 'hashi-tools' library**
 
