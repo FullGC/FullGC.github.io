@@ -11,6 +11,7 @@ tags:
 - scala
 - open-source
 source-id: 1lXfCSHSE5biyuR0JdN5Ox8Sult-yWBz6vZl_IO7XHsw
+date: 2019-10-18 14:15:45
 published: true
 ---
 Overcome the Secrets management challenge with Hashicorp Vault and the 'hashi-tools' library. 
