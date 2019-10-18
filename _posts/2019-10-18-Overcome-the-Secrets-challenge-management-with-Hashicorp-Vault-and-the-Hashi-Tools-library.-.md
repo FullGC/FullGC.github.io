@@ -56,7 +56,7 @@ We like that *each service* would be able to get *its credentials on demand*, *f
 
 ![image alt text]({{ site.url }}/public/cmDSyp5zKlr8wnoTn0r0UA_img_1.png)
 
-<img src="{{ site.url }}/public/cmDSyp5zKlr8wnoTn0r0UA_img_1.png" height = '400'>
+<img src="{{ site.url }}/public/cmDSyp5zKlr8wnoTn0r0UA_img_1.png" height = '600'>
 
 
 
