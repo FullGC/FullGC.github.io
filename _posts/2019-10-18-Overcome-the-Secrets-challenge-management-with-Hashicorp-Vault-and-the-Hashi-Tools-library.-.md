@@ -109,6 +109,8 @@ The full documentation can be found in the [project's repository](https://github
 
 ### Usage examples
 
+<script src="https://gist.github.com/FullGC/b406ba8e3b5e1ae1149bfea8658b847c.js"></script>
+
 <script src="https://gist.github.com/FullGC/8e268f8e9f82a6e415113de5b5681bd5.js></script>
 
 ![image alt text]({{ site.url }}/public/vault-client-worksheet.png)
