@@ -2,7 +2,7 @@
 title: Overcome the Secrets management challenge with Hashicorp Vault and the hashi-tools library
 layout: post
 author: Dani Shemesh
-permalink: /overcome-the-secrets-challenge-management-with-hashicorp-vault-and-the-hashi-tools-library.-/
+permalink: /overcome-the-secrets-challenge-management-with-hashicorp-vault-and-the-hashi-tools-library/
 tags:
 - hashicorp
 - fyber
