@@ -1,5 +1,5 @@
 ---
-title: Overcome the Secrets management challenge with Hashicorp Vault and the hashi-tools library.
+title: Overcome the Secrets management challenge with Hashicorp Vault and the hashi-tools library
 layout: post
 author: Dani Shemesh
 permalink: /overcome-the-secrets-challenge-management-with-hashicorp-vault-and-the-hashi-tools-library.-/
@@ -75,11 +75,11 @@ Most of our services are dynamic in the sense that they scale up and down, so cr
 2. Use a Vault authentication method. Vault has pluggable authentication methods, making it easy to authenticate with Vault using whatever form works best for you. For example,  you can authenticate using your personal GitHub access token. However, as in this example, there is a need to store a secret physically, and the implementation is not always trivial.
 In both cases, the temporary token needs to be periodically renewed by the application.
 
-After the authentication, in order to obtain credentials from the Vault server, an HTTP call with the appropriate properties is needed; and then parse the response and periodically renew the lease, along with the regulars, such as handle failures, monitoring, etc.
+After logging-in, in order to obtain credentials from the Vault server, an HTTP call with the appropriate properties is needed; and then parse the response and periodically renew the lease, along with the regulars, such as handle failures, monitoring, etc.
 
 ## **The 'hashi-tools' library**
 
-To ease the migration of the secrets management to Vault, I wrote an SDK library. Most of our services are written in Scala, and so is the client. 
+To ease the migration of the secrets management to Vault, I wrote an [SDK library](https://github.com/FyberEngineers/hashi-tools). Most of our services are written in Scala, and so is the client.
 
 The library contains two clients: 'Secrets' for Vault and ‘Discovery’ for Consul. The library is used by all of our backend applications that have been written in the past year.
 
@@ -124,7 +124,7 @@ There is still a long way to go to making the SKD more complete. The main tasks 
 *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
 *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
 var disqus_config = function () {
-this.page.url = "https://fullgc.github.io/overcome-the-secrets-challenge-management-with-hashicorp-vault-and-the-hashi-tools-library/"
+this.page.url = "https://fullgc.github.io/overcome-the-secrets-challenge-management-with-hashicorp-vault-and-the-hashi-tools-library.-/"
 this.page.identifier = terraform-validation
 };
 (function() { // DON'T EDIT BELOW THIS LINE
