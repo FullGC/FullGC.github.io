@@ -15,7 +15,6 @@ date: 2019-10-18 14:15:45
 published: true
 header-img: "img/keys-new-pixabay.jpg"
 ---
-Overcome the Secrets management challenge with Hashicorp Vault and the 'hashi-tools' library. 
 
 Hashicorp Vault is a "secrets" management system, and one of the various Hashicorp open-source tools that the Fyber DevOps team uses. 
 
@@ -42,8 +41,7 @@ For this reason (and others..), we wanted to change our way of working with secr
 * Secure auditing.
 
 Vault seemed like a natural fit, as it technically provides all of the above; it supports dynamic secrets for all popular systems and tools (cloud providers, databases, ssh, etc.), it provides a central, secure, configurable place to store secrets, it offers a variety of authentication methods which perform authentication and assigning policies to a user and services, and it has automatic revocation and auditing. 
-
-(If you are not familiar with Vault, take a few minutes to review [the documentation here](https://www.vaultproject.io/)).
+If you are not familiar with Vault, take a few minutes to review [the documentation here](https://www.vaultproject.io/).
 
 ![image alt text]({{ site.url }}/public/cmDSyp5zKlr8wnoTn0r0UA_img_0.png)
 
@@ -70,13 +68,9 @@ So we constructed a Vault cluster. The remaining implementation of the above wor
 
 I feel safe in claiming that for most developers, dealing with secrets is no brainer. Credentials with more than enough permissions either find their way somehow to a configuration file inside the node, or they just all have access to them and they can put them wherever they like in the Git repo.
 
-The developer will have to implement an authentication mechanism with the Vault server in each project, where it's app would get a temporary Vault token and have to be periodically renewed. After the authentication, in order to obtain credentials from the Vault server, an HTTP call with the appropriate properties is needed; and then parse the response and periodically renew the lease, along with the regulars, such as handle failures, monitoring, etc. 
+The developer will have to implement an authentication mechanism with the Vault server in each project, where it's app would get a temporary Vault token and have to be periodically renewed. After the authentication, in order to obtain credentials from the Vault server, an HTTP call with the appropriate properties is needed; and then parse the response and periodically renew the lease, along with the regulars, such as handle failures, monitoring, etc.
 
- The way to do it is to:
-
-1. Store a pre-defined Vault token. You'll recall that we don’t want to share secrets. Hence, it needs to store a unique token somehow. Most of our services are dynamic in the sense that they scale up and down, so creating a mechanism where we generate and place a Vault token in the service config file is not ideal. Moreover, this temporary token would need to be periodically renewed by the application, and anyway, as discussed, we prefer not to keep any secret physically inside a node. 
-
-2. Use a Vault authentication method. Vault has pluggable authentication methods, making it easy to authenticate with Vault using whatever form works best for you. For example,  you can authenticate using your personal GitHub access token. However, as in this example, there is a need to store a secret physically. The implementation is not always trivial, and the temporary token would have to be periodically renewed here too.
+authenticate with Vault using whatever form works best for you. For example,  you can authenticate using your personal GitHub access token. However, as in this example, there is a need to store a secret physically. The implementation is not always trivial, and the temporary token would have to be periodically renewed here too.
 
 ## **The 'hashi-tools' library**
 
