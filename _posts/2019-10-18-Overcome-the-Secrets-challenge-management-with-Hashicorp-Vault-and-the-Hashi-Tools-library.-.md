@@ -41,6 +41,7 @@ For this reason (and others..), we wanted to change our way of working with secr
 * Secure auditing.
 
 Vault seemed like a natural fit, as it technically provides all of the above; it supports dynamic secrets for all popular systems and tools (cloud providers, databases, ssh, etc.), it provides a central, secure, configurable place to store secrets, it offers a variety of authentication methods which perform authentication and assigning policies to a user and services, and it has automatic revocation and auditing. 
+
 If you are not familiar with Vault, take a few minutes to review [the documentation here](https://www.vaultproject.io/).
 
 ![image alt text]({{ site.url }}/public/cmDSyp5zKlr8wnoTn0r0UA_img_0.png)
