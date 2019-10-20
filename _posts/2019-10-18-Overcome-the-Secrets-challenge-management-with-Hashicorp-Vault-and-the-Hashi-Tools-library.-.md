@@ -2,7 +2,7 @@
 title: Overcome the Secrets management challenge with Hashicorp Vault and the hashi-tools library
 layout: post
 author: Dani Shemesh
-permalink: /overcome-the-secrets-challenge-management-with-hashicorp-vault-and-the-hashi-tools-library/
+permalink: /overcome-the-secrets-management-challenge-with-hashicorp-vault-and-the-hashi-tools-library/
 tags:
 - hashicorp
 - fyber
@@ -125,7 +125,7 @@ There is still a long way to go to making the SKD more complete. The main tasks 
 *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
 *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
 var disqus_config = function () {
-this.page.url = "https://fullgc.github.io/overcome-the-secrets-challenge-management-with-hashicorp-vault-and-the-hashi-tools-library.-/"
+this.page.url = "https://fullgc.github.io/overcome-the-secrets-management-challenge-with-hashicorp-vault-and-the-hashi-tools-library/"
 this.page.identifier = terraform-validation
 };
 (function() { // DON'T EDIT BELOW THIS LINE
