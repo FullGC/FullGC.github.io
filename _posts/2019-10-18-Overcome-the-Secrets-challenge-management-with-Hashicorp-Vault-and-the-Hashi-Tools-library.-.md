@@ -1,5 +1,5 @@
 ---
-title: Overcome the Secrets management challenge with Hashicorp Vault and the hashi-tools library
+title: Secrets management at scale with Hashicorp Vault and the hashi-tools library
 layout: post
 author: Dani Shemesh
 permalink: /overcome-the-secrets-management-challenge-with-hashicorp-vault-and-the-hashi-tools-library/
