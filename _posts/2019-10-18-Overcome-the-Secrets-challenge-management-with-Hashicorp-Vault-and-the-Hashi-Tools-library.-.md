@@ -44,6 +44,7 @@ Vault seemed like a natural fit, as it technically provides all of the above; it
 
 If you are not familiar with Vault, take a few minutes to review [the documentation here](https://www.vaultproject.io/).
 
+
 ![image alt text]({{ site.url }}/public/cmDSyp5zKlr8wnoTn0r0UA_img_0.png)
 
 ## **The plan**
@@ -60,7 +61,7 @@ We also like to use Vault as, well, a "secret vault" to keep constant sensitive 
 
 The flow should then be something like this:
 
-![image alt text]({{ site.url }}/public/vault-workflow.png)
+![image alt text]({{ site.url }}/public/vault-workflow.png width '500')
 
 
 ## **The implementation challenge**
@@ -84,7 +85,7 @@ To ease the migration of the secrets management to Vault, I wrote an [SDK librar
 
 The library contains two clients: 'Secrets' for Vault and ‘Discovery’ for Consul. The library is used by all of our backend applications that have been written in the past year.
 
-So then let's update the workflow:![image alt text]({{ site.url }}/public/cmDSyp5zKlr8wnoTn0r0UA_img_2.png)
+So then let's update the workflow:![image alt text]({{ site.url }}/public/cmDSyp5zKlr8wnoTn0r0UA_img_2.png width '500')
 
 ### Main features
 
