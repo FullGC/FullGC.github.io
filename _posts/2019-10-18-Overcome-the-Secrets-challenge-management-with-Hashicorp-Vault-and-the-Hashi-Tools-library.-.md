@@ -86,7 +86,8 @@ To ease the migration of the secrets management to Vault, I wrote an [SDK librar
 The library contains two clients: 'Secrets' for Vault and ‘Discovery’ for Consul. The library is used by all of our backend applications that have been written in the past year.
 
 So then let's update the workflow:
-<img src="{{ site.url }}/public/cmDSyp5zKlr8wnoTn0r0UA_img_2.png width = '500'">
+
+<img src="{{ site.url }}/public/cmDSyp5zKlr8wnoTn0r0UA_img_2.png" width = '600'>
 
 ### Main features
 
